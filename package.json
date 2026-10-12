@@ -1,0 +1,11 @@
+{
+  "name": "snowy-escape",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sfx": "node scripts/generate-sfx.mjs"
+  },
+  "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.71.0"
+  }
+}
