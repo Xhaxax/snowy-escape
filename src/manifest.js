@@ -118,6 +118,22 @@ window.SE_MANIFEST = {
   "bird_fly": {
    "frames": 5,
    "fps": 14.0
+  },
+  "fox_sniff": {
+   "frames": 9,
+   "fps": 6.0
+  },
+  "hare_sniff": {
+   "frames": 9,
+   "fps": 5.0
+  },
+  "owl_idle": {
+   "frames": 9,
+   "fps": 5.0
+  },
+  "bird_peck": {
+   "frames": 9,
+   "fps": 8.0
   }
  }
 };
