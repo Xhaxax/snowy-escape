@@ -32,6 +32,21 @@ def load_tileset(name):
     return tiles
 
 
+def lighten_path(tile):
+    """The packed-snow path comes out a dark blue-grey; lift it toward pale, trodden snow so it
+    never reads as water, keeping its boot-print texture (and leaving the fresh snow alone)."""
+    out = tile.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if r > 200 and g > 200 and b > 205:
+                continue
+            k = 0.45
+            px[x, y] = (int(r + (214 - r) * k), int(g + (212 - g) * k), int(b + (226 - b) * k), a)
+    return out
+
+
 def bez(p0, c, p1, t):
     u = 1 - t
     return (u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0], u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1])
@@ -55,7 +70,13 @@ def main():
         return 'path' if d < cell * 1.35 else 'snow'
 
     grid = [[terrain(vx, vy) for vx in range(cols + 1)] for vy in range(rows + 1)]
-    snow_path, ice_snow = load_tileset('snow_path_pro'), load_tileset('ice_snow_pro')
+    # paths are trodden snow (packed_snow_pro); the older earthy footpath set is the fallback
+    snow_path = load_tileset('packed_snow_pro')
+    if snow_path:
+        snow_path = {k: [lighten_path(t) for t in v] for k, v in snow_path.items()}
+    else:
+        snow_path = load_tileset('snow_path_pro')
+    ice_snow = load_tileset('ice_snow_pro')
     rnd = random.Random(3)
     out = Image.new('RGBA', (cols * cell, rows * cell))
     for cy in range(rows):
@@ -87,6 +108,17 @@ def main():
         x, y = rnd.randrange(cols * cell), rnd.randrange(rows * cell)
         if snowish(px[x, y]):
             px[x, y] = rnd.choice([(255, 255, 255, 255), (214, 216, 232, 255), (236, 238, 248, 255)])
+    # old boot prints and paw prints pressed into the trodden snow of the paths
+    trodden = lambda p: not snowish(p) and p[2] > 150
+    for _ in range(1400):
+        x0, y0 = path_pts[rnd.randrange(len(path_pts))]
+        x0, y0 = int(x0 + rnd.uniform(-9, 9)), int(y0 + rnd.uniform(-9, 9))
+        paw = rnd.random() < 0.35
+        for dx, dy in ([(0, 0), (2, 1)] if paw else [(0, 0), (1, 0), (0, 1), (1, 1)]):
+            x, y = x0 + dx, y0 + dy
+            if 0 <= x < cols * cell and 0 <= y < rows * cell and trodden(px[x, y]):
+                r, g, b, a = px[x, y]
+                px[x, y] = (r - 18, g - 16, b - 8, a)
     # cracks and frosty patches on the lake ice
     inside = lambda x, y: ((x - lake['cx']) / (lake['rx'] - 18)) ** 2 + ((y - lake['cy']) / (lake['ry'] - 18)) ** 2 <= 1
     for _ in range(14):

@@ -134,6 +134,26 @@ window.SE_MANIFEST = {
   "bird_peck": {
    "frames": 9,
    "fps": 8.0
+  },
+  "trav_pray": {
+   "frames": 13,
+   "fps": 5.0
+  },
+  "summit_sit": {
+   "frames": 7,
+   "fps": 1.6
+  },
+  "trav_walk_e": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "trav_walk_n": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "trav_walk_s": {
+   "frames": 8,
+   "fps": 10.0
   }
  }
 };

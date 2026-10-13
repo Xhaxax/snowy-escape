@@ -168,6 +168,8 @@ SE.defaultSave = () => ({
   photos: [],        // {kind, t}
   wishes: 0,
   breaths: 0,
+  prayers: 0,        // quiet prayers in the chapel
+  candles: 0,        // candles lit in the chapel
   petsDog: 0,
   petsCat: 0,
   distance: 0,

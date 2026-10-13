@@ -215,6 +215,7 @@
       line('Sketched: deer · elk · fox · hare · owl · bird', `${sk.deer || sv.deerPhotos || 0}·${sk.elk || 0}·${sk.fox || 0}·${sk.hare || 0}·${sk.owl || 0}·${sk.bird || 0}`);
       line('Wishes on shooting stars', sv.wishes);
       line('Calm breaths at the summit', sv.breaths);
+      line('Prayers · candles lit in the chapel', `${sv.prayers || 0} · ${sv.candles || 0}`);
       line('Belly rubs for Waffles', sv.petsDog);
       line('Paths shoveled', sv.shoveled);
       line('Armfuls of firewood', sv.logs);

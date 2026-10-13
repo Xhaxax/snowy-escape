@@ -76,13 +76,15 @@
       }
 
       // walkers
-      const tSize = SE.animSize('traveler_walk');
+      // the canonical traveler (falls back to the older strip if it is missing)
+      const walkAnim = SE.anims.trav_walk_e ? 'trav_walk_e' : 'traveler_walk';
+      const tSize = SE.animSize(walkAnim);
       const tx = 180, ty = GROUND - (tSize.h || 54);
       const walkT = s.t;
-      if (SE.anims.traveler_walk) {
+      if (SE.anims[walkAnim]) {
         const fps = 10;
-        const frame = walking ? Math.floor(walkT * fps) % SE.anims.traveler_walk.frames : 0;
-        SE.drawAnim('traveler_walk', tx, ty, 0, { frame });
+        const frame = walking ? Math.floor(walkT * fps) % SE.anims[walkAnim].frames : 0;
+        SE.drawAnim(walkAnim, tx, ty, 0, { frame });
         if (walking && frame !== s.lastFrame && (frame === 1 || frame === 5)) {
           SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.save.snowDepth > 0.6 });
           s.prints.push({ x: tx + (frame === 1 ? 4 : 14), y: GROUND + 2 + (frame === 1 ? 0 : 3), s: s.scroll });

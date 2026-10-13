@@ -75,6 +75,7 @@
         const sz = SE.animSize('summit_sit');
         SE.drawAnim('summit_sit', 196, 238 - sz.h, s.t * 0.6, { pingpong: true });
       } else SE.drawActorFallback(ctx, 210, 196, '#a0522d');
+      SE.drawDogRest(234, 239, { seed: 1 });
 
       SE.weather.draw(ctx, { density: 0.6 });
       // watch mode: breathe along in long slow sessions with quiet pauses between

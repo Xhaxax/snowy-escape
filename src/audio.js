@@ -213,6 +213,10 @@
       for (let i = 0; i < 5; i++) tone(t + 0.72 + i * 0.06, midi(96 + (i % 3) * 3), 0.25, { gain: 0.015, send: 0.9 });
     },
     soft(t) { tone(t, midi(76), 0.6, { gain: 0.05, send: 0.5 }); },
+    // the chapel bell, a little way off: inharmonic partials with a long tail
+    bell(t) {
+      [[1, 0.07], [2.0, 0.035], [2.4, 0.03], [3.0, 0.02], [4.2, 0.012]].forEach(([k, g]) => tone(t, 220 * k, 3.2 / Math.sqrt(k), { type: 'sine', gain: g, send: 0.9, attack: 0.005 }));
+    },
     whoosh(t) { noiseBurst(t, 0.6, { type: 'bandpass', freq: 400, freqEnd: 1800, q: 1.2, gain: 0.1, attack: 0.25 }); },
     sip(t) { noiseBurst(t, 0.35, { type: 'bandpass', freq: 900, freqEnd: 500, q: 3, gain: 0.08, attack: 0.08 }); },
   };
@@ -241,6 +245,13 @@
       chords: [[45, 52, 57, 59, 64], [41, 48, 53, 57, 64], [48, 55, 60, 64, 67], [43, 50, 55, 59, 64]],
       scale: [69, 72, 74, 76, 79, 81, 84, 88],
       voice: 'pad', density: 0.18, bars: 2,
+    },
+    // the chapel: a slow, hymn-like progression with a bell now and then
+    chapel: {
+      bpm: 48,
+      chords: [[48, 55, 60, 64], [41, 53, 57, 60], [43, 50, 55, 59], [45, 52, 57, 60], [41, 48, 53, 57], [43, 50, 55, 62], [48, 52, 55, 60], [48, 55, 60, 64]],
+      scale: [72, 74, 76, 79, 81, 84],
+      voice: 'pad', density: 0.1, bars: 2,
     },
   };
   let song = null, songName = null, nextBeat = 0, beat = 0, schedTimer = null, songGain = null, fileMusic = null;

@@ -12,6 +12,7 @@
     summit: { node: 'summit', label: 'Summit Trail', desc: 'Up past the cave to a ledge above the clouds.', scene: 'summit' },
     lake: { node: 'lake', label: 'Frozen Lake', desc: 'Ice fishing with Waffles by your side.', scene: 'lake' },
     trail: { node: 'trail', label: 'Long Walk', desc: 'The old trail out of the valley. Just keep walking.', scene: 'trail' },
+    chapel: { node: 'chapel', label: 'Little Chapel', desc: 'A quiet log chapel with a bell tower. Candles, pews, peace.', scene: 'chapel' },
   };
   // path network, lake, clearings and landmarks come from src/world_layout.js (also used by
   // tools/build_world.py, which auto-tiles the ground with the PixelLab Wang tilesets)
@@ -39,6 +40,7 @@
   // ------------------------------------------------------------ world building (once)
   let world = null, nearTrees = [];
   const CABIN = L.objects.find((o) => o.img === 'map/cabin_td') || { x: 244, y: 566 };
+  const CHAPEL = L.objects.find((o) => o.img === 'map/chapel_td') || { x: 142, y: 380 };
 
   function rng(seed) { return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); }
   function buildWorld() {
@@ -60,7 +62,7 @@
     for (let k = 0; k < 3; k++) { c.fillStyle = k % 2 ? 'rgb(120,116,112)' : 'rgb(146,140,132)'; c.fillRect(704, 872 + k * 8, 32, 6); }
 
     // landmarks that sit flat on the ground (drawn before the trees)
-    for (const o of L.objects) { const img = SE.img(o.img); if (img && o.img !== 'map/cabin_td') c.drawImage(img, o.x, o.y); }
+    for (const o of L.objects) { const img = SE.img(o.img); if (img && !isSorted(o)) c.drawImage(img, o.x, o.y); }
 
     // a dense pine forest everywhere except the paths, clearings, lake and landmarks
     const lk = L.lake;
@@ -96,16 +98,19 @@
     }
     trees.sort((a, b) => a.y - b.y);
     nearTrees = [];
-    const cab = SE.img('map/cabin_td');
-    let cabinDrawn = false;
+    // buildings stand among the trees, so they are drawn in the same top-to-bottom order
+    const buildings = L.objects.filter(isSorted).map((o) => ({ o, img: SE.img(o.img) })).filter((b) => b.img)
+      .sort((a, b) => (a.o.y + a.img.height) - (b.o.y + b.img.height));
+    let bi = 0;
     for (const t of trees) {
-      if (!cabinDrawn && cab && t.y > CABIN.y + cab.height - 14) { c.drawImage(cab, CABIN.x, CABIN.y); cabinDrawn = true; }
+      while (bi < buildings.length && t.y > buildings[bi].o.y + buildings[bi].img.height - 14) { c.drawImage(buildings[bi].img, buildings[bi].o.x, buildings[bi].o.y); bi++; }
       if (t.near) { nearTrees.push(t); continue; }
       drawTree(c, t);
     }
-    if (!cabinDrawn && cab) c.drawImage(cab, CABIN.x, CABIN.y);
+    for (; bi < buildings.length; bi++) c.drawImage(buildings[bi].img, buildings[bi].o.x, buildings[bi].o.y);
     world = cv;
   }
+  function isSorted(o) { return o.sorted || o.img === 'map/cabin_td'; }
   function drawTree(c, t) {
     const img = SE.img(t.img);
     if (!img) return;
@@ -157,6 +162,7 @@
       SE.drawChimneySmoke(ctx, CABIN.x + 66, CABIN.y + 12, dt, 0.7);
       ctx.save(); ctx.globalAlpha = 0.45 + SE.weather.night() * 0.7;
       SE.drawWindowGlow(ctx, [{ x: CABIN.x + 36, y: CABIN.y + 52, r: 8 }, { x: CABIN.x + 84, y: CABIN.y + 70, r: 8 }, { x: CABIN.x + 56, y: CABIN.y + 40, r: 6 }]);
+      SE.drawWindowGlow(ctx, [{ x: CHAPEL.x + 22, y: CHAPEL.y + 67, r: 6 }, { x: CHAPEL.x + 61, y: CHAPEL.y + 72, r: 6 }, { x: CHAPEL.x + 73, y: CHAPEL.y + 68, r: 6 }, { x: CHAPEL.x + 36, y: CHAPEL.y + 24, r: 4 }]);
       ctx.restore();
       for (let k = s.prints.length - 1; k >= 0; k--) {
         const p = s.prints[k]; p.t += dt;

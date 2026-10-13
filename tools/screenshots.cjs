@@ -30,6 +30,7 @@ fs.mkdirSync(out, { recursive: true });
   if (want('forest')) { await go('forest'); await page.evaluate(() => { SE.idleTime = 0; }); await shot('07_forest', 9000); }
   if (want('summit')) { await go('summit'); await shot('08_summit', 2000); }
   if (want('kitchen')) { await go('kitchen'); await shot('09_kitchen'); }
+  if (want('chapel')) { await go('chapel'); await shot('16_chapel', 1500); await page.evaluate(() => { SE.save.settings.watch = true; }); await go('chapel'); await shot('17_chapel_pray', 9000); await page.evaluate(() => { SE.save.settings.watch = false; }); }
   if (want('yard')) { await go('yard', { mode: 'chop' }); await shot('10_yard_chop', 2000); }
   if (want('night')) {
     await page.evaluate(() => { SE.save.settings.time = 'night'; });
