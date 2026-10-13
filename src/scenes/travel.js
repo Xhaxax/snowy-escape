@@ -35,7 +35,7 @@
       s = {
         t: 0, scroll: 0, prints: [], lastFrame: -1, lastDogFrame: -1,
         thought: SE.pick(THOUGHTS), thoughtT: 0, hurry: false, arrived: false, walked: 0,
-        seg: 'flat', segT: SE.rand(20, 35), climb: null, fade: 0, wildT: SE.rand(40, 90),
+        seg: 'flat', segT: SE.rand(20, 35), climb: null, fade: 0, wildT: SE.rand(150, 300),
       };
       SE.audio.setMusic('outdoors');
       SE.audio.setAmbience({ wind: 0.5 + SE.weather.wind / 80, birds: 0.25 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 1 : 0 });
@@ -63,9 +63,9 @@
       // on the flat, now and then something turns up beside the path (Waffles notices first)
       if (walking && SE.pickEncounter && !SE.weather.stormy()) {
         s.wildT -= dt;
-        if (s.wildT <= 0 && !s.alertT) { s.alertT = 0.01; SE.audio.sfx('woof'); }
+        if (s.wildT <= 0 && !s.alertT && SE.encounterReady()) { s.alertT = 0.01; SE.audio.sfx('woof'); }
       }
-      if (s.alertT) { s.alertT += rdt; if (s.alertT > 1.2) { s.alertT = 0; s.wildT = SE.rand(60, 120); SE.moment('alert', { go: ['encounter', { animal: SE.pickEncounter(), from: 'trail' }] }); } }
+      if (s.alertT) { s.alertT += rdt; if (s.alertT > 1.2) { s.alertT = 0; s.wildT = SE.rand(240, 420); SE.moment('alert', { go: ['encounter', { animal: SE.pickEncounter(), from: 'trail' }] }); } }
 
       // background panorama (mirrored tiling = seamless); the path runs along the bottom
       const bgName = SE.img('bg_trail2') ? 'bg_trail2' : 'bg_trail';

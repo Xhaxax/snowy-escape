@@ -42,6 +42,8 @@
   let world = null, nearTrees = [], walkMask = null;
   const CABIN = L.objects.find((o) => o.img === 'map/cabin_td') || { x: 244, y: 566 };
   const CHAPEL = L.objects.find((o) => o.img === 'map/chapel_td') || { x: 142, y: 380 };
+  const CABIN_LIGHTS = [{ x: CABIN.x + 39, y: CABIN.y + 69, r: 7 }, { x: CABIN.x + 78, y: CABIN.y + 69, r: 7 }, { x: CABIN.x + 51, y: CABIN.y + 80, r: 6 }];
+  const CHAPEL_LIGHTS = [{ x: CHAPEL.x + 22, y: CHAPEL.y + 66, r: 6 }, { x: CHAPEL.x + 74, y: CHAPEL.y + 67, r: 6 }, { x: CHAPEL.x + 62, y: CHAPEL.y + 74, r: 6 }, { x: CHAPEL.x + 32, y: CHAPEL.y + 50, r: 5 }, { x: CHAPEL.x + 36, y: CHAPEL.y + 24, r: 4, pool: false }];
 
   function rng(seed) { return () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); }
   function buildWorld() {
@@ -171,7 +173,7 @@
         hero: { x: at[0], y: at[1], dir: 's', moving: false, anim: 0 },
         dog: { x: at[0] - 12, y: at[1] + 4, dir: 's', moving: false, anim: 0 },
         trail: [], prints: [], stepT: 0, cam: { x: at[0] - SE.W / 2, y: at[1] - SE.H / 2 }, drag: null, follow: true,
-        pop: { id: null, a: 0 }, wild: 0, nextWild: SE.rand(380, 760), alert: null,
+        pop: { id: null, a: 0 }, wild: 0, nextWild: SE.rand(2400, 4200), alert: null,
       };
       for (let k = 0; k < 30; k++) s.trail.push({ x: s.dog.x, y: s.dog.y });
       clampCam();
@@ -191,9 +193,9 @@
       ctx.save();
       ctx.translate(-cx, -cy);
       SE.drawChimneySmoke(ctx, CABIN.x + 66, CABIN.y + 12, dt, 0.7);
-      ctx.save(); ctx.globalAlpha = 0.45 + SE.weather.night() * 0.7;
-      SE.drawWindowGlow(ctx, [{ x: CABIN.x + 36, y: CABIN.y + 52, r: 8 }, { x: CABIN.x + 84, y: CABIN.y + 70, r: 8 }, { x: CABIN.x + 56, y: CABIN.y + 40, r: 6 }]);
-      SE.drawWindowGlow(ctx, [{ x: CHAPEL.x + 22, y: CHAPEL.y + 67, r: 6 }, { x: CHAPEL.x + 61, y: CHAPEL.y + 72, r: 6 }, { x: CHAPEL.x + 73, y: CHAPEL.y + 68, r: 6 }, { x: CHAPEL.x + 36, y: CHAPEL.y + 24, r: 4 }]);
+      ctx.save(); ctx.globalAlpha = 0.45 * (1 - SE.weather.night()); // daytime: a faint warm hint only
+      SE.drawWindowGlow(ctx, CABIN_LIGHTS);
+      SE.drawWindowGlow(ctx, CHAPEL_LIGHTS);
       ctx.restore();
       for (let k = s.prints.length - 1; k >= 0; k--) {
         const p = s.prints[k]; p.t += dt;
@@ -210,6 +212,11 @@
       ctx.restore();
 
       SE.weather.tint(ctx, 0.75);
+      // after dark the cabin and the chapel shine out over the valley
+      ctx.save(); ctx.translate(-cx, -cy);
+      SE.nightLights(ctx, 'lit/cabin_td', CABIN.x, CABIN.y, CABIN_LIGHTS);
+      SE.nightLights(ctx, 'lit/chapel_td', CHAPEL.x, CHAPEL.y, CHAPEL_LIGHTS);
+      ctx.restore();
       SE.weather.sunshine(ctx, 0);
       SE.weather.draw(ctx, { density: 0.5 });
       drawOffscreen(ctx, cx, cy);
@@ -317,12 +324,12 @@
   function wildlife(moved) {
     if (!moved) return;
     s.wild += moved;
-    if (s.wild < s.nextWild || SE.weather.stormy() || !SE.pickEncounter) return;
+    if (s.wild < s.nextWild || SE.weather.stormy() || !SE.pickEncounter || !SE.encounterReady()) return;
     const h = s.hero, lk = L.lake;
     const nearPlace = Object.values(SE.PLACES).some((p) => Math.hypot(N[p.node][0] - h.x, N[p.node][1] - h.y) < 70);
     const onIce = ((h.x - lk.cx) / lk.rx) ** 2 + ((h.y - lk.cy) / lk.ry) ** 2 < 1.2;
     if (nearPlace || onIce) return;
-    s.wild = 0; s.nextWild = SE.rand(520, 1100);
+    s.wild = 0; s.nextWild = SE.rand(3000, 5200);
     s.alert = { t: 0, kind: SE.pickEncounter() };
     SE.audio.sfx('woof');
   }
@@ -340,7 +347,7 @@
     SE.persist();
     if (id === 'cabin') SE.audio.sfx('door');
     const buried = id === 'cabin' && SE.save.snowDepth >= 0.6;
-    const to = [buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40 }];
+    const to = [buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40, inDoor: true }];
     // arriving somewhere special plays a little still-frame moment first (sound carries it)
     if (SE.MOMENTS && SE.MOMENTS[id]) SE.moment(id, { go: to });
     else SE.go(...to);

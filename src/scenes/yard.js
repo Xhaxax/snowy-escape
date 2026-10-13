@@ -2,7 +2,7 @@
 'use strict';
 
 (function () {
-  const WINDOWS = [{ x: 188, y: 183, r: 22 }, { x: 275, y: 183, r: 22 }, { x: 230, y: 118, r: 16 }, { x: 354, y: 183, r: 18 }, { x: 231, y: 180, r: 10 }];
+  const WINDOWS = [{ x: 188, y: 183, r: 22 }, { x: 275, y: 183, r: 22 }, { x: 230, y: 118, r: 16, pool: false }, { x: 354, y: 183, r: 18 }, { x: 231, y: 180, r: 10, pool: false }];
   const PATH = { x: 168, y: 230, w: 140, h: 42 };
   const SPOT = {
     chop: { x: 30, y: 268 },   // feet of the chopper (his stump is part of the sprite)
@@ -57,7 +57,7 @@
       if (SE.weather.stormy() && s.t > 2 && !s.leaving) {
         s.leaving = true;
         SE.toast('The storm is too strong — back inside you go!', '#cfe6ff');
-        setTimeout(() => { if (SE.sceneName === 'yard') SE.go('cabin', {}); }, 1600);
+        setTimeout(() => { if (SE.sceneName === 'yard') SE.go('cabin', { inDoor: true }); }, 1600);
       }
       if (SE.watching()) direct(dt);
 
@@ -67,10 +67,11 @@
       drawMounds(ctx);
       drawActors(ctx, dt);
       // night light falls on the whole yard; the windows and the smoke glow on top of it
+      SE.drawChimneySmoke(ctx, 346, 62, dt); // smoke sits in the night air too, so it is tinted
       SE.weather.tint(ctx);
       SE.weather.stars(ctx, 60);
-      SE.drawChimneySmoke(ctx, 346, 62, dt);
-      ctx.save(); ctx.globalAlpha = 0.6 + SE.weather.night() * 0.8; SE.drawWindowGlow(ctx, WINDOWS); ctx.restore();
+      SE.nightLights(ctx, 'lit/bg_cabin', 0, 0, WINDOWS);
+      ctx.save(); ctx.globalAlpha = 0.6 * (1 - SE.weather.night()); SE.drawWindowGlow(ctx, WINDOWS); ctx.restore();
       SE.weather.sunshine(ctx, 215);
       SE.weather.draw(ctx);
 
@@ -211,7 +212,7 @@
     if (mode === 'chop' && !SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.6 * a + 0.2 });
     if (SE.watching()) return;
     const items = mode === 'yard'
-      ? [['Chop wood', 62, () => { mode = 'chop'; SE.moment('chop'); }], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else { mode = 'shovel'; SE.moment('shovel'); } }], ['Rocking chair', 74, () => { mode = 'porch'; SE.moment('porch'); }], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', {}] })], ['Wander off', 64, leave]]
+      ? [['Chop wood', 62, () => { mode = 'chop'; SE.moment('chop'); }], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else { mode = 'shovel'; SE.moment('shovel'); } }], ['Rocking chair', 74, () => { mode = 'porch'; SE.moment('porch'); }], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', { inDoor: true }] })], ['Wander off', 64, leave]]
       : [['Done', 50, () => (mode = 'yard')]];
     // a column on the right, so the woodpile and Waffles stay visible along the bottom
     let y = SE.H - 6 - items.length * 20;

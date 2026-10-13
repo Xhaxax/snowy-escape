@@ -53,6 +53,63 @@
     if (n > 0) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(Math.round(x + 2), Math.round(baseY - 6 - Math.ceil(n / 7) * 5), Math.min(30, n * 3), 1); }
   };
 
+  // The pine clearing (Whispering Pines and wild encounters). Its painted sunbeams only belong to a
+  // sunny spell: toward night, while it snows and in storms it fades into an overcast version
+  // with no beams at all; the night tint then turns that into a proper dark, moonlit forest.
+  SE.forestDim = function () {
+    const W = SE.weather;
+    // beams need the sun: snowfall means cloud cover, so only a sunny spell by day keeps them
+    return SE.clamp(Math.max(W.night() * 1.6, 1 - W.sun, W.stormy() ? 1 : 0, W.fog * 3, W.golden() * 0.5), 0, 1);
+  };
+  SE.drawForest = function (ctx, swayRegions) {
+    const k = SE.forestDim();
+    if (k < 1) SE.drawImg('bg_forest', 0, 0);
+    if (k > 0) { ctx.save(); ctx.globalAlpha = k; SE.drawImg('bg_forest_dim', 0, 0); ctx.restore(); }
+    if (swayRegions) SE.weather.sway(ctx, k > 0.5 ? 'bg_forest_dim' : 'bg_forest', swayRegions);
+    return k;
+  };
+  // A cold moon wash over the snow at night, so the dark forest still reads.
+  SE.moonlight = function (ctx, x = 300, y = 40) {
+    const n = SE.weather.night() * (SE.weather.stormy() ? 0.3 : 1);
+    if (n < 0.05) return;
+    SE.glow(ctx, x, y, 260, '120,140,210', 0.10 * n);
+    SE.glow(ctx, x - 40, 230, 180, '150,170,230', 0.07 * n);
+  };
+
+  // Lit windows after dark: drawn AFTER the night tint, so the warm panes keep their full colour and
+  // bloom out into the dark while everything around them sinks into blue-black. `img` holds only the
+  // lit pixels of a backdrop (assets/img/lit/*), `spots` are window centres for halos and pools of
+  // light on the snow below them. Storms darken the day too, so the lights come on then as well.
+  SE.nightLights = function (ctx, img, x, y, spots = [], scale = 1) {
+    const W = SE.weather;
+    const k = SE.clamp(W.night() * 1.15 + (W.stormy() ? 0.45 : 0) + W.fog * 0.6, 0, 1);
+    if (k < 0.04) return;
+    const im = SE.img(img);
+    const flick = 0.92 + 0.08 * Math.sin(SE.time * 7.3) * Math.sin(SE.time * 3.1);
+    for (const p of spots) {
+      const r = (p.r || 12) * scale;
+      // light falling out onto the snow, then the halo around the pane
+      if (p.pool !== false) {
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        const g = ctx.createRadialGradient(p.x, p.y + r * 1.6, 1, p.x, p.y + r * 1.6, r * 2.2);
+        g.addColorStop(0, `rgba(255,170,80,${0.22 * k * flick})`); g.addColorStop(1, 'rgba(255,170,80,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(p.x, p.y + r * 1.6, r * 2.2, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+      SE.glow(ctx, p.x, p.y, r * 2.4, '255,180,90', 0.28 * k * flick);
+      SE.glow(ctx, p.x, p.y, r, '255,220,150', 0.3 * k * flick);
+    }
+    if (im) {
+      ctx.save();
+      ctx.globalAlpha = k;
+      ctx.drawImage(im, Math.round(x), Math.round(y), im.width * scale, im.height * scale);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.35 * k * flick;
+      ctx.drawImage(im, Math.round(x), Math.round(y), im.width * scale, im.height * scale);
+      ctx.restore();
+    }
+  };
+
   // Warm flickering light (fireplace, lamps).
   SE.glow = function (ctx, x, y, r, rgb, strength) {
     ctx.save();

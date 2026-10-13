@@ -6,7 +6,7 @@
 
 (function () {
   const FEET = 242;
-  const TRAV = { x: 96 }, DOG = { x: 136 };
+  const TRAV = { x: 96 }, DOG = { x: 134 };
   const MARK = 300; // where the animal stops
   // walk/act sprites (shared with Whispering Pines), the three photos, and what goes in the notebook
   const ANIMALS = {
@@ -61,12 +61,19 @@
     },
     draw(ctx, dt) {
       s.t += dt; s.animT += dt;
-      SE.drawImg('bg_forest', 0, 0);
-      SE.weather.sway(ctx, 'bg_forest', [[0, 0, 175, 200], [255, 0, 225, 195]]);
+      SE.drawForest(ctx, [[0, 0, 175, 200], [255, 0, 225, 195]]);
       updateAnimal(dt);
       drawAnimal(ctx);
       drawPair(ctx, dt);
-      SE.weather.tint(ctx, 0.75);
+      SE.weather.tint(ctx, 0.75 + 0.25 * SE.weather.night()); // a real night out here, not a filter
+      SE.moonlight(ctx);
+      // after dark he carries the lantern: a small warm circle around the two of them
+      const nl = SE.weather.night();
+      if (nl > 0.1) {
+        const lx = TRAV.x - s.back + 10, ly = FEET - 22, fl = 0.9 + 0.1 * Math.sin(SE.time * 8) * Math.sin(SE.time * 3.3);
+        SE.glow(ctx, lx, ly + 10, 64 * fl, '255,180,100', 0.22 * nl);
+        SE.glow(ctx, lx, ly, 10 * fl, '255,225,160', 0.5 * nl);
+      }
       SE.weather.stars(ctx, 60);
       SE.weather.draw(ctx, { density: 0.5 });
       if (s.flash > 0) { s.flash -= dt * 3; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
@@ -169,10 +176,19 @@
       ctx.beginPath(); ctx.ellipse(TRAV.x + bx, FEET, 10, 2, 0, 0, Math.PI * 2); ctx.fill();
       SE.drawAnim(tA, Math.round(TRAV.x + bx - sz.w / 2), FEET - sz.h, 0, { frame });
     } else SE.drawActorFallback(ctx, TRAV.x + bx - 7, FEET - 36, '#8a5a34');
-    const dA = moving && has('dog_walk') ? 'dog_walk' : 'dog_sit';
+    // Waffles is not at ease: he heard something he does not know. He stands right by your side,
+    // low and tense, head stretched toward it, sniffing — until the animal is gone again.
+    const wary = s.state !== 'leave' || s.mood === 'agitated';
+    const dA = moving && has('dog_walk') ? 'dog_walk' : wary && has('dog_cautious') ? 'dog_cautious' : 'dog_sit';
     if (has(dA)) {
       const sz = SE.animSize(dA), n = SE.anims[dA].frames;
-      const frame = dA === 'dog_walk' ? (n - 1 - (Math.floor((s.walkT || 0) * 8) % n)) : Math.floor(SE.time * 3) % Math.min(3, n);
+      let frame = dA === 'dog_walk' ? (n - 1 - (Math.floor((s.walkT || 0) * 8) % n)) : Math.floor(SE.time * 3) % Math.min(3, n);
+      if (dA === 'dog_cautious') {
+        // lower the head and lean in over the first moments, then hold there, sniffing now and then
+        const t = s.t * 5, hold = n - 4;
+        frame = t < hold ? Math.floor(t) : hold + Math.floor((Math.sin(s.t * 1.7) * 0.5 + 0.5) * 3.99);
+        if (s.mood === 'agitated') frame = Math.min(frame, 3) + (Math.floor(SE.time * 8) % 2); // bristling, uneasy
+      }
       SE.drawAnim(dA, Math.round(DOG.x + bx - sz.w / 2), FEET - sz.h + 2, 0, { frame });
       // Waffles notices first: a bouncing "!" over his head
       if (s.state === 'alert' || s.t < 2.4) drawBang(ctx, DOG.x + bx, FEET - sz.h - 6, s.t);
@@ -296,7 +312,11 @@
   }
 
   // ------------------------------------------------------------ which animal turns up
+  // encounters stay rare: at least ENC_GAP seconds of play between any two, wherever you walk
+  const ENC_GAP = 300;
+  SE.encounterReady = () => SE.time - (SE._lastEncounter != null ? SE._lastEncounter : -1e9) > ENC_GAP;
   SE.pickEncounter = function () {
+    SE._lastEncounter = SE.time;
     const night = SE.weather.night() > 0.6;
     const pool = night ? [['owl', 4], ['fox', 2], ['hare', 2]] : [['deer', 4], ['fox', 3], ['hare', 3], ['bird', 3], ['elk', 1.5], ['bear', 1]];
     let r = Math.random() * pool.reduce((t, p) => t + p[1], 0);

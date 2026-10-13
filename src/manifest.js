@@ -231,6 +231,10 @@ window.SE_MANIFEST = {
   "cat_stretch": {
    "frames": 11,
    "fps": 7.0
+  },
+  "dog_cautious": {
+   "frames": 8,
+   "fps": 5.0
   }
  }
 };

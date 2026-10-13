@@ -54,8 +54,7 @@
     },
     draw(ctx, dt) {
       s.t += dt;
-      SE.drawImg('bg_forest', 0, 0);
-      SE.weather.sway(ctx, 'bg_forest', [[0, 0, 175, 200], [255, 0, 225, 195]]);
+      SE.drawForest(ctx, [[0, 0, 175, 200], [255, 0, 225, 195]]);
       // drifting light motes in the sun rays
       if (SE.weather.night() < 0.5 && Math.random() < dt * 6) s.motes.push({ x: SE.rand(150, 330), y: SE.rand(10, 160), t: 0, life: SE.rand(3, 6) });
       for (let i = s.motes.length - 1; i >= 0; i--) {
@@ -84,8 +83,9 @@
       if (SE.weather.night() < 0.55) for (const b of s.birds) { updateBird(b, dt); scene.push({ y: b.state === 'ground' ? b.y : 0, draw: () => drawBird(b) }); }
       scene.sort((a, b) => a.y - b.y).forEach((o) => o.draw());
 
-      SE.weather.tint(ctx, 0.9);
-      SE.weather.sunshine(ctx, 190);
+      SE.weather.tint(ctx, 0.9 + 0.1 * SE.weather.night());
+      SE.moonlight(ctx);
+      if (SE.forestDim() < 0.5) SE.weather.sunshine(ctx, 190);
       SE.weather.draw(ctx, { density: 0.8 });
 
       // Waffles lying low in the snow in the foreground, watching too

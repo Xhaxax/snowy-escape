@@ -89,3 +89,10 @@
 - `src/touch.js`: turns on with the first touch (or `?touch`). Floating thumb-stick on the left of the valley (push to the rim to hurry), tap the place card to go in, hold button to back away from a bear. Other scenes were already tap-friendly.
 - Engine: `SE.pointerFilter` lets touch controls claim a pointer; `SE.vkeys` feeds `SE.held`; audio also unlocks on pointerup (iOS); `navigator.audioSession.type = 'playback'` so sound plays with the silent switch on.
 - index.html: viewport-fit=cover, no zoom / text selection, a "turn your phone sideways" card in portrait.
+
+## Round: encounters, night light, the cabin door
+- Encounters are rare now: at least 5 minutes of play between any two (SE.encounterReady), and 3000–5200px of walking (valley) / 4–7 min (Long Walk).
+- Waffles in encounters: new PixelLab `dog_cautious` (Berni v2, v3 anim): stands tense by the traveler, head low and stretched toward the sound, sniffing; bristles when the bear is agitated, relaxes (sits) when the animal leaves.
+- `bg_forest_dim` (PixelLab edit of bg_forest without sunbeams): SE.drawForest crossfades to it whenever the sun is not out (snowfall, storms, dusk, night). Encounters/Pines get full night tint + SE.moonlight + a lantern glow around the traveler.
+- Night lights: assets/img/lit/* hold only the lit window pixels; SE.nightLights draws them AFTER the night tint with halos and pools on the snow (yard, valley cabin + chapel), also during storms. Chimney smoke is now tinted with the night.
+- Cabin: PixelLab-inpainted front door in the right wall (cross moved above the coat peg, the coffee-table book is now the Bible). The door swings open with the outside visible, cold light and a gust of snow when you come in (from the yard/map) or step out (click the door). Mochi can wait on the doormat.
