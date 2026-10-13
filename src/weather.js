@@ -59,23 +59,24 @@
     const pref = SE.save.settings.time || 'cycle';
     if (pref === 'live') { const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
     if (pref === 'day') return 12;
-    if (pref === 'dusk') return 18.6;
+    if (pref === 'dusk') return 16.6;
     if (pref === 'night') return 23;
     return SE.save.clock;
   };
-  // 0 = full day, 1 = deep night; smooth dawn (5-8h) and dusk (17-21h)
+  // 0 = full day, 1 = deep night. Deep winter in the mountains: the sun is late and leaves
+  // early, with a smooth dawn (6:30-8:30) and dusk (15:45-18:00); by early evening it is night.
   W.night = function () {
     const h = W.hour();
-    if (h >= 21 || h < 5) return 1;
-    if (h >= 17) return SE.ease((h - 17) / 4);
-    if (h < 8) return 1 - SE.ease((h - 5) / 3);
+    if (h >= 18 || h < 6.5) return 1;
+    if (h >= 15.75) return SE.ease((h - 15.75) / 2.25);
+    if (h < 8.5) return 1 - SE.ease((h - 6.5) / 2);
     return 0;
   };
   // golden light around sunrise and sunset
   W.golden = function () {
     const h = W.hour();
     const g = (c) => Math.max(0, 1 - Math.abs(h - c) / 1.6);
-    return Math.max(g(7), g(18));
+    return Math.max(g(8.2), g(16));
   };
   W.phase = function () {
     const n = W.night(), h = W.hour();
@@ -176,7 +177,9 @@
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
     if (gold > 0.01) { ctx.fillStyle = `rgba(255,190,160,${0.45 * gold * strength})`; ctx.fillRect(0, 0, SE.W, SE.H); }
-    if (n > 0.01) { ctx.fillStyle = `rgba(62,74,150,${0.62 * n * strength})`; ctx.fillRect(0, 0, SE.W, SE.H); }
+    if (n > 0.01) { ctx.fillStyle = `rgba(36,44,104,${Math.min(0.92, n * strength * 1.1)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
+    // deep night is properly dark: only moonlit snow, lit windows and fires stay readable
+    if (n > 0.5) { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = `rgba(4,6,18,${0.55 * (n - 0.5) * 2 * strength})`; ctx.fillRect(0, 0, SE.W, SE.H); }
     if (storm > 0.05) { ctx.fillStyle = `rgba(150,158,180,${storm * 1.2 * strength})`; ctx.fillRect(0, 0, SE.W, SE.H); }
     ctx.restore();
   };
@@ -229,11 +232,44 @@
     if (n < 0.01) return;
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = `rgba(120,100,150,${0.4 * n})`;
+    ctx.fillStyle = `rgba(70,60,110,${0.6 * n})`;
     ctx.fillRect(0, 0, SE.W, SE.H);
     ctx.restore();
   };
   W.label = () => MODES[W.mode].label;
+
+  // Storms (and thick fog) hide the sun: a heavy grey overcast over the sky part of a backdrop.
+  W.overcast = function (ctx, skyH = 160) {
+    const k = Math.min(1, Math.max(W.stormy() ? 1 : 0, W.fog * 3, W.mode === 'windy' ? 0.55 : 0, W.mode === 'snowy' ? 0.45 : 0));
+    if (k < 0.02) return;
+    const g = ctx.createLinearGradient(0, 0, 0, skyH);
+    g.addColorStop(0, `rgba(104,110,128,${0.85 * k})`); g.addColorStop(0.75, `rgba(140,146,164,${0.6 * k})`); g.addColorStop(1, 'rgba(150,156,172,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, SE.W, skyH);
+  };
+  // How hard the wind blows for the eye (0 calm … ~3 storm): used for swaying trees and shivering.
+  W.windForce = () => Math.max(0, (W.wind + W.gust) / 24);
+  // In a cold, windy spell the traveler and Waffles shiver now and then: a quick 1px tremble for
+  // ~0.7s every few seconds. Returns an x offset; `seed` keeps the two out of step.
+  W.shiver = function (seed = 0) {
+    const f = W.windForce();
+    if (f < 1.2 && !W.stormy()) return 0;
+    const cycle = W.stormy() ? 4.5 : 7, t = (SE.time + seed * 1.7) % cycle;
+    return t < 0.7 ? (Math.floor(SE.time * 22) % 2 ? 1 : -1) : 0;
+  };
+  // Trees sway in the wind: redraw the tree areas of a background row by row, shifting the rows
+  // sideways a little more the higher they are (the trunk stays put). rects: [x, y, w, h].
+  W.sway = function (ctx, imgName, rects, x0 = 0) {
+    const img = SE.img(imgName), f = W.windForce();
+    if (!img || f < 0.35) return;
+    const amp = Math.min(3, f * 1.2);
+    for (const [rx, ry, rw, rh] of rects) {
+      for (let y = ry; y < ry + rh; y++) {
+        const k = Math.pow(1 - (y - ry) / rh, 1.6);
+        const off = Math.round(amp * k * Math.sin(SE.time * (1.1 + f * 0.5) + rx * 0.05 + y * 0.012));
+        if (off) ctx.drawImage(img, rx, y, rw, 1, rx + off + x0, y, rw, 1);
+      }
+    }
+  };
 
   // Outdoors when a storm is (or gets) going: head home along the paths. Called on storm start
   // and by each outdoor scene on enter, so arriving somewhere mid-storm also sends you home.

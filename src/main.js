@@ -6,9 +6,13 @@
   SE.weather.catchUp();
   window.addEventListener('beforeunload', () => SE.persist());
   const M = window.SE_MANIFEST || { images: [], anims: {} };
-  const images = ['bg_living', 'bg_kitchen', 'bg_lake', 'bg_forest', 'bg_summit', 'bg_cabin', 'bg_map', 'bg_trail',
+  const images = ['bg_living', 'bg_kitchen', 'bg_lake', 'bg_forest', 'bg_summit', 'bg_cabin', 'bg_map', 'bg_trail', 'bg_trail2', 'bg_climb',
+    'lake_hands', 'props/woodpile', 'props/mug', 'snow/heap_big', 'snow/heap_small', 'smoke/p0', 'smoke/p1', 'smoke/p2', 'smoke/p3', 'smoke/p4',
     'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td', 'map/chapel_td', 'bg_chapel']
-    .concat(M.images, Object.keys(M.anims));
+    .concat(M.images, Object.keys(M.anims))
+    .concat([0, 1, 2, 3, 4, 5, 6, 7].map((i) => `cloud/c${i}`), [0, 1, 2, 3, 4, 5].map((i) => `cloud/w${i}`))
+    // three camera-only photos per animal (wildlife encounters)
+    .concat(...['deer', 'elk', 'fox', 'hare', 'owl', 'bird', 'bear'].map((k) => [0, 1, 2].map((i) => `photo/${k}_${i}`)));
   for (const [name, a] of Object.entries(M.anims)) SE.defAnim(name, name, a.frames, a.fps);
 
   // loading screen while images arrive

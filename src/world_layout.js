@@ -19,10 +19,9 @@ window.SE_WORLD = {
   ],
   "objects": [
     { "img": "map/mountain_td", "x": 1040, "y": 40, "solid": [1060, 60, 200, 150] },
-    { "img": "map/cabin_td", "x": 244, "y": 566 },
-    { "img": "map/chapel_td", "x": 142, "y": 380, "sorted": true },
-    { "img": "map/chop_td", "x": 356, "y": 606 },
-    { "img": "map/fishing_td", "x": 1090, "y": 600 }
-  ],
-  "signs": { "cabin": [352, 712], "forest": [304, 300], "lake": [1000, 590], "summit": [1112, 262], "trail": [748, 868], "chapel": [226, 510] }
+    { "img": "map/cabin_td", "x": 244, "y": 566, "block": [250, 566, 100, 92] },
+    { "img": "map/chapel_td", "x": 142, "y": 380, "sorted": true, "block": [148, 380, 86, 92] },
+    { "img": "map/chop_td", "x": 356, "y": 606, "block": [364, 610, 32, 26] },
+    { "img": "map/fishing_td", "x": 1090, "y": 600, "block": [1098, 604, 32, 28] }
+  ]
 };

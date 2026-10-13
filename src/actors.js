@@ -27,6 +27,15 @@
 
   // A little stack of split firewood that grows with what you've chopped.
   SE.drawWoodpile = function (ctx, x, baseY, count) {
+    // the PixelLab log pile: it shows more of itself as the stack grows (bottom rows first)
+    const img = SE.img('props/woodpile');
+    if (img) {
+      if (count <= 0) return;
+      const k = Math.min(1, 0.25 + count / 16);
+      const h = Math.max(8, Math.round(img.height * k)), w = Math.round(img.width * (0.5 + 0.5 * k));
+      ctx.drawImage(img, Math.round((img.width - w) / 2), img.height - h, w, h, Math.round(x), Math.round(baseY - h), w, h);
+      return;
+    }
     const n = Math.min(count, 28);
     let i = 0;
     for (let row = 0; i < n; row++) {
@@ -88,6 +97,21 @@
     else ctx.drawImage(tmp, Math.round(cx - w / 2), Math.round(cy - h / 2));
     ctx.restore();
     return { x: cx - w / 2, y: cy - h / 2, w, h };
+  };
+
+  // A caught fish wriggling and gasping (PixelLab animation per species). rot turns it, e.g. -PI/2 to
+  // hang it head-up from the line by its mouth. Falls back to the still sprite.
+  SE.drawFishWiggle = function (ctx, species, cx, cy, scale, t, rot = 0, speed = 1) {
+    const info = SE.FISH[species];
+    const anim = info && info.img + '_w';
+    if (!anim || !SE.anims[anim]) { SE.drawFishSprite(ctx, species, cx, cy, scale); return; }
+    const a = SE.anims[anim], sz = SE.animSize(anim);
+    const frame = Math.floor(t * a.fps * speed) % a.frames;
+    ctx.save();
+    ctx.translate(Math.round(cx), Math.round(cy));
+    if (rot) ctx.rotate(rot);
+    SE.drawAnim(anim, -Math.round((sz.w * scale) / 2), -Math.round((sz.h * scale) / 2), 0, { frame, scale });
+    ctx.restore();
   };
 
   // Petting close-up: stroke the animal with the mouse to fill the happiness meter.

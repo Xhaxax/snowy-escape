@@ -7,20 +7,28 @@
     { x: 188, y: 183, r: 22 }, { x: 275, y: 183, r: 22 }, { x: 230, y: 118, r: 16 }, { x: 354, y: 183, r: 18 }, { x: 231, y: 180, r: 10 },
   ];
 
+  // Chimney smoke: PixelLab smoke puffs that rise, drift off with the wind, swell a little and fade.
+  // Pixel puffs are drawn at 1x (no blurry scaling); `scale` only slows and thins them for far views.
   SE.drawChimneySmoke = function (ctx, cx, cy, dt, scale = 1) {
-    if (Math.random() < dt * 6) smoke.push({ x: cx + SE.rand(-3, 3), y: cy, r: SE.rand(3, 5) * scale, t: 0, life: SE.rand(4, 6) });
+    if (Math.random() < dt * (scale < 1 ? 1.1 : 1.6)) smoke.push({ x: cx + SE.rand(-2, 2), y: cy, t: 0, life: SE.rand(4.5, 6.5), i: Math.floor(Math.random() * 5), flip: Math.random() < 0.5, s: scale });
     for (let i = smoke.length - 1; i >= 0; i--) {
       const p = smoke[i];
       p.t += dt;
       if (p.t > p.life) { smoke.splice(i, 1); continue; }
-      p.y -= 9 * dt * scale;
-      p.x += (6 + SE.weather.wind * 0.4) * dt * scale + Math.sin(p.t * 1.3) * 0.08;
-      p.r += 1.6 * dt * scale;
-      const a = 0.32 * (1 - p.t / p.life);
-      ctx.fillStyle = `rgba(150,150,170,${a})`;
-      ctx.beginPath();
-      ctx.arc(Math.round(p.x), Math.round(p.y), Math.round(p.r), 0, Math.PI * 2);
-      ctx.fill();
+      p.y -= 8 * dt * p.s;
+      p.x += (5 + SE.weather.wind * 0.45) * dt * p.s + Math.sin(p.t * 1.3) * 0.06;
+      const k = p.t / p.life;
+      const a = Math.min(1, p.t * 2) * (1 - k) * (p.s < 1 ? 0.35 : 0.55);
+      const img = SE.img('smoke/p' + p.i);
+      if (img) {
+        ctx.save(); ctx.globalAlpha = a;
+        const x = Math.round(p.x - img.width / 2), y = Math.round(p.y - img.height / 2);
+        if (p.flip) { ctx.translate(x + img.width, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); } else ctx.drawImage(img, x, y);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = `rgba(150,150,170,${a * 0.6})`;
+        ctx.beginPath(); ctx.arc(Math.round(p.x), Math.round(p.y), Math.round(3 + k * 8), 0, Math.PI * 2); ctx.fill();
+      }
     }
   };
 

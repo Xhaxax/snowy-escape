@@ -166,7 +166,7 @@ SE.defaultSave = () => ({
   deerPhotos: 0,
   sketches: {},
   photos: [],        // {kind, t}
-  wishes: 0,
+  stars: 0,          // shooting stars watched together at the summit
   breaths: 0,
   prayers: 0,        // quiet prayers in the chapel
   candles: 0,        // candles lit in the chapel

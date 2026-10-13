@@ -1,5 +1,6 @@
-// The valley: a big snowy world seen from above. Walk with Waffles along the paths through a dense
-// pine forest to each place. The camera follows you; drag (or use the arrow keys) to look around.
+// The valley: a big snowy world seen from above. Walk with Waffles (WASD or the arrow keys) along the
+// paths through a dense pine forest; near a place a little card pops up and E / Enter takes you in.
+// The camera follows you; drag to look around.
 'use strict';
 
 (function () {
@@ -38,7 +39,7 @@
   SE.placeDistance = (a, b) => len(route(a, b));
 
   // ------------------------------------------------------------ world building (once)
-  let world = null, nearTrees = [];
+  let world = null, nearTrees = [], walkMask = null;
   const CABIN = L.objects.find((o) => o.img === 'map/cabin_td') || { x: 244, y: 566 };
   const CHAPEL = L.objects.find((o) => o.img === 'map/chapel_td') || { x: 142, y: 380 };
 
@@ -109,6 +110,7 @@
     }
     for (; bi < buildings.length; bi++) c.drawImage(buildings[bi].img, buildings[bi].o.x, buildings[bi].o.y);
     world = cv;
+    walkMask = buildMask(pathPts);
   }
   function isSorted(o) { return o.sorted || o.img === 'map/cabin_td'; }
   function drawTree(c, t) {
@@ -119,33 +121,62 @@
     else c.drawImage(img, x, y);
   }
 
-  // signposts at each place of interest
-  function sign(ctx, x, y, text) {
-    const w = SE.measure(text, 7) + 8;
-    ctx.fillStyle = '#4a3226'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 12, 2, 12);
-    SE.panel(x - w / 2, y - 24, w, 12, { fill: 'rgba(122,84,58,0.98)', border: 'rgba(60,38,28,1)' });
-    SE.text(text, x, y - 22, { size: 7, align: 'center', color: '#fff3dc', shadow: false });
+  // ------------------------------------------------------------ where you can walk
+  // A coarse mask (4px cells): the trodden paths, the clearings and the frozen lake are walkable;
+  // buildings and props are solid, so you walk around them instead of over their roofs.
+  const CELL = 4, MW = Math.ceil(WW / CELL), MH = Math.ceil(WH / CELL);
+  function buildMask(pathPts) {
+    const m = new Uint8Array(MW * MH);
+    const mark = (x, y, r) => {
+      for (let j = Math.floor((y - r) / CELL); j <= (y + r) / CELL; j++) {
+        for (let i = Math.floor((x - r) / CELL); i <= (x + r) / CELL; i++) {
+          if (i < 0 || j < 0 || i >= MW || j >= MH) continue;
+          if ((i * CELL + 2 - x) ** 2 + (j * CELL + 2 - y) ** 2 <= r * r) m[j * MW + i] = 1;
+        }
+      }
+    };
+    for (const [x, y] of pathPts) mark(x, y, 15);
+    for (const cl of L.clearings) mark(cl.x, cl.y, cl.r - 12);
+    const lk = L.lake;
+    for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) {
+      if (((i * CELL + 2 - lk.cx) / (lk.rx - 4)) ** 2 + ((j * CELL + 2 - lk.cy) / (lk.ry - 4)) ** 2 <= 1) m[j * MW + i] = 1;
+    }
+    for (const o of L.objects) {
+      const b = o.block || o.solid;
+      if (!b) continue;
+      for (let j = Math.floor(b[1] / CELL); j < (b[1] + b[3]) / CELL; j++) for (let i = Math.floor(b[0] / CELL); i < (b[0] + b[2]) / CELL; i++) if (i >= 0 && j >= 0 && i < MW && j < MH) m[j * MW + i] = 0;
+    }
+    return m;
   }
-  const SIGNS = L.signs;
+  function canWalk(x, y) {
+    const i = (x / CELL) | 0, j = (y / CELL) | 0;
+    return !walkMask || (i >= 0 && j >= 0 && i < MW && j < MH && walkMask[j * MW + i] === 1);
+  }
 
   // ------------------------------------------------------------ scene
   let s = null;
   function dirOf(dx, dy) { return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'e' : 'w') : dy > 0 ? 's' : 'n'; }
+  const ENTER_R = 30; // how close to a place before its card pops up
 
   SE.addScene('map', {
     enter(p) {
       if (!world) buildWorld();
       const here = SE.PLACES[SE.save.location] ? SE.save.location : 'cabin';
-      const at = N[SE.PLACES[here].node];
+      // back from a wildlife encounter: carry on from exactly where you were
+      const back = p && p.resume && SE.mapReturn;
+      const at = back ? [SE.mapReturn.x, SE.mapReturn.y] : N[SE.PLACES[here].node];
+      SE.mapReturn = null;
       s = {
-        here, selected: null, walking: null, t: 0, fast: false,
+        here, walking: null, t: 0, moved: 0, buriedT: 0,
         hero: { x: at[0], y: at[1], dir: 's', moving: false, anim: 0 },
         dog: { x: at[0] - 12, y: at[1] + 4, dir: 's', moving: false, anim: 0 },
         trail: [], prints: [], stepT: 0, cam: { x: at[0] - SE.W / 2, y: at[1] - SE.H / 2 }, drag: null, follow: true,
+        pop: { id: null, a: 0 }, wild: 0, nextWild: SE.rand(380, 760), alert: null,
       };
       for (let k = 0; k < 30; k++) s.trail.push({ x: s.dog.x, y: s.dog.y });
       clampCam();
       SE.audio.setMusic('outdoors');
+      // a scripted walk (e.g. heading home through a storm) plays by itself
       if (p && p.walkTo && p.walkTo !== here) setTimeout(() => { if (SE.sceneName === 'map' && !s.walking) startWalk(p.walkTo); }, 800);
     },
     update() {
@@ -175,18 +206,17 @@
       const list = nearTrees.filter(view).map((t) => ({ y: t.y, draw: () => drawTree(ctx, t) }));
       list.push({ y: s.dog.y, draw: () => drawWalker(ctx, 'dog', s.dog) }, { y: s.hero.y, draw: () => drawWalker(ctx, 'hero', s.hero) });
       list.sort((a, b) => a.y - b.y).forEach((o) => o.draw());
-      for (const [id, [x, y]] of Object.entries(SIGNS)) if (x > cx - 60 && x < cx + SE.W + 60 && y > cy - 20 && y < cy + SE.H + 30) sign(ctx, x, y, SE.PLACES[id].label);
-      drawPins(ctx, cx, cy);
+      if (s.alert && SE.drawBang) SE.drawBang(ctx, s.dog.x, s.dog.y - 20, s.alert.t);
       ctx.restore();
 
       SE.weather.tint(ctx, 0.75);
       SE.weather.sunshine(ctx, 0);
       SE.weather.draw(ctx, { density: 0.5 });
       drawOffscreen(ctx, cx, cy);
-      if (SE.weather.stormy()) SE.text('Snowstorm — the trails are closed until it calms down', SE.W / 2, 46, { align: 'center', size: 8, color: '#cfe6ff', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
-      drawCard(ctx);
-      const back = () => (SE.weather.stormy() && s.here !== 'cabin' ? startWalk('cabin') : SE.go(SE.PLACES[s.here].scene));
-      SE.hud.draw(ctx, { watch: false, title: 'The Valley', back: s.walking ? null : back });
+      if (SE.weather.stormy()) SE.text('Snowstorm — the trails are closed until it calms down', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#cfe6ff', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
+      drawPopup(ctx, dt);
+      drawFooter(ctx);
+      SE.hud.draw(ctx, { watch: false, title: 'The Valley' });
     },
   });
 
@@ -194,16 +224,13 @@
   function clampCam() { s.cam.x = SE.clamp(s.cam.x, 0, WW - SE.W); s.cam.y = SE.clamp(s.cam.y, 0, WH - SE.H); }
   function camera(dt) {
     const m = SE.mouse;
-    if (!SE.modal && m.pressed && m.y > 30 && m.y < SE.H - 64) s.drag = { x: m.x, y: m.y, cx: s.cam.x, cy: s.cam.y, moved: 0 };
+    if (!SE.modal && m.pressed && m.y > 30 && m.y < SE.H - 30) s.drag = { x: m.x, y: m.y, cx: s.cam.x, cy: s.cam.y, moved: 0 };
     if (s.drag && m.down) {
       s.drag.moved += SE.mouse.moved;
       if (s.drag.moved > 4) { s.cam.x = s.drag.cx - (m.x - s.drag.x); s.cam.y = s.drag.cy - (m.y - s.drag.y); s.follow = false; SE.cursor = 'grabbing'; }
     }
-    if (!m.down && s.drag) { s.wasDrag = s.drag.moved > 4; s.drag = null; } else s.wasDrag = false;
-    const kx = (SE.held('ArrowRight', 'KeyD') ? 1 : 0) - (SE.held('ArrowLeft', 'KeyA') ? 1 : 0);
-    const ky = (SE.held('ArrowDown', 'KeyS') ? 1 : 0) - (SE.held('ArrowUp', 'KeyW') ? 1 : 0);
-    if (kx || ky) { s.cam.x += kx * 220 * dt; s.cam.y += ky * 220 * dt; s.follow = false; }
-    if (s.walking) s.follow = true;
+    if (!m.down && s.drag) s.drag = null;
+    if (s.walking || s.hero.moving) s.follow = true;
     if (s.follow) {
       s.cam.x = SE.approach(s.cam.x, s.hero.x - SE.W / 2, 2.5, dt);
       s.cam.y = SE.approach(s.cam.y, s.hero.y - SE.H / 2 - 10, 2.5, dt);
@@ -211,42 +238,67 @@
     clampCam();
   }
 
-  // ------------------------------------------------------------ walking along the route
+  // ------------------------------------------------------------ walking: your keys, or a scripted route
   function startWalk(to) {
-    s.walking = { to, path: route(SE.PLACES[s.here].node, SE.PLACES[to].node), i: 1, len: 0 };
-    s.selected = null;
+    s.walking = { to, path: route(nearestNode(), SE.PLACES[to].node), i: 1, len: 0 };
     s.follow = true;
+  }
+  function nearestNode() {
+    let best = SE.PLACES[s.here].node, bd = 1e9;
+    for (const [id, [x, y]] of Object.entries(N)) { const d = Math.hypot(x - s.hero.x, y - s.hero.y); if (d < bd) { bd = d; best = id; } }
+    return best;
+  }
+  function steer(dt) {
+    const h = s.hero;
+    if (SE.modal) return 0;
+    const kx = (SE.held('ArrowRight', 'KeyD') ? 1 : 0) - (SE.held('ArrowLeft', 'KeyA') ? 1 : 0);
+    const ky = (SE.held('ArrowDown', 'KeyS') ? 1 : 0) - (SE.held('ArrowUp', 'KeyW') ? 1 : 0);
+    if (!kx && !ky) return 0;
+    const hurry = SE.held('ShiftLeft', 'ShiftRight');
+    const speed = (hurry ? 60 : 34) * (SE.save.snowDepth > 0.6 ? 0.85 : 1);
+    const n = Math.hypot(kx, ky), vx = (kx / n) * speed * dt, vy = (ky / n) * speed * dt;
+    h.dir = dirOf(kx, ky);
+    const ox = h.x, oy = h.y;
+    // slide along the edges of the path rather than sticking to them
+    if (canWalk(h.x + vx, h.y)) h.x += vx;
+    if (canWalk(h.x, h.y + vy)) h.y += vy;
+    // the path out of the yard is buried: shovel it before you wander off
+    const home = N[SE.PLACES.cabin.node];
+    if (SE.save.snowDepth >= 0.6 && Math.hypot(h.x - home[0], h.y - home[1]) > 96 && Math.hypot(ox - home[0], oy - home[1]) <= 96) {
+      h.x = ox; h.y = oy;
+      if (s.buriedT <= 0) { SE.toast('The path is buried in snow — shovel it first (press E at the cabin).', '#cfe6ff'); s.buriedT = 4; }
+    }
+    if (hurry) h.anim += dt * 0.8;
+    return Math.hypot(h.x - ox, h.y - oy);
   }
   function walk(dt) {
     const h = s.hero;
-    h.moving = false;
+    s.buriedT -= dt;
+    let moved = 0;
     if (s.walking) {
       const w = s.walking;
-      let budget = (s.fast ? 52 : 20) * (SE.save.snowDepth > 0.6 ? 0.85 : 1) * dt;
+      let budget = 28 * (SE.save.snowDepth > 0.6 ? 0.85 : 1) * dt;
       while (budget > 0 && w.path[w.i]) {
         const t = w.path[w.i];
         const dx = t[0] - h.x, dy = t[1] - h.y, d = Math.hypot(dx, dy);
-        if (d <= budget) { h.x = t[0]; h.y = t[1]; budget -= d; w.len += d; w.i++; continue; }
-        h.x += (dx / d) * budget; h.y += (dy / d) * budget; w.len += budget; budget = 0;
+        if (d <= budget) { h.x = t[0]; h.y = t[1]; budget -= d; moved += d; w.i++; continue; }
+        h.x += (dx / d) * budget; h.y += (dy / d) * budget; moved += budget; budget = 0;
         h.dir = dirOf(dx, dy);
       }
-      h.moving = true;
-      h.anim += dt * (s.fast ? 1.8 : 1);
-      s.stepT -= dt * (s.fast ? 1.8 : 1);
+      if (!w.path[w.i]) { s.walking = null; enterPlace(w.to); }
+    } else if (s.alert) alertTick(dt);
+    else { moved = steer(dt); wildlife(moved); }
+    h.moving = moved > 0.01;
+    s.moved += moved;
+    SE.save.distance += moved * 3;
+    if (h.moving) {
+      h.anim += dt;
+      s.stepT -= dt * (SE.held('ShiftLeft', 'ShiftRight') ? 1.8 : 1);
       if (s.stepT <= 0) {
         s.stepT = 0.34;
-        SE.audio.sfx('step');
+        SE.audio.sfx('step', { deep: SE.save.snowDepth > 0.6 || SE.weather.stormy() });
         const side = (Math.floor(h.anim / 0.34) % 2) ? 1 : -1;
         s.prints.push({ x: h.x + (h.dir === 'n' || h.dir === 's' ? side : 0), y: h.y + (h.dir === 'e' || h.dir === 'w' ? side : 0), t: 0 });
-      }
-      if (!w.path[w.i]) {
-        const to = w.to;
-        s.walking = null; s.here = to;
-        SE.save.location = to;
-        SE.save.distance += w.len * 3;
-        SE.persist();
-        if (to === 'cabin') SE.audio.sfx('door');
-        SE.go(SE.PLACES[to].scene, { arrived: true });
       }
     }
     // Waffles trots along behind, sniffing the path
@@ -260,6 +312,35 @@
       d.dir = dirOf(ddx, ddy); d.anim += dt;
       if (Math.random() < dt * 2.5) s.prints.push({ x: d.x, y: d.y, t: 0 });
     }
+  }
+  // Out on the trails an animal can turn up out of nowhere. Waffles notices first.
+  function wildlife(moved) {
+    if (!moved) return;
+    s.wild += moved;
+    if (s.wild < s.nextWild || SE.weather.stormy() || !SE.pickEncounter) return;
+    const h = s.hero, lk = L.lake;
+    const nearPlace = Object.values(SE.PLACES).some((p) => Math.hypot(N[p.node][0] - h.x, N[p.node][1] - h.y) < 70);
+    const onIce = ((h.x - lk.cx) / lk.rx) ** 2 + ((h.y - lk.cy) / lk.ry) ** 2 < 1.2;
+    if (nearPlace || onIce) return;
+    s.wild = 0; s.nextWild = SE.rand(520, 1100);
+    s.alert = { t: 0, kind: SE.pickEncounter() };
+    SE.audio.sfx('woof');
+  }
+  function alertTick(dt) {
+    s.alert.t += dt;
+    if (s.alert.t > 1.2 && !s.alert.gone) {
+      s.alert.gone = true;
+      SE.mapReturn = { x: s.hero.x, y: s.hero.y };
+      SE.go('encounter', { animal: s.alert.kind, from: 'map' });
+    }
+  }
+  function enterPlace(id) {
+    if (SE.weather.stormy() && id !== 'cabin' && id !== 'chapel') { SE.toast('A snowstorm is blowing. Better head home to the fire.', '#cfe6ff'); return; }
+    SE.save.location = id;
+    SE.persist();
+    if (id === 'cabin') SE.audio.sfx('door');
+    const buried = id === 'cabin' && SE.save.snowDepth >= 0.6;
+    SE.go(buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40 });
   }
   function drawWalker(ctx, who, a) {
     const name = `${who === 'hero' ? 'td_trav' : 'td_dog'}_${a.dir === 'w' ? 'e' : a.dir}`;
@@ -278,69 +359,59 @@
     }
   }
 
-  // ------------------------------------------------------------ pins, off-screen markers & destination card
-  function drawPins(ctx, cx, cy) {
-    s.hover = null;
+  // ------------------------------------------------------------ place card, off-screen hints & footer
+  function nearPlace() {
+    let best = null, bd = ENTER_R;
     for (const [id, p] of Object.entries(SE.PLACES)) {
       const [x, y] = N[p.node];
-      if (id === s.here && !s.walking) continue;
-      const r = { x: x - 18, y: y - 40, w: 36, h: 44 };
-      const over = !SE.modal && !s.walking && SE.inRect(SE.mouse.x + cx, SE.mouse.y + cy, r);
-      if (over) { s.hover = id; SE.cursor = 'pointer'; }
-      const bob = over || s.selected === id ? 2 + Math.sin(SE.time * 6) : Math.sin(SE.time * 2 + x) * 1;
-      const py = y - 40 - bob;
-      ctx.fillStyle = s.walking && s.walking.to === id ? '#ffd166' : '#ff8fa3';
-      ctx.fillRect(x - 3, py, 7, 7); ctx.fillRect(x - 1, py + 7, 3, 3);
-      ctx.fillStyle = '#fff7ea'; ctx.fillRect(x - 1, py + 2, 3, 3);
+      const d = Math.hypot(s.hero.x - x, s.hero.y - y);
+      if (d < bd) { bd = d; best = id; }
     }
-    if (s.hover && SE.mouse.released && !s.wasDrag) { s.selected = s.hover; SE.audio.sfx('pop'); SE.mouse.released = false; }
+    return best;
   }
+  // near a place a small card slides in at the top middle; E / Enter / Space (or its button) goes in
+  function drawPopup(ctx, dt) {
+    const id = s.walking ? null : nearPlace();
+    if (id) s.pop.id = id;
+    s.pop.a = SE.approach(s.pop.a, id ? 1 : 0, 10, dt);
+    if (!s.pop.id || s.pop.a < 0.03) return;
+    const p = SE.PLACES[s.pop.id];
+    const go = s.pop.id === 'cabin' ? 'go home' : 'go in';
+    const hint = `E · Enter: ${go}`;
+    const w = Math.max(SE.measure(p.label, 10), SE.measure(p.desc, 7), SE.measure(hint, 7) + 40) + 20;
+    const x = SE.W / 2 - w / 2, y = 30 - (1 - s.pop.a) * 8;
+    SE.panel(x, y, w, 42, { alpha: s.pop.a, fill: 'rgba(48,40,70,0.94)' });
+    SE.text(p.label, SE.W / 2, y + 4, { align: 'center', size: 10, color: '#ffe6b8', alpha: s.pop.a });
+    SE.text(p.desc, SE.W / 2, y + 17, { align: 'center', size: 7, color: '#dfe8ff', alpha: s.pop.a });
+    SE.text(hint, SE.W / 2, y + 29, { align: 'center', size: 7, color: '#fff7ea', alpha: s.pop.a * 0.85 });
+    if (!id || SE.modal) return;
+    const r = { x, y, w, h: 42 };
+    if (SE.inRect(SE.mouse.x, SE.mouse.y, r)) SE.cursor = 'pointer';
+    if (SE.key('KeyE') || SE.key('Enter') || SE.key('Space') || (SE.mouse.released && SE.inRect(SE.mouse.x, SE.mouse.y, r))) { SE.mouse.released = false; enterPlace(id); }
+  }
+  // faint arrows toward places that are off screen, so you can find your way
   function drawOffscreen(ctx, cx, cy) {
     for (const [id, p] of Object.entries(SE.PLACES)) {
-      if (id === s.here && !s.walking) continue;
       const [x, y] = N[p.node];
       const sx = x - cx, sy = y - cy;
       if (sx > 10 && sx < SE.W - 10 && sy > 30 && sy < SE.H - 10) continue;
-      const ex = SE.clamp(sx, 40, SE.W - 40), ey = SE.clamp(sy, 50, SE.H - 30);
+      const ex = SE.clamp(sx, 40, SE.W - 40), ey = SE.clamp(sy, 80, SE.H - 30);
       const label = `${p.label} ${sx < 10 ? '←' : sx > SE.W - 10 ? '→' : sy < 30 ? '↑' : '↓'}`;
       const w = SE.measure(label, 7) + 8;
-      const r = { x: ex - w / 2, y: ey - 6, w, h: 12 };
-      const over = !SE.modal && !s.walking && SE.inRect(SE.mouse.x, SE.mouse.y, r);
-      SE.panel(r.x, r.y, w, 12, { alpha: over ? 1 : 0.7 });
-      SE.text(label, ex, ey - 4, { size: 7, align: 'center', color: '#ffe6b8' });
-      if (over) { SE.cursor = 'pointer'; if (SE.mouse.released) { s.selected = id; SE.mouse.released = false; s.follow = false; s.cam.x = x - SE.W / 2; s.cam.y = y - SE.H / 2; clampCam(); } }
+      SE.panel(ex - w / 2, ey - 6, w, 12, { alpha: 0.5 });
+      SE.text(label, ex, ey - 4, { size: 7, align: 'center', color: '#ffe6b8', alpha: 0.85 });
     }
   }
-  function drawCard(ctx) {
-    const a = 1;
+  function drawFooter() {
     if (s.walking) {
       const to = SE.PLACES[s.walking.to];
-      const left = len(s.walking.path.slice(s.walking.i));
-      const msg = `Walking to ${to.label} with Waffles… ${Math.round(left * 3)} m`;
+      const msg = `Walking to ${to.label} with Waffles…`;
       const w = SE.measure(msg, 8) + 16;
-      SE.panel(SE.W / 2 - w / 2 - 50, SE.H - 24, w, 16, { alpha: 0.9 });
-      SE.text(msg, SE.W / 2 - 50, SE.H - 20, { align: 'center', size: 8 });
-      if (SE.button(SE.W / 2 + w / 2 - 44, SE.H - 25, 92, 18, s.fast ? 'Stroll slowly' : 'Walk faster', { active: s.fast, alpha: a })) s.fast = !s.fast;
+      SE.panel(SE.W / 2 - w / 2, SE.H - 24, w, 16, { alpha: 0.9 });
+      SE.text(msg, SE.W / 2, SE.H - 20, { align: 'center', size: 8 });
       return;
     }
-    if (!s.selected) {
-      if (SE.sceneTime < 8) SE.text('Click a pin to walk there · drag to look around', SE.W / 2, SE.H - 16, { align: 'center', size: 8, color: '#fff7ea', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
-      if (!s.follow && SE.button(SE.W - 96, SE.H - 24, 90, 18, 'Find us')) s.follow = true;
-      return;
-    }
-    const sel = s.selected, p = SE.PLACES[sel];
-    const meters = Math.round(SE.placeDistance(SE.PLACES[s.here].node, p.node) * 3);
-    SE.panel(SE.W / 2 - 124, SE.H - 62, 248, 56, { fill: 'rgba(48,40,70,0.96)' });
-    SE.text(p.label, SE.W / 2 - 114, SE.H - 56, { size: 10, color: '#ffe6b8' });
-    SE.text(p.desc, SE.W / 2 - 114, SE.H - 42, { size: 7, color: '#dfe8ff' });
-    const stormy = SE.weather.stormy() && sel !== 'cabin';
-    const buried = s.here === 'cabin' && sel !== 'cabin' && SE.save.snowDepth >= 0.6;
-    const label = stormy ? 'Too stormy…' : buried ? 'Path is buried' : `Walk there · ${meters} m`;
-    if (SE.button(SE.W / 2 - 114, SE.H - 28, 116, 17, label, { fill: stormy || buried ? 'rgba(70,64,90,0.7)' : undefined })) {
-      if (stormy) SE.toast('A snowstorm is blowing. Wait it out by the fire.', '#cfe6ff');
-      else if (buried) { SE.toast('Too much snow on the path — shovel it first.', '#cfe6ff'); SE.go('yard', { mode: 'shovel' }); }
-      else startWalk(sel);
-    }
-    if (SE.button(SE.W / 2 + 54, SE.H - 28, 60, 17, 'Not yet')) s.selected = null;
+    if (SE.sceneTime < 10 && s.moved < 30) SE.text('WASD or arrow keys to walk · hold Shift to hurry · E to go in', SE.W / 2, SE.H - 16, { align: 'center', size: 8, color: '#fff7ea', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
+    if (!s.follow && SE.button(SE.W - 96, SE.H - 24, 90, 18, 'Find us')) s.follow = true;
   }
 })();

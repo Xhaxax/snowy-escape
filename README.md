@@ -22,15 +22,16 @@ Progress saves automatically in your browser (localStorage).
 | **The Cabin** | Fire crackling, snow outside, Waffles by the fire, Mochi on the windowsill | Sit on the couch with a hot chocolate and Mochi on your lap, add logs to the fire, pet Waffles or Mochi (close-ups) |
 | **Kitchen** | Oven ticking, Mochi sitting on the counter | Make hot chocolate (pour → scoop → stir → marshmallows); cook your catch (chop → season → fry → plate) while Mochi tries to steal a bite |
 | **Porch & Yard** | Chimney smoke, glowing windows | Chop firewood (Waffles cheers or naps), shovel snow off the path, rock in the rocking chair on the porch |
-| **Frozen Lake** | Ice fishing, bobber bobbing | Reel in: keep the fish inside the green zone |
+| **Frozen Lake** | Ice fishing on a stool by the hole | Reel in: keep the fish inside the green zone, then look at it in your mittens |
 | **Whispering Pines** | Deer wander in and graze | Sketch a deer while it looks up (polaroid for the journal) |
-| **Summit Trail** | Above the clouds | Guided breathing; wish on shooting stars at dusk/night |
+| **Little Chapel** | Candlelight, snow at the arched window, Waffles by the altar step | Kneel and pray (a verse to sit with), light a candle, ring the bell, read from the Bible |
+| **Summit Trail** | Cuddled up with Waffles above the clouds | Guided breathing; at dusk and night shooting stars cross the sky and you both look up |
 
-To get anywhere outside the cabin you walk there with Waffles: crunchy footsteps, footprints in the snow, little thoughts along the way.
+To get anywhere outside the cabin you walk there with Waffles (**WASD or the arrow keys**, Shift to hurry, **E** to go in when the little card pops up): crunchy footsteps on trodden snow, footprints, little thoughts along the way. Now and then an animal turns up out of nowhere — Waffles notices first. Take a photo (every animal has three special shots for your album), sketch it, or let it be. If it's a bear, only photograph him while he's calm; otherwise back away slowly. The Long Walk sometimes turns into a climb up a mountain trail.
 
 ## A gentle loop
 
-- **Time passes.** One real minute is one in-game hour, so a full day/night cycle takes 24 minutes. You can switch to your real clock or fix the time of day under the snowflake button.
+- **Time passes.** One real minute is one in-game hour, so a full day/night cycle takes 24 minutes. It is deep winter: dark from six in the evening until half past six in the morning. You can switch to your real clock or fix the time of day under the snowflake button.
 - **Snow never stops.** Some hours it barely falls, some it piles up; the wind rises and calms, the sun breaks through, and now and then a **snowstorm** closes the trails. If it catches you outside, you and Waffles walk home.
 - **Snow piles up on the path.** Shovel it now and then; if it gets really deep you need to clear it before you can wander off.
 - **The fire and the oven burn down slowly.** Chop wood in the yard, add logs to the fireplace and the oven. A warm oven is needed to cook and to make cocoa.
@@ -57,7 +58,7 @@ src/audio.js          generative lofi music, layered ambience, synthesized sound
 src/weather.js        snowfall, wind, sun, storms, day/night clock, snow depth, fire/oven
 src/hud.js            top bar, journal, focus timer, sound & weather panels
 src/actors.js         shared drawing helpers, petting close-up, fish sprite tinting
-src/scenes/*.js       title, map, travel, cabin, kitchen, yard, lake, forest, summit
+src/scenes/*.js       title, map, travel, cabin, kitchen, yard, lake, forest, summit, chapel, encounter
 src/manifest.js       sprite-strip registry (generated)
 assets/img/           PixelLab backgrounds and sprite strips
 tools/strip.py        packs PixelLab animation frames into strips + manifest

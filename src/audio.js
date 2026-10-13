@@ -197,7 +197,7 @@
       o.frequency.setValueCurveAtTime(new Float32Array([140, 170, 150, 190, 160]), t, 0.6);
       [88, 93].forEach((n, i) => tone(t + 0.25 + i * 0.12, midi(n), 1.2, { gain: 0.05, send: 0.5 }));
     },
-    wish(t) {
+    star(t) {
       tone(t, 1800, 1.2, { gain: 0.05, freqEnd: 600, send: 0.8 });
       [84, 88, 91, 96].forEach((n, i) => tone(t + 0.15 + i * 0.07, midi(n), 0.9, { gain: 0.03, send: 0.8 }));
     },
@@ -395,6 +395,13 @@
       tone(t, 220 + Math.random() * 120, 1.6, { type: 'sine', gain: 0.05 * s.creaks, freqEnd: 60, bus: ambBus, send: 0.9, attack: 0.05 });
     }
     if (s.chimes && Math.random() < 0.01 * s.chimes) bell(t, SE.pick([84, 86, 88, 91, 93]), 0.3);
+    // when the wind really picks up it howls: a resonant gust that swoops up and falls away
+    const W = SE.weather, howly = W ? Math.max(0, (W.wind - 25) / 45) : 0;
+    if (howly > 0 && Math.random() < 0.016 * howly) {
+      const k = Math.min(1.2, howly) * (s.muffled ? 0.4 : 1), f0 = 260 + Math.random() * 160;
+      noiseBurst(t, 1.7, { type: 'bandpass', freq: f0, freqEnd: f0 * 2.2, q: 16, gain: 0.5 * k, attack: 0.7, bus: ambBus, send: 0.5 });
+      noiseBurst(t + 1.6, 2.4, { type: 'bandpass', freq: f0 * 2.2, freqEnd: f0 * 0.85, q: 16, gain: 0.42 * k, attack: 0.05, bus: ambBus, send: 0.5 });
+    }
   }
   A.setAmbience = function (state) {
     A._pendingAmb = state;

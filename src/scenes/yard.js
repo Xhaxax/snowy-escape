@@ -17,6 +17,19 @@
   let mode = 'yard', s = null;
 
   // the mounds of snow on the path come from the snow depth
+  // snow piled on the path: PixelLab snow heaps that grow in number (and size) as the snow deepens
+  function drawMounds(ctx) {
+    const d = SE.save.snowDepth;
+    const n = Math.ceil(d * 5);
+    for (let i = 0; i < n; i++) {
+      const big = d > 0.45 && i % 2 === 0;
+      const name = big ? 'snow/heap_big' : 'snow/heap_small';
+      const img = SE.img(name);
+      const x = PATH.x + ((i * 0.61803) % 1) * Math.max(10, PATH.w - 60) - 10, y = PATH.y + 6 + ((i * 37) % Math.max(6, PATH.h - 10));
+      if (img) { ctx.save(); ctx.globalAlpha = Math.min(1, d * 3); SE.drawImg(name, Math.round(x), Math.round(y - img.height + 4), { flip: i % 2 === 1 }); ctx.restore(); }
+      else for (const m of mounds()) { ctx.fillStyle = '#eef3ff'; ctx.beginPath(); ctx.ellipse(m.x, m.y, m.r, m.r * 0.6, 0, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
   function mounds() {
     const n = Math.round(SE.save.snowDepth * 14);
     const out = [];
@@ -48,24 +61,17 @@
       }
       if (SE.watching()) direct(dt);
 
-      SE.weather.stars(ctx, 70);
       SE.drawImg('bg_cabin', 0, 0);
-      SE.weather.stars(ctx, 60);
+      SE.weather.sway(ctx, 'bg_cabin', [[0, 40, 120, 200], [400, 10, 80, 240]]);
+      SE.weather.overcast(ctx, 150);
+      drawMounds(ctx);
+      drawActors(ctx, dt);
+      // night light falls on the whole yard; the windows and the smoke glow on top of it
       SE.weather.tint(ctx);
+      SE.weather.stars(ctx, 60);
       SE.drawChimneySmoke(ctx, 346, 62, dt);
       ctx.save(); ctx.globalAlpha = 0.6 + SE.weather.night() * 0.8; SE.drawWindowGlow(ctx, WINDOWS); ctx.restore();
       SE.weather.sunshine(ctx, 215);
-
-      // snow piled on the path
-      for (const m of mounds()) {
-        ctx.fillStyle = 'rgba(150,165,210,0.5)';
-        ctx.beginPath(); ctx.ellipse(m.x, m.y + 2, m.r + 1, m.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#eef3ff';
-        ctx.beginPath(); ctx.ellipse(m.x, m.y, m.r, m.r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(m.x - m.r / 2), Math.round(m.y - m.r * 0.4), 2, 1);
-      }
-
-      drawActors(ctx, dt);
       SE.weather.draw(ctx);
 
       for (let i = s.chips.length - 1; i >= 0; i--) {

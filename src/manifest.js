@@ -72,19 +72,19 @@ window.SE_MANIFEST = {
    "fps": 10.0
   },
   "fishing": {
-   "frames": 9,
-   "fps": 5.0
+   "frames": 8,
+   "fps": 6.0
   },
   "fishing_reel": {
-   "frames": 9,
-   "fps": 9.0
+   "frames": 8,
+   "fps": 8.0
   },
   "cat_sit": {
-   "frames": 9,
+   "frames": 12,
    "fps": 5.0
   },
   "cat_eager": {
-   "frames": 9,
+   "frames": 4,
    "fps": 6.0
   },
   "hare_hop": {
@@ -154,6 +154,50 @@ window.SE_MANIFEST = {
   "trav_walk_s": {
    "frames": 8,
    "fps": 10.0
+  },
+  "summit_pair": {
+   "frames": 20,
+   "fps": 6.0
+  },
+  "dog_walk_n": {
+   "frames": 8,
+   "fps": 11.0
+  },
+  "fish/brook_w": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "fish/char_w": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "fish/white_w": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "fish/pike_w": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "fish/perch_w": {
+   "frames": 5,
+   "fps": 8.0
+  },
+  "bear_walk": {
+   "frames": 8,
+   "fps": 8.0
+  },
+  "bear_idle": {
+   "frames": 5,
+   "fps": 4.0
+  },
+  "bear_rear": {
+   "frames": 3,
+   "fps": 4.0
+  },
+  "cocoa_stir": {
+   "frames": 12,
+   "fps": 8.0
   }
  }
 };

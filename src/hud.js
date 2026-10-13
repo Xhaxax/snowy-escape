@@ -185,7 +185,7 @@
 
   function drawJournal(px, py, pw, ph) {
     SE.text("Traveler's Journal", px + 12, py + 8, { size: 10, color: '#ffe6b8' });
-    const tabs = ['Fish', 'Kitchen', 'Moments'];
+    const tabs = ['Fish', 'Kitchen', 'Moments', 'Photos'];
     tabs.forEach((t, i) => { if (SE.button(px + 12 + i * 62, py + 24, 58, 15, t, { modal: true, active: H.tab === i })) H.tab = i; });
     const sv = SE.save;
     let y = py + 48;
@@ -210,10 +210,40 @@
       line('Hot chocolate ready', sv.cocoa);
       for (const d of Object.keys(SE.DISHES)) line(d + ' made', sv.dishes[d] || 0);
       line('Meals cooked in total', sv.cooked);
+    } else if (H.tab === 3) {
+      // the photo album: three camera-only shots per animal, met on walks through the valley
+      const W = SE.WILDLIFE || {};
+      const kinds = ['deer', 'elk', 'fox', 'hare', 'owl', 'bird', 'bear'];
+      const album = sv.album || {};
+      const tw = 32, th = 24, colW = 39, x0 = px + 14, y0 = y - 2;
+      let count = 0;
+      kinds.forEach((k, c) => {
+        const cx = x0 + c * colW;
+        SE.text(W[k] ? W[k].name.split(' ').pop() : k, cx + tw / 2, y0, { size: 6, align: 'center', color: '#b9b1d6' });
+        for (let i = 0; i < 3; i++) {
+          const ty = y0 + 10 + i * (th + 4);
+          const got = (album[k] || []).includes(i), img = SE.img(`photo/${k}_${i}`);
+          SE.ctx.fillStyle = got ? '#fbf6ec' : 'rgba(20,16,32,0.6)';
+          SE.ctx.fillRect(cx - 1, ty - 1, tw + 2, th + 2);
+          if (got && img) { SE.ctx.imageSmoothingEnabled = false; SE.ctx.drawImage(img, cx, ty, tw, th); count++; }
+          else SE.text('?', cx + tw / 2, ty + 7, { size: 8, align: 'center', color: '#5d5577' });
+          if (got && SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: ty, w: tw, h: th })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; H.photo = { k, i }; } }
+        }
+      });
+      SE.text(`${count} / 21 photos · animals turn up on walks through the valley`, px + pw / 2, py + ph - 14, { align: 'center', size: 6, color: '#b9b1d6' });
+      if (H.photo) {
+        const img = SE.img(`photo/${H.photo.k}_${H.photo.i}`);
+        const w = 256, h = 192, bx = SE.W / 2 - w / 2, by = 20;
+        SE.ctx.fillStyle = '#fbf6ec'; SE.ctx.fillRect(bx - 6, by - 6, w + 12, h + 26);
+        if (img) SE.ctx.drawImage(img, bx, by, w, h);
+        const cap = W[H.photo.k] ? W[H.photo.k].shots[H.photo.i] : '';
+        SE.text(cap, SE.W / 2, by + h + 6, { align: 'center', size: 8, color: '#3a2a2a', shadow: false });
+        if (SE.mouse.released) { SE.mouse.released = false; H.photo = null; }
+      }
     } else {
       const sk = sv.sketches || {};
       line('Sketched: deer · elk · fox · hare · owl · bird', `${sk.deer || sv.deerPhotos || 0}·${sk.elk || 0}·${sk.fox || 0}·${sk.hare || 0}·${sk.owl || 0}·${sk.bird || 0}`);
-      line('Wishes on shooting stars', sv.wishes);
+      line('Shooting stars watched with Waffles', sv.stars || 0);
       line('Calm breaths at the summit', sv.breaths);
       line('Prayers · candles lit in the chapel', `${sv.prayers || 0} · ${sv.candles || 0}`);
       line('Belly rubs for Waffles', sv.petsDog);

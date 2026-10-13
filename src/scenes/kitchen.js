@@ -27,34 +27,39 @@
 
   // ------------------------------------------------------------ hot chocolate
   function drawMug(ctx, cx, cy, s) {
-    const w = 54, h = 58, x = Math.round(cx - w / 2), y = Math.round(cy - h / 2);
-    ctx.fillStyle = '#2b1d2a'; ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
-    ctx.fillRect(x + w, y + 12, 16, 30);
-    ctx.fillStyle = '#e8d8c4'; ctx.fillRect(x + w + 2, y + 14, 12, 26);
-    ctx.fillStyle = '#6b4a3a'; ctx.fillRect(x + w + 5, y + 19, 6, 16);
-    ctx.fillStyle = '#efe2d0'; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = '#d9c4ab'; ctx.fillRect(x, y + h - 6, w, 6);
-    ctx.fillStyle = '#c14b4b'; ctx.fillRect(x, y + 20, w, 6); // cozy red stripe
-    // liquid seen from slightly above
-    const inner = { x: x + 4, y: y + 4, w: w - 8, h: h - 12 };
-    ctx.fillStyle = '#2b1d2a'; ctx.fillRect(inner.x, inner.y, inner.w, 6);
-    if (s.level > 0) {
-      const lh = Math.round(inner.h * s.level);
-      const col = mix([246, 240, 228], [122, 70, 44], s.choc);
+    // the PixelLab mug (a knitted red band, drawn at 2x); its opening shows what is inside
+    const img = SE.img('props/mug');
+    if (img) {
+      const w = img.width * 2, h = img.height * 2, x = Math.round(cx - w / 2), y = Math.round(cy - h / 2);
+      ctx.drawImage(img, x, y, w, h);
+      const ex = x + 40, ey = y + 54, rx = 32, ry = 12;
+      const col = s.level > 0 ? mix([246, 240, 228], [122, 70, 44], s.choc) : '58,36,40';
       ctx.fillStyle = `rgb(${col})`;
-      // show level as a band on the mug's glass-like front window
-      ctx.globalAlpha = 0.9;
-      ctx.fillRect(inner.x, inner.y + inner.h - lh, inner.w, lh);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(inner.x, inner.y + inner.h - lh, inner.w, 1);
+      ctx.beginPath(); ctx.ellipse(ex, ey, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.fillRect(ex - rx + 6, ey - ry + 2, rx, 1);
       if (s.swirl) {
         ctx.fillStyle = `rgba(255,236,210,${0.5 * (1 - s.choc)})`;
-        for (let i = 0; i < 6; i++) {
-          const a = s.swirl + i;
-          ctx.fillRect(Math.round(cx + Math.cos(a) * (8 + i * 2)), Math.round(inner.y + inner.h - lh + 4 + Math.abs(Math.sin(a)) * 3), 2, 1);
-        }
+        for (let i = 0; i < 6; i++) { const a = s.swirl + i; ctx.fillRect(Math.round(ex + Math.cos(a) * (6 + i * 3)), Math.round(ey + Math.sin(a) * (2 + i)), 2, 1); }
       }
+      // how full it is: a little gauge beside the mug
+      const gx = x - 14, gy = y + 40, gh = h - 50;
+      ctx.fillStyle = 'rgba(20,16,30,0.85)'; ctx.fillRect(gx, gy, 6, gh);
+      ctx.fillStyle = `rgb(${col})`; const lh = Math.round(gh * s.level); ctx.fillRect(gx + 1, gy + gh - lh, 4, lh);
+      if (s.target) { ctx.fillStyle = '#7fd38a'; ctx.fillRect(gx - 3, Math.round(gy + gh - gh * s.target), 12, 1); }
+      for (const m of s.marsh || []) {
+        ctx.fillStyle = '#fffaf2'; ctx.fillRect(Math.round(m.x), Math.round(m.y), 6, 4);
+        ctx.fillStyle = '#f0d9e0'; ctx.fillRect(Math.round(m.x), Math.round(m.y) + 3, 6, 1);
+      }
+      // marshmallows land on the surface inside the opening
+      return { x, y, w, h, inner: { x: ex - rx + 8, y: ey - ry, w: rx * 2 - 22, h: ry * 2 + 2 } };
+    }
+    const w = 54, h = 58, x = Math.round(cx - w / 2), y = Math.round(cy - h / 2);
+    ctx.fillStyle = '#efe2d0'; ctx.fillRect(x, y, w, h);
+    const inner = { x: x + 4, y: y + 4, w: w - 8, h: h - 12 };
+    if (s.level > 0) {
+      const lh = Math.round(inner.h * s.level);
+      ctx.fillStyle = `rgb(${mix([246, 240, 228], [122, 70, 44], s.choc)})`;
+      ctx.fillRect(inner.x, inner.y + inner.h - lh, inner.w, lh);
     }
     // the fill target line
     if (s.target) {
@@ -103,7 +108,14 @@
     };
     card(ctx, titles[g.stage], hints[g.stage]);
     const cx = SE.W / 2, cy = CARD.y + 112;
-    const mug = drawMug(ctx, cx, cy, { level: g.level, choc: g.choc, swirl: g.stage === 'stir' ? g.swirl : 0, target: g.stage === 'milk' ? 0.78 : 0, marsh: g.marsh });
+    let mug;
+    if (g.stage === 'stir' && SE.anims.cocoa_stir) {
+      // a close look: his hands stirring the mug with a spoon; your circles turn the spoon
+      const sz = SE.animSize('cocoa_stir');
+      const frame = Math.floor(Math.abs(g.swirl) * 1.9) % SE.anims.cocoa_stir.frames;
+      SE.drawAnim('cocoa_stir', Math.round(cx - sz.w / 2), CARD.y + 52, 0, { frame });
+      mug = { x: cx - sz.w / 2, y: CARD.y + 52, w: sz.w, h: sz.h, inner: { x: cx - 20, y: CARD.y + 90, w: 40, h: 20 } };
+    } else mug = drawMug(ctx, cx, cy, { level: g.level, choc: g.choc, swirl: g.stage === 'stir' ? g.swirl : 0, target: g.stage === 'milk' ? 0.78 : 0, marsh: g.marsh });
 
     if (g.stage === 'milk') {
       const pouring = (playing() && (SE.mouse.down && SE.inRect(SE.mouse.x, SE.mouse.y, CARD) || SE.held('Space'))) || g.autoHold;
