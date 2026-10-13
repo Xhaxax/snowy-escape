@@ -37,7 +37,9 @@ SE.ctx = SE.canvas.getContext('2d');
 
 SE.resize = function () {
   const dpr = window.devicePixelRatio || 1;
-  const fit = Math.min(window.innerWidth / SE.W, window.innerHeight / SE.H);
+  const de = document.documentElement;
+  const vw = Math.min(window.innerWidth, de.clientWidth || window.innerWidth), vh = Math.min(window.innerHeight, de.clientHeight || window.innerHeight);
+  const fit = Math.min(vw / SE.W, vh / SE.H);
   // Prefer whole-number device-pixel scaling for crisp pixels, unless it wastes a lot of screen.
   let s = Math.floor(fit * dpr);
   if (s < 1 || s / (fit * dpr) < 0.8) s = Math.max(1, fit * dpr);
@@ -48,7 +50,12 @@ SE.resize = function () {
   SE.canvas.style.height = (SE.H * s) / dpr + 'px';
   SE.ctx.imageSmoothingEnabled = false;
 };
-window.addEventListener('resize', SE.resize);
+// iOS reports the old size for a moment after a rotation (the game then ends up blown up past the
+// screen edges), so measure again a little later too.
+const settle = () => { SE.resize(); setTimeout(SE.resize, 150); setTimeout(SE.resize, 500); };
+window.addEventListener('resize', settle);
+window.addEventListener('orientationchange', settle);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', settle);
 
 // ---------------------------------------------------------------- input
 function logical(e) {

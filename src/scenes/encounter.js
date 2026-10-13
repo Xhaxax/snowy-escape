@@ -22,7 +22,7 @@
       shots: ['An owl’s golden eyes among the snowy pines.', 'An owl gliding silently over the snow.', 'A close-up of an owl’s round face.'] },
     bird: { name: 'Cardinal', fly: 'bird_fly', act: 'bird_peck', note: 'A bright red cardinal, the only colour in the snow.',
       shots: ['A cardinal in flight, wings spread wide.', 'A cardinal swooping over snowy pine branches.', 'A cardinal on a snowy branch with red berries.'] },
-    bear: { name: 'Grizzly bear', walk: 'bear_walk', act: 'bear_idle', angry: 'bear_rear', speed: 12, bear: true, note: 'A grizzly, calm and foraging. Keep your distance.',
+    bear: { name: 'Grizzly bear', walk: 'bear_walk', act: 'bear_idle', angry: 'bear_bluff', sniff: 'bear_sniff', speed: 12, bear: true, note: 'A grizzly, calm and foraging. Keep your distance.',
       shots: ['A grizzly walking calmly through the pines.', 'A grizzly crossing a snowy clearing, far off.', 'A grizzly among the tall pines.'] },
   };
   SE.WILDLIFE = ANIMALS;
@@ -124,7 +124,7 @@
     s.state = 'meet';
     s.animT = 0;
     SE.audio.sfx('woof');
-    s.msg = { text: `The bear rises up and huffs. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A'}.`, color: '#ffb3a3', t: 0 };
+    s.msg = { text: `The bear lowers his head and huffs, slapping the snow. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A'}.`, color: '#ffb3a3', t: 0 };
   }
   function drawAnimal(ctx) {
     const A = s.A;
@@ -132,6 +132,9 @@
     const walking = s.state === 'enter' || s.state === 'leave';
     let anim = walking ? (A.walk || A.fly) : A.act;
     if (A.bear && s.mood === 'agitated' && !walking && has(A.angry)) anim = A.angry;
+    // a calm bear forages, and every so often lifts a paw and his nose to test the air
+    const sniffing = A.bear && s.mood === 'calm' && !walking && has(A.sniff) && (s.animT % 11) > 7;
+    if (sniffing) anim = A.sniff;
     if (s.kind === 'bird') anim = walking ? A.fly : A.act;
     if (s.kind === 'owl') anim = A.act;
     const flip = !(s.state === 'leave'); // the sprites face right; they come in from the right
@@ -143,7 +146,13 @@
     let frame;
     if (walking) frame = A.hops ? ((s.animT % 1.2) < 0.55 ? Math.floor(((s.animT % 1.2) / 0.55) * n) % n : 0) : Math.floor(s.animT * 9) % n;
     else { const f = Math.floor(s.animT * 3); frame = f < n - 2 ? f : n - 3 + (Math.floor(s.animT * 2.5) % 2); }
-    if (A.bear && s.mood === 'agitated' && !walking) frame = Math.min(n - 1, Math.floor(s.animT * 6));
+    // agitated: a bluff — head drops, ears back, a front paw slams the snow; a pause, then again
+    if (A.bear && s.mood === 'agitated' && !walking) {
+      const c = (s.animT % 2.6) * 7, last = n - 1;
+      frame = c < n ? Math.floor(c) : c < n + 4 ? last : Math.max(0, last - Math.floor(c - n - 4));
+      if (frame === 6 && !s.thud) { s.thud = true; SE.audio.sfx('stomp'); } else if (frame !== 6) s.thud = false;
+    }
+    if (sniffing) { const c = ((s.animT % 11) - 7) * 4, half = n - 1; frame = Math.min(half, Math.floor(c < half + 6 ? Math.min(c, half) : Math.max(0, 2 * half + 6 - c))); }
     if (A.perch || s.kind === 'bird') { SE.drawAnim(anim, s.ax - sz.w / 2, s.ay - sz.h, 0, { frame, flip: s.kind === 'bird' ? s.state !== 'leave' : false }); return; }
     ctx.fillStyle = 'rgba(70,90,140,0.25)';
     ctx.fillRect(Math.round(s.ax + 4), FEET - 1, Math.round(sz.w - 8), 2);

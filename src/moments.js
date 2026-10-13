@@ -59,6 +59,36 @@
       { img: 'cut/cocoa', dur: 2.8, text: 'Milk on the stove…', pan: 1, sounds: [[0.2, 'pour']] },
     ],
   };
+  // Every still exists for the weather and the time of day it is shown in: 'day' (a sunny spell),
+  // 'snow' (overcast, snowing), 'storm' (wind and whiteout) and 'night'. BASE says which of those the
+  // plain cut/<name>.png already is; the others live in cut/<name>_<variant>.png.
+  const BASE = {
+    alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
+    shovel: 'snow', leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night', cocoa: 'any',
+  };
+  SE.CUT_VARIANTS = {
+    alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
+    trail: ['snow', 'storm', 'night'], forest: ['snow', 'storm', 'night'], summit: ['snow', 'storm', 'night'],
+    porch: ['snow', 'storm', 'night'], shovel: ['day', 'storm', 'night'], leave: ['day', 'snow', 'storm'],
+    chapel: ['day', 'snow', 'storm'], home: ['day', 'storm'], pray: ['day'],
+  };
+  const PREFER = { day: ['day', 'snow'], snow: ['snow', 'storm', 'day'], storm: ['storm', 'snow', 'day'], night: ['night'] };
+  function wanted() {
+    const W = SE.weather;
+    if (W.night() > 0.5) return 'night';
+    if (W.stormy() || W.mode === 'windy') return 'storm';
+    return W.mode === 'sunny' ? 'day' : 'snow';
+  }
+  function stillFor(img) {
+    const name = img.replace(/^cut\//, '');
+    if (!BASE[name] || BASE[name] === 'any') return img;
+    for (const v of PREFER[wanted()]) {
+      if (v === BASE[name]) return img;
+      if (SE.img(`${img}_${v}`)) return `${img}_${v}`;
+    }
+    return img;
+  }
+
   const COOLDOWN = 120; // seconds before the same moment plays again (they stay special)
   const lastPlayed = {};
   let m = null;
@@ -69,7 +99,7 @@
     const fresh = !lastPlayed[name] || SE.time - lastPlayed[name] > COOLDOWN || opts.force;
     if (!beats || !fresh || m) { if (opts.go) SE.go(...opts.go); if (opts.then) opts.then(); return false; }
     lastPlayed[name] = SE.time;
-    m = { beats: beats.map((b) => ({ ...b })), i: 0, t: 0, played: new Set(), opts, fadeIn: 0 };
+    m = { beats: beats.map((b) => ({ ...b, img: b.img && stillFor(b.img) })), i: 0, t: 0, played: new Set(), opts, fadeIn: 0 };
     if (opts.go) m.beats[m.beats.length - 1].go = opts.go; // switch scenes during the last beat
     SE.modal = 'moment';
     return true;

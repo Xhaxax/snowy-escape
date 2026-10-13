@@ -192,10 +192,6 @@ window.SE_MANIFEST = {
    "frames": 5,
    "fps": 4.0
   },
-  "bear_rear": {
-   "frames": 3,
-   "fps": 4.0
-  },
   "cocoa_stir": {
    "frames": 12,
    "fps": 8.0
@@ -235,6 +231,22 @@ window.SE_MANIFEST = {
   "dog_cautious": {
    "frames": 8,
    "fps": 5.0
+  },
+  "bear_bluff": {
+   "frames": 9,
+   "fps": 6.0
+  },
+  "bear_sniff": {
+   "frames": 9,
+   "fps": 4.0
+  },
+  "kitchen_fry_raw": {
+   "frames": 8,
+   "fps": 7.0
+  },
+  "kitchen_fry_gold": {
+   "frames": 8,
+   "fps": 7.0
   }
  }
 };

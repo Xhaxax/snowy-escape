@@ -199,14 +199,7 @@
   // ------------------------------------------------------------ cooking fish
   function startCook(fish) {
     mode = 'cook';
-    g = { cutIn: 2.6, paw: { t: 0, next: SE.rand(3, 6) }, stage: 'chop', fish, seq: Array.from({ length: 5 }, () => SE.pick(ARROW_KEYS)), i: 0, wobble: 0, cuts: [], herbs: [], done1: 0, side: 0, scores: [], knife: 0, sizzle: null, t: 0 };
-  }
-  const drawFish = (ctx, cx, cy, scale, cook) => SE.drawFishSprite(ctx, g.fish, cx, cy, scale, cook);
-  // once filleted, the fish is two neat fillets (PixelLab sprite), browning as they cook
-  SE.FOOD = Object.assign(SE.FOOD || {}, { fillet: { color: '#f2a08a', size: 1, img: 'props/fillet' } });
-  function drawFillets(ctx, x, y, scale, cook) {
-    if (SE.img('props/fillet')) return SE.drawFishSprite(ctx, 'fillet', x, y, scale, cook);
-    return SE.drawFishPieces(ctx, g.fish, x, y, scale, cook, g.cuts, 3);
+    g = { paw: { t: 0, next: SE.rand(3, 6) }, stage: 'chop', fish, seq: Array.from({ length: 5 }, () => SE.pick(ARROW_KEYS)), i: 0, wobble: 0, cuts: [], herbs: [], done1: 0, side: 0, scores: [], knife: 0, sizzle: null, t: 0 };
   }
   // Mochi cannot help herself: now and then her paw sneaks in toward the fish, then pulls back
   function drawPaw(ctx, dt, f) {
@@ -222,26 +215,8 @@
     if (k > 0.45 && k < 0.5 && !p.mew) { p.mew = true; SE.audio.sfx('pop'); }
     if (k > 0.9) p.mew = false;
   }
-  // where the pan's cooking surface is in the kitchen_pan art (centre and radii)
+  // where the pan's cooking surface is in the kitchen_fry_* art (centre and radii)
   const PAN = { x: 112, y: 62, rx: 50, ry: 20 };
-  // hot oil: little bubbles that swell, pop and leave a glint, all over the pan around the fish
-  const oil = [];
-  function drawOil(ctx, dt, px, py) {
-    if (oil.length < 40 && Math.random() < dt * 30) {
-      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
-      oil.push({ x: px + Math.cos(a) * r * PAN.rx * 0.9, y: py + Math.sin(a) * r * PAN.ry * 0.9, t: 0, life: SE.rand(0.4, 1.1), big: Math.random() < 0.3 });
-    }
-    for (let i = oil.length - 1; i >= 0; i--) {
-      const b = oil[i]; b.t += dt;
-      if (b.t > b.life) { oil.splice(i, 1); if (Math.random() < 0.15) SE.spawnFloater(b.x, b.y - 2, 'spark', '#fff4d6'); continue; }
-      const k = b.t / b.life, s = b.big ? 2 : 1;
-      ctx.fillStyle = `rgba(255,214,120,${0.7 * (1 - k)})`;
-      ctx.fillRect(Math.round(b.x), Math.round(b.y), s + (k > 0.6 ? 1 : 0), s);
-      ctx.fillStyle = `rgba(255,250,225,${0.9 * (1 - k)})`;
-      ctx.fillRect(Math.round(b.x), Math.round(b.y), 1, 1);
-    }
-  }
-
   function autoCook(dt) {
     g.tap = false;
     g.autoKey = null;
@@ -266,32 +241,22 @@
     const cx = SE.W / 2, cy = CARD.y + 100;
 
     if (g.stage === 'chop' || g.stage === 'season') {
-      // cutting board
-      ctx.fillStyle = '#2b1d2a'; ctx.fillRect(cx - 82, cy - 34, 164, 68);
-      ctx.fillStyle = '#c99a62'; ctx.fillRect(cx - 80, cy - 32, 160, 64);
-      ctx.fillStyle = '#b58650'; for (let i = 0; i < 5; i++) ctx.fillRect(cx - 80, cy - 26 + i * 13, 160, 1);
       // a still panel between cuts (descaling, head and fins off, the fillets): sound does the rest
       if (g.panel) { if (g.panel.draw(ctx, dt)) return; g.panel = null; if (g.afterPanel) { g.afterPanel(); g.afterPanel = null; } }
-      // a close look first: his hands cutting the fish on the board (a short cut-in)
-      if (g.stage === 'chop' && g.cutIn > 0 && SE.anims.kitchen_cut) {
-        g.cutIn -= dt;
-        const sz = SE.animSize('kitchen_cut');
-        // one still frame (Coffee Talk style): the picture and the chopping sounds do the rest
-        if (Math.floor(g.cutIn * 3) !== Math.floor((g.cutIn + dt) * 3)) SE.audio.sfx('chop');
-        SE.drawAnim('kitchen_cut', Math.round(cx - sz.w / 2), CARD.y + 44, 0, { frame: 0 });
-        return;
+      // No sprite fish being sliced: only the painted stills, Coffee Talk style. While cutting, his
+      // hands and the knife on the board; once it is filleted, the two open fillets you season.
+      const still = g.stage === 'chop' ? 'kitchen_cut' : 'kitchen_fillet';
+      const im = SE.img(still) || SE.img(SE.anims[still] ? SE.anims[still].img : still);
+      const sw = im ? (SE.anims[still] ? SE.animSize(still).w : im.width) : 160, sh = im ? (SE.anims[still] ? SE.animSize(still).h : im.height) : 112;
+      const f = { x: Math.round(cx - sw / 2), y: CARD.y + 44, w: sw, h: sh };
+      if (SE.anims[still]) SE.drawAnim(still, f.x, f.y, 0, { frame: 0 }); else if (im) SE.drawImg(still, f.x, f.y);
+      if (g.stage === 'chop') {
+        g.knife = Math.max(0, g.knife - dt * 4);
+        if (g.knife > 0.6) { ctx.fillStyle = `rgba(255,250,235,${(g.knife - 0.6) * 0.5})`; ctx.fillRect(f.x, f.y, f.w, f.h); } // a soft flash on each cut
       }
-      // while cutting: cut lines; once it is cut (seasoning) the pieces lie apart on the board
-      const f = g.stage === 'chop' ? drawFish(ctx, cx, cy, 3, 0) : drawFillets(ctx, cx, cy, 3, 0);
-      if (g.stage === 'chop') { ctx.fillStyle = '#5a3a3a'; for (const c of g.cuts) ctx.fillRect(Math.round(f.x + f.w * c), Math.round(f.y + 6), 1, f.h - 12); }
       drawPaw(ctx, dt, f);
       for (const h of g.herbs) { ctx.fillStyle = h.c; ctx.fillRect(Math.round(h.x), Math.round(h.y), 1, 1); }
       if (g.stage === 'chop') {
-        g.knife = Math.max(0, g.knife - dt * 4);
-        const kx = f.x + f.w * (0.2 + g.i * 0.14);
-        ctx.fillStyle = '#2b1d2a'; ctx.fillRect(Math.round(kx) - 1, Math.round(cy - 56 + g.knife * -10 + (1 - g.knife) * 18), 4, 30);
-        ctx.fillStyle = '#d7dbe6'; ctx.fillRect(Math.round(kx), Math.round(cy - 55 + g.knife * -10 + (1 - g.knife) * 18), 2, 20);
-        ctx.fillStyle = '#6b3b22'; ctx.fillRect(Math.round(kx) - 1, Math.round(cy - 65 + g.knife * -10 + (1 - g.knife) * 18), 4, 10);
         // sequence
         g.wobble = Math.max(0, g.wobble - dt * 4);
         g.seq.forEach((k, i) => {
@@ -328,19 +293,21 @@
         SE.drawIcon('heart', SE.mouse.x - 4, SE.mouse.y - 12, '#7fd38a'); ctx.restore();
       }
     } else if (g.stage === 'fry') {
-      // the PixelLab cast-iron pan on the wood stove; the fish sizzles in bubbling oil
-      let px = cx, py = cy;
-      if (SE.img('kitchen_pan')) {
-        const img = SE.img('kitchen_pan');
-        const ix = Math.round(cx - img.width / 2), iy = CARD.y + 50;
-        SE.drawImg('kitchen_pan', ix, iy);
-        px = ix + PAN.x; py = iy + PAN.y;
-      }
+      // the PixelLab cast-iron pan on the wood stove with the two open fillets sizzling in it:
+      // pink side up at first, the golden crust once they are flipped
+      const fry = g.side === 0 ? 'kitchen_fry_raw' : 'kitchen_fry_gold';
       g.pos += dt * 0.11;
-      const cookLevel = (g.side === 0 ? g.pos : 0.65 + g.pos * 0.3) * 0.9;
-      drawOil(ctx, dt, px, py);
-      drawFillets(ctx, px, py - 2 + Math.sin(SE.time * 20) * 0.4, 2, cookLevel);
-      if (Math.random() < dt * 10) SE.spawnFloater(px + SE.rand(-PAN.rx * 0.7, PAN.rx * 0.7), py - 6, 'spark', '#fff4d6');
+      if (SE.anims[fry]) {
+        const sz = SE.animSize(fry);
+        const ix = Math.round(cx - sz.w / 2), iy = CARD.y + 50;
+        // a little hop of the fillets right after the flip
+        const hop = g.flipT > 0 ? Math.round(Math.sin(g.flipT * Math.PI) * -3) : 0;
+        g.flipT = Math.max(0, (g.flipT || 0) - dt * 3);
+        ctx.save(); ctx.beginPath(); ctx.rect(CARD.x + 6, CARD.y + 30, CARD.w - 12, CARD.h - 40); ctx.clip(); // keep it inside the card
+        SE.drawAnim(fry, ix, iy + hop, g.t, {});
+        ctx.restore();
+        if (Math.random() < dt * 6) SE.spawnFloater(ix + PAN.x + SE.rand(-PAN.rx * 0.7, PAN.rx * 0.7), iy + PAN.y - 6, 'spark', '#fff4d6');
+      }
       // doneness bar
       const bx = cx - 90, by = CARD.y + 38, bw = 180;
       const zones = [[0, 0.5, '#e6a3a3'], [0.5, 0.58, '#e8c27a'], [0.58, 0.74, '#7fd38a'], [0.74, 0.86, '#e8c27a'], [0.86, 1, '#a0643c']];
@@ -356,15 +323,14 @@
         g.scores.push(score);
         SE.audio.sfx('whoosh');
         SE.toast(score > 0.85 ? 'Golden!' : g.pos < 0.5 ? 'A little rare — still tasty.' : 'Nice and crispy.');
-        if (g.side === 0) { g.side = 1; g.pos = 0; }
+        if (g.side === 0) { g.side = 1; g.pos = 0; g.flipT = 1; SE.audio.sfx('sizzle'); }
         else { g.stage = 'plate'; g.sizzle.stop(); SE.cardOpen = true; finishDish(); }
       }
     } else if (g.stage === 'plate') {
       ctx.fillStyle = '#2b1d2a'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 64, 30, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#f2ece2'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 61, 27, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ddd3c4'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 46, 18, 0, 0, Math.PI * 2); ctx.fill();
-      if (SE.img('item_dish')) SE.drawImg('item_dish', cx - SE.img('item_dish').width, cy - SE.img('item_dish').height + 8, { scale: 2 });
-      else drawFillets(ctx, cx, cy, 2, 0.7);
+      if (SE.img('props/dish')) { const d = SE.img('props/dish'); ctx.drawImage(d, Math.round(cx - d.width / 2), Math.round(cy + 4 - d.height / 2)); }
       const stars = g.stars;
       for (let i = 0; i < 3; i++) SE.drawIcon('heart', cx - 18 + i * 13, CARD.y + 36, i < stars ? '#ffd166' : '#5d5577', 1);
       SE.text(`Pan-fried ${g.fish}`, cx, CARD.y + CARD.h - 44, { align: 'center', size: 10, color: '#ffe6b8' });

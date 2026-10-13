@@ -96,3 +96,9 @@
 - `bg_forest_dim` (PixelLab edit of bg_forest without sunbeams): SE.drawForest crossfades to it whenever the sun is not out (snowfall, storms, dusk, night). Encounters/Pines get full night tint + SE.moonlight + a lantern glow around the traveler.
 - Night lights: assets/img/lit/* hold only the lit window pixels; SE.nightLights draws them AFTER the night tint with halos and pools on the snow (yard, valley cabin + chapel), also during storms. Chimney smoke is now tinted with the night.
 - Cabin: PixelLab-inpainted front door in the right wall (cross moved above the coat peg, the coffee-table book is now the Bible). The door swings open with the outside visible, cold light and a gust of snow when you come in (from the yard/map) or step out (click the door). Mochi can wait on the doormat.
+
+## Round: real bear, weather stills, honest fish
+- Bear: the dancing hind-leg strip is gone. Agitated = PixelLab `bear_bluff` (on all fours, head low, ears back, a front paw slapped into the snow with a thud, pause, repeat). Calm bears forage and every ~11 s lift a paw and test the air (`bear_sniff`).
+- Cutscene stills exist per condition: day (sunny spell), snow (overcast + snowfall), storm (windy/storm), night. BASE in src/moments.js says which one the original file is; the others are cut/<name>_<variant>.png (33 PixelLab edits). The moment picks the right one when it starts. Cocoa (indoors) and lantern (always dusk) have one version.
+- Kitchen: no sprite fish sliced on a drawn board any more. Cutting shows only the painted stills (kitchen_cut, scaling, head/fins, the open fillets), seasoning sprinkles dill onto the open-fillet still, frying is a PixelLab animation of the two open fillets in the pan (`kitchen_fry_raw`, then `kitchen_fry_gold` after the flip), and the plate is a PixelLab dish (props/dish).
+- iOS: resize again shortly after rotations (stale sizes blew the canvas up past the screen).
