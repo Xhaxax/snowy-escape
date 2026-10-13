@@ -8,7 +8,8 @@ window.SE_MANIFEST = {
   "fish/pike",
   "fish/perch",
   "owl",
-  "bird"
+  "bird",
+  "kitchen_cut"
  ],
  "anims": {
   "traveler_walk": {
@@ -28,8 +29,8 @@ window.SE_MANIFEST = {
    "fps": 5.0
   },
   "dog_happy": {
-   "frames": 9,
-   "fps": 8.0
+   "frames": 8,
+   "fps": 6.0
   },
   "chop": {
    "frames": 9,
@@ -197,6 +198,22 @@ window.SE_MANIFEST = {
   },
   "cocoa_stir": {
    "frames": 12,
+   "fps": 8.0
+  },
+  "cat_lie": {
+   "frames": 10,
+   "fps": 3.0
+  },
+  "cat_walk": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "cat_jump": {
+   "frames": 8,
+   "fps": 10.0
+  },
+  "dog_bark": {
+   "frames": 6,
    "fps": 8.0
   }
  }

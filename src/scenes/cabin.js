@@ -9,6 +9,10 @@
     fire: { x: 76, y: 150, w: 56, h: 66 },
     couch: { x: 250, y: 197 }, // traveler sitting on the couch
   };
+  // where Mochi can be in the living room, and the jumps between those spots
+  const CAT_SURF = { sill: [266, 340, 134], couchBack: [236, 350, 142], couch: [212, 365, 166], coffee: [278, 292, 200], shelf: [198, 234, 68], table: [408, 428, 171], rug: [200, 300, 256] };
+  const CAT_LINKS = [['rug', 'couch'], ['couch', 'couchBack'], ['couchBack', 'sill'], ['couch', 'coffee'], ['coffee', 'rug'], ['rug', 'table'], ['couchBack', 'shelf']];
+  let mochi = null;
   let mode = 'room', pet = null, sip = 0, sips = 0, drink = 'cocoa', steam = [], idleHint = 0;
 
   function bottomOf(anim, x, y) { const s = SE.animSize(anim); return { x: Math.round(x), y: Math.round(y - s.h), w: s.w, h: s.h }; }
@@ -70,6 +74,7 @@
       SE.save.location = 'cabin';
       SE.persist();
       mode = p.mode || 'room';
+      mochi = SE.Mochi(CAT_SURF, CAT_LINKS);
       SE.audio.setMusic('cabin');
       if (p.arrived) SE.toast('Home. Mochi was waiting by the door.', '#ffe6b8');
     },
@@ -99,10 +104,10 @@
       const r = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
       if (r && mode === 'room' && !SE.watching() && hotspot(r, 'Pet Waffles')) startPet('dog');
       if (mode === 'couch') drawCouch(ctx, dt);
-      else if (SE.anims.cat_sit) {
-        const r = bottomOf('cat_sit', POS.cat.x, POS.cat.y);
-        SE.drawAnim('cat_sit', r.x, r.y, SE.time * 0.6, { pingpong: true });
-        if (mode === 'room' && !SE.watching() && hotspot(r, 'Pet Mochi')) startPet('cat');
+      else if (mochi) {
+        mochi.update(dt);
+        const r = mochi.draw();
+        if (r && mode === 'room' && !SE.watching() && hotspot(r, 'Pet Mochi')) startPet('cat');
       }
 
       // warm vignette

@@ -93,7 +93,7 @@
   function drawActors(ctx, dt) {
     const sz = (n) => SE.animSize(n);
     // the chopping corner: stump with the axe waiting in it, and a woodpile that grows
-    SE.drawWoodpile(ctx, 108, 266, SE.save.wood);
+    SE.drawWoodpile(ctx, 100, 256, SE.save.wood);
     if (mode === 'chop' && SE.anims.chop) {
       const frame = s.chopAnim > 0 ? Math.floor(s.chopAnim) % SE.anims.chop.frames : 0;
       SE.drawAnim('chop', SPOT.chop.x, SPOT.chop.y - sz('chop').h, 0, { frame });
@@ -101,11 +101,12 @@
 
     // Waffles: cheering while you chop or shovel, otherwise resting on his tummy
     const cheering = (mode === 'chop' && s.cheer) || mode === 'shovel';
-    if (cheering && SE.anims.dog_happy) {
-      const d = sz('dog_happy');
+    const dA = SE.dogCheer();
+    if (cheering && SE.anims[dA]) {
+      const d = sz(dA);
       const pos = mode === 'shovel' ? { x: 300, y: 266 } : { x: 160, y: 266 };
       const hop = Math.abs(Math.sin(s.t * 6)) * 2;
-      SE.drawAnim('dog_happy', pos.x, pos.y - d.h - hop, s.t * 1.6, { pingpong: true });
+      SE.drawAnim(dA, pos.x, pos.y - d.h - hop, s.t * 1.6, { pingpong: dA === 'dog_happy' });
       if (Math.random() < dt * 0.8) SE.spawnFloater(pos.x + d.w / 2, pos.y - d.h, Math.random() < 0.5 ? 'note' : 'heart');
     } else {
       const pos = mode === 'porch' ? { x: 336, y: 240, flip: true } : mode === 'chop' ? { x: 150, y: 268 } : { x: 236, y: 270, flip: true };

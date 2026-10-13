@@ -31,9 +31,10 @@
     const img = SE.img('props/woodpile');
     if (img) {
       if (count <= 0) return;
-      const k = Math.min(1, 0.25 + count / 16);
-      const h = Math.max(8, Math.round(img.height * k)), w = Math.round(img.width * (0.5 + 0.5 * k));
-      ctx.drawImage(img, Math.round((img.width - w) / 2), img.height - h, w, h, Math.round(x), Math.round(baseY - h), w, h);
+      // the whole stack, standing on the ground with a soft shadow (never sliced)
+      ctx.fillStyle = 'rgba(40,46,90,0.25)';
+      ctx.beginPath(); ctx.ellipse(Math.round(x + img.width / 2), Math.round(baseY - 1), img.width / 2 + 2, 3, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.drawImage(img, Math.round(x), Math.round(baseY - img.height));
       return;
     }
     const n = Math.min(count, 28);
@@ -99,6 +100,23 @@
     return { x: cx - w / 2, y: cy - h / 2, w, h };
   };
 
+  // Waffles celebrates with you: while a success banner is up he barks and grins.
+  SE.dogCheer = () => (SE.anims.dog_bark && SE.celebration && SE.celebration.t < 2.6 ? 'dog_bark' : 'dog_happy');
+
+  // The fish once it is cut: the same sprite in pieces, a small gap at each cut (fractions 0..1).
+  SE.drawFishPieces = function (ctx, species, cx, cy, scale, cook, cuts, gap = 2) {
+    const r = SE.drawFishSprite(ctx, species, -9999, -9999, scale, cook); // renders into the shared canvas
+    const xs = [0, ...cuts.slice().sort((a, b) => a - b), 1];
+    const total = r.w + gap * (xs.length - 2);
+    let dx = Math.round(cx - total / 2);
+    for (let i = 0; i < xs.length - 1; i++) {
+      const a = Math.round(xs[i] * r.w), b = Math.round(xs[i + 1] * r.w);
+      ctx.drawImage(tmp, a, 0, b - a, r.h, dx, Math.round(cy - r.h / 2), b - a, r.h);
+      dx += b - a + gap;
+    }
+    return { x: cx - total / 2, y: cy - r.h / 2, w: total, h: r.h };
+  };
+
   // A caught fish wriggling and gasping (PixelLab animation per species). rot turns it, e.g. -PI/2 to
   // hang it head-up from the line by its mouth. Falls back to the still sprite.
   SE.drawFishWiggle = function (ctx, species, cx, cy, scale, t, rot = 0, speed = 1) {
@@ -112,6 +130,57 @@
     if (rot) ctx.rotate(rot);
     SE.drawAnim(anim, -Math.round((sz.w * scale) / 2), -Math.round((sz.h * scale) / 2), 0, { frame, scale });
     ctx.restore();
+  };
+
+  // Mochi's little life in a room. `surfaces` are the places she can be: { id: [x1, x2, feetY] };
+  // `links` are the jumps between them. Each time a room is entered she is lounging somewhere new;
+  // then she sits, washes herself, lies down, strolls along a counter or hops up onto a shelf.
+  SE.Mochi = function (surfaces, links) {
+    const ids = Object.keys(surfaces);
+    const m = { state: 'rest', t: 0, dur: SE.rand(6, 12), flip: Math.random() < 0.5, pose: SE.pick(['lie', 'lie', 'sit', 'wash']) };
+    const place = (id) => { const [a, b, y] = surfaces[id]; m.surf = id; m.x = SE.rand(a, b); m.y = y; };
+    place(SE.pick(ids));
+    const neighbours = () => links.filter((l) => l.includes(m.surf)).map((l) => (l[0] === m.surf ? l[1] : l[0]));
+    function decide() {
+      const [a, b] = surfaces[m.surf], r = Math.random(), nb = neighbours();
+      m.t = 0;
+      if (r < 0.35 && b - a > 24) { m.state = 'walk'; m.tx = SE.rand(a, b); m.flip = m.tx < m.x; return; }
+      if (r < 0.7 && nb.length) {
+        const to = SE.pick(nb), [c, d, y] = surfaces[to];
+        m.state = 'jump'; m.from = [m.x, m.y]; m.to = [SE.clamp(m.x, c, d), y]; m.toSurf = to; m.flip = m.to[0] < m.x;
+        m.dur = 0.75; return;
+      }
+      m.state = 'rest'; m.pose = SE.pick(['lie', 'sit', 'wash', 'lie']); m.dur = m.pose === 'lie' ? SE.rand(14, 30) : SE.rand(6, 12);
+    }
+    m.update = function (dt) {
+      m.t += dt;
+      if (m.state === 'rest' && m.t > m.dur) decide();
+      else if (m.state === 'walk') {
+        const d = m.tx - m.x, step = 15 * dt;
+        if (Math.abs(d) <= step) { m.x = m.tx; m.state = 'rest'; m.t = 0; m.pose = SE.pick(['sit', 'lie', 'wash']); m.dur = SE.rand(5, 14); }
+        else m.x += Math.sign(d) * step;
+      } else if (m.state === 'jump') {
+        const k = Math.min(1, m.t / m.dur);
+        m.x = SE.lerp(m.from[0], m.to[0], k);
+        const lift = Math.max(14, m.from[1] - m.to[1] + 12);
+        m.y = SE.lerp(m.from[1], m.to[1], k) - Math.sin(k * Math.PI) * lift * (m.to[1] < m.from[1] ? 1 : 0.5);
+        if (k >= 1) { m.y = m.to[1]; m.surf = m.toSurf; m.state = 'rest'; m.t = 0; m.pose = SE.pick(['sit', 'wash']); m.dur = SE.rand(4, 9); }
+      }
+    };
+    // draws her (feet at m.y) and returns her box for petting hotspots
+    m.draw = function () {
+      let anim = 'cat_sit', frame = 0;
+      if (m.state === 'walk' && SE.anims.cat_walk) { anim = 'cat_walk'; frame = Math.floor(m.t * 10) % SE.anims.cat_walk.frames; }
+      else if (m.state === 'jump' && SE.anims.cat_jump) { anim = 'cat_jump'; frame = Math.min(SE.anims.cat_jump.frames - 1, Math.floor((m.t / m.dur) * SE.anims.cat_jump.frames)); }
+      else if (m.pose === 'lie' && SE.anims.cat_lie) { anim = 'cat_lie'; const n = SE.anims.cat_lie.frames, c = n * 2 - 2; let f = Math.floor(m.t * 2) % c; if (f >= n) f = c - f; frame = f; }
+      else if (m.pose === 'wash' && SE.anims.cat_sit) { frame = Math.floor(m.t * 5) % SE.anims.cat_sit.frames; }
+      if (!SE.anims[anim]) return null;
+      const sz = SE.animSize(anim);
+      const x = Math.round(m.x - sz.w / 2), y = Math.round(m.y - sz.h);
+      SE.drawAnim(anim, x, y, 0, { frame, flip: m.flip });
+      return { x, y, w: sz.w, h: sz.h };
+    };
+    return m;
   };
 
   // Petting close-up: stroke the animal with the mouse to fill the happiness meter.

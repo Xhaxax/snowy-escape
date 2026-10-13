@@ -197,9 +197,42 @@
   // ------------------------------------------------------------ cooking fish
   function startCook(fish) {
     mode = 'cook';
-    g = { stage: 'chop', fish, seq: Array.from({ length: 5 }, () => SE.pick(ARROW_KEYS)), i: 0, wobble: 0, cuts: [], herbs: [], done1: 0, side: 0, scores: [], knife: 0, sizzle: null, t: 0 };
+    g = { cutIn: 2.6, paw: { t: 0, next: SE.rand(3, 6) }, stage: 'chop', fish, seq: Array.from({ length: 5 }, () => SE.pick(ARROW_KEYS)), i: 0, wobble: 0, cuts: [], herbs: [], done1: 0, side: 0, scores: [], knife: 0, sizzle: null, t: 0 };
   }
   const drawFish = (ctx, cx, cy, scale, cook) => SE.drawFishSprite(ctx, g.fish, cx, cy, scale, cook);
+  // Mochi cannot help herself: now and then her paw sneaks in toward the fish, then pulls back
+  function drawPaw(ctx, dt, f) {
+    const p = g.paw, img = SE.img('props/paw');
+    if (!img) return;
+    p.t += dt;
+    if (p.t < p.next) return;
+    const k = (p.t - p.next) / 2.2; // reach out, hover, pull back
+    if (k >= 1) { p.t = 0; p.next = SE.rand(5, 9); return; }
+    const reach = Math.sin(Math.min(1, k) * Math.PI);
+    const x = Math.round(CARD.x + CARD.w - 18 - reach * Math.min(70, CARD.x + CARD.w - (f.x + f.w) + 30)), y = Math.round(f.y + f.h * 0.4);
+    ctx.save(); ctx.translate(x + img.width, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore();
+    if (k > 0.45 && k < 0.5 && !p.mew) { p.mew = true; SE.audio.sfx('pop'); }
+    if (k > 0.9) p.mew = false;
+  }
+  // where the pan's cooking surface is in the kitchen_pan art (centre and radii)
+  const PAN = { x: 112, y: 62, rx: 50, ry: 20 };
+  // hot oil: little bubbles that swell, pop and leave a glint, all over the pan around the fish
+  const oil = [];
+  function drawOil(ctx, dt, px, py) {
+    if (oil.length < 40 && Math.random() < dt * 30) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
+      oil.push({ x: px + Math.cos(a) * r * PAN.rx * 0.9, y: py + Math.sin(a) * r * PAN.ry * 0.9, t: 0, life: SE.rand(0.4, 1.1), big: Math.random() < 0.3 });
+    }
+    for (let i = oil.length - 1; i >= 0; i--) {
+      const b = oil[i]; b.t += dt;
+      if (b.t > b.life) { oil.splice(i, 1); if (Math.random() < 0.15) SE.spawnFloater(b.x, b.y - 2, 'spark', '#fff4d6'); continue; }
+      const k = b.t / b.life, s = b.big ? 2 : 1;
+      ctx.fillStyle = `rgba(255,214,120,${0.7 * (1 - k)})`;
+      ctx.fillRect(Math.round(b.x), Math.round(b.y), s + (k > 0.6 ? 1 : 0), s);
+      ctx.fillStyle = `rgba(255,250,225,${0.9 * (1 - k)})`;
+      ctx.fillRect(Math.round(b.x), Math.round(b.y), 1, 1);
+    }
+  }
 
   function autoCook(dt) {
     g.tap = false;
@@ -229,9 +262,19 @@
       ctx.fillStyle = '#2b1d2a'; ctx.fillRect(cx - 82, cy - 34, 164, 68);
       ctx.fillStyle = '#c99a62'; ctx.fillRect(cx - 80, cy - 32, 160, 64);
       ctx.fillStyle = '#b58650'; for (let i = 0; i < 5; i++) ctx.fillRect(cx - 80, cy - 26 + i * 13, 160, 1);
-      const f = drawFish(ctx, cx, cy, 3, 0);
-      ctx.fillStyle = '#5a3a3a';
-      for (const c of g.cuts) ctx.fillRect(Math.round(f.x + f.w * c), Math.round(f.y + 6), 1, f.h - 12);
+      // a close look first: his hands cutting the fish on the board (a short cut-in)
+      if (g.stage === 'chop' && g.cutIn > 0 && SE.anims.kitchen_cut) {
+        g.cutIn -= dt;
+        const sz = SE.animSize('kitchen_cut');
+        // one still frame (Coffee Talk style): the picture and the chopping sounds do the rest
+        if (Math.floor(g.cutIn * 3) !== Math.floor((g.cutIn + dt) * 3)) SE.audio.sfx('chop');
+        SE.drawAnim('kitchen_cut', Math.round(cx - sz.w / 2), CARD.y + 44, 0, { frame: 0 });
+        return;
+      }
+      // while cutting: cut lines; once it is cut (seasoning) the pieces lie apart on the board
+      const f = g.stage === 'chop' ? drawFish(ctx, cx, cy, 3, 0) : SE.drawFishPieces(ctx, g.fish, cx, cy, 3, 0, g.cuts, 3);
+      if (g.stage === 'chop') { ctx.fillStyle = '#5a3a3a'; for (const c of g.cuts) ctx.fillRect(Math.round(f.x + f.w * c), Math.round(f.y + 6), 1, f.h - 12); }
+      drawPaw(ctx, dt, f);
       for (const h of g.herbs) { ctx.fillStyle = h.c; ctx.fillRect(Math.round(h.x), Math.round(h.y), 1, 1); }
       if (g.stage === 'chop') {
         g.knife = Math.max(0, g.knife - dt * 4);
@@ -269,16 +312,19 @@
         SE.drawIcon('heart', SE.mouse.x - 4, SE.mouse.y - 12, '#7fd38a'); ctx.restore();
       }
     } else if (g.stage === 'fry') {
-      // stove-top pan
-      ctx.fillStyle = '#2b1d2a'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 72, 34, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#3d3a44'; ctx.beginPath(); ctx.ellipse(cx, cy + 2, 68, 30, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#4c4955'; ctx.beginPath(); ctx.ellipse(cx, cy, 60, 24, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#2b1d2a'; ctx.fillRect(cx + 66, cy - 2, 50, 8);
-      ctx.fillStyle = '#5a3a2a'; ctx.fillRect(cx + 70, cy - 1, 44, 6);
+      // the PixelLab cast-iron pan on the wood stove; the fish sizzles in bubbling oil
+      let px = cx, py = cy;
+      if (SE.img('kitchen_pan')) {
+        const img = SE.img('kitchen_pan');
+        const ix = Math.round(cx - img.width / 2), iy = CARD.y + 50;
+        SE.drawImg('kitchen_pan', ix, iy);
+        px = ix + PAN.x; py = iy + PAN.y;
+      }
       g.pos += dt * 0.11;
       const cookLevel = (g.side === 0 ? g.pos : 0.65 + g.pos * 0.3) * 0.9;
-      drawFish(ctx, cx, cy - 2 + Math.sin(SE.time * 20) * 0.4, 2, cookLevel);
-      if (Math.random() < dt * 14) SE.spawnFloater(cx + SE.rand(-40, 40), cy - 6, 'spark', '#fff4d6');
+      drawOil(ctx, dt, px, py);
+      SE.drawFishPieces(ctx, g.fish, px, py - 2 + Math.sin(SE.time * 20) * 0.4, 2, cookLevel, g.cuts, 2);
+      if (Math.random() < dt * 10) SE.spawnFloater(px + SE.rand(-PAN.rx * 0.7, PAN.rx * 0.7), py - 6, 'spark', '#fff4d6');
       // doneness bar
       const bx = cx - 90, by = CARD.y + 38, bw = 180;
       const zones = [[0, 0.5, '#e6a3a3'], [0.5, 0.58, '#e8c27a'], [0.58, 0.74, '#7fd38a'], [0.74, 0.86, '#e8c27a'], [0.86, 1, '#a0643c']];
@@ -302,7 +348,7 @@
       ctx.fillStyle = '#f2ece2'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 61, 27, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ddd3c4'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 46, 18, 0, 0, Math.PI * 2); ctx.fill();
       if (SE.img('item_dish')) SE.drawImg('item_dish', cx - SE.img('item_dish').width, cy - SE.img('item_dish').height + 8, { scale: 2 });
-      else drawFish(ctx, cx, cy, 2, 0.7);
+      else SE.drawFishPieces(ctx, g.fish, cx, cy, 2, 0.7, g.cuts, 2);
       const stars = g.stars;
       for (let i = 0; i < 3; i++) SE.drawIcon('heart', cx - 18 + i * 13, CARD.y + 36, i < stars ? '#ffd166' : '#5d5577', 1);
       SE.text(`Pan-fried ${g.fish}`, cx, CARD.y + CARD.h - 44, { align: 'center', size: 10, color: '#ffe6b8' });
@@ -360,15 +406,18 @@
       }
       return;
     }
-    const anim = SE.anims.cat_sit ? 'cat_sit' : null;
-    if (!anim) return;
-    const sz = SE.animSize(anim);
-    SE.drawAnim(anim, 168, 153 - sz.h, SE.time * 0.6, { pingpong: true });
+    if (!kmochi) kmochi = SE.Mochi(KCAT_SURF, KCAT_LINKS);
+    kmochi.update(dt);
+    kmochi.draw();
   }
+  // Mochi in the kitchen: the back counter, the island, the window sill, the shelf, the floor
+  const KCAT_SURF = { counter: [180, 345, 156], island: [192, 248, 188], sill: [280, 318, 134], shelf: [196, 222, 62], floor: [150, 330, 262], right: [448, 476, 158] };
+  const KCAT_LINKS = [['floor', 'island'], ['island', 'counter'], ['counter', 'sill'], ['counter', 'shelf'], ['floor', 'counter']];
+  let kmochi = null;
 
   // ------------------------------------------------------------ scene
   SE.addScene('kitchen', {
-    enter() { mode = 'idle'; SE.cardOpen = false; SE.audio.setMusic('cabin'); },
+    enter() { mode = 'idle'; kmochi = null; SE.cardOpen = false; SE.audio.setMusic('cabin'); },
     exit() { SE.cardOpen = false; if (g && g.sizzle) g.sizzle.stop(); if (g && g.pour) g.pour.stop(); },
     update(dt) {
       SE.audio.setAmbience({ fire: SE.save.stove * 0.6, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.6 : 0, muffled: true });

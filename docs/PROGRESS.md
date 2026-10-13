@@ -36,6 +36,19 @@
   on characters too), storm overcast over skies, howling wind gusts, characters shiver in cold wind, trees sway
   (row-shear of tree regions per background). PixelLab chimney smoke puffs, snow heaps, woodpile.
 
+## Latest requests (end of this session, not done yet)
+- **Mochi has more life now** (SE.Mochi in src/actors.js: random spot per visit in cabin/kitchen, sit / wash / lie,
+  walks along surfaces, jumps between linked spots) but she is always seen from the side. Give her more directions/
+  poses (front-facing loaf, curled up asleep, stretching, lap cuddle on the couch with the canonical traveler).
+- **Cooking presentation, Coffee Talk style**: show single beautiful still frames for steps (the cutting step now opens
+  with one still: assets/img/kitchen_cut.png) and let sound carry the action. Research how Coffee Talk stages its
+  drink-making with stills + sound + small UI motion and apply it to the cocoa and cooking steps (descale, head/fins
+  off, fillet = a few stills rather than animation).
+- New Waffles (Berni v2 character 98faef20…): dog_happy = idle, dog_bark = bark; he barks while a success banner is
+  up (SE.dogCheer). Petting close-up uses the new idle at 3x — check it reads well.
+- Mochi's paw sneaks into the cut/season card (assets/img/props/paw.png) — only appears once that sprite exists
+  (PixelLab job 08fc4131… had 64 candidates, pick one and save it as props/paw.png).
+
 ## Next
 1. Remaining old (non-canonical) traveler sprites: couch_sit (also has the old big Mochi on the lap), chop, porch
    rocking chair, shovel, kitchen poses. Regenerate from the canonical character at each scene's scale.

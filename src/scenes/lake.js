@@ -89,7 +89,8 @@
       } else SE.drawActorFallback(ctx, POS.man.x + 20, POS.man.y - 40, '#a0522d');
       // Waffles keeps you company: resting, then sitting up when a fish bites
       if (s.state === 'nibble' || s.mini || s.card || s.land || s.miss) {
-        if (SE.anims.dog_happy) { const sz = SE.animSize('dog_happy'); SE.drawAnim('dog_happy', POS.dog.x + 10, POS.dog.y - sz.h, s.t * 1.6, { pingpong: true }); }
+        const dA = SE.dogCheer();
+        if (SE.anims[dA]) { const sz = SE.animSize(dA); SE.drawAnim(dA, POS.dog.x + 10, POS.dog.y - sz.h, s.t * 1.6, { pingpong: dA === 'dog_happy' }); }
       } else SE.drawDogRest(POS.dog.x - 16 + SE.weather.shiver(1), POS.dog.y + 2, { seed: 2 });
 
       // night and weather light fall on everyone in the scene, not just the background
