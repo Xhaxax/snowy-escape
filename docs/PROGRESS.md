@@ -83,3 +83,9 @@
   (crop, inpaint, paste back).
 - Local test: `npx http-server -p 8123 .` then `NODE_PATH=$(npm root -g) node tools/screenshots.cjs`
   (CHROME=/opt/pw-browsers/chromium in the cloud container). Rebuild the valley ground with `python3 tools/build_world.py`.
+
+
+## Mobile / touch (iPhone)
+- `src/touch.js`: turns on with the first touch (or `?touch`). Floating thumb-stick on the left of the valley (push to the rim to hurry), tap the place card to go in, hold button to back away from a bear. Other scenes were already tap-friendly.
+- Engine: `SE.pointerFilter` lets touch controls claim a pointer; `SE.vkeys` feeds `SE.held`; audio also unlocks on pointerup (iOS); `navigator.audioSession.type = 'playback'` so sound plays with the silent switch on.
+- index.html: viewport-fit=cover, no zoom / text selection, a "turn your phone sideways" card in portrait.

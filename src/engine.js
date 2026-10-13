@@ -51,30 +51,40 @@ SE.resize = function () {
 window.addEventListener('resize', SE.resize);
 
 // ---------------------------------------------------------------- input
-function toLogical(e) {
+function logical(e) {
   const r = SE.canvas.getBoundingClientRect();
-  SE.mouse.x = ((e.clientX - r.left) / r.width) * SE.W;
-  SE.mouse.y = ((e.clientY - r.top) / r.height) * SE.H;
+  return [((e.clientX - r.left) / r.width) * SE.W, ((e.clientY - r.top) / r.height) * SE.H];
 }
+function toLogical(e) {
+  [SE.mouse.x, SE.mouse.y] = logical(e);
+}
+// on-screen touch controls (src/touch.js) may claim a pointer before it becomes the "mouse"
+SE.vkeys = new Set();
+const claimed = (type, e) => !!(SE.pointerFilter && SE.pointerFilter(type, e, ...logical(e)));
 SE.canvas.addEventListener('pointermove', (e) => {
+  if (claimed('move', e)) return;
   const ox = SE.mouse.x, oy = SE.mouse.y;
   toLogical(e);
   SE.mouse.moved += Math.hypot(SE.mouse.x - ox, SE.mouse.y - oy);
   SE.idleTime = 0;
 });
 SE.canvas.addEventListener('pointerdown', (e) => {
+  if (SE.audio) SE.audio.unlock();
+  SE.idleTime = 0;
+  SE.canvas.setPointerCapture(e.pointerId);
+  if (claimed('down', e)) return;
   toLogical(e);
   SE.mouse.down = true;
   SE.mouse.pressed = true;
-  SE.idleTime = 0;
-  SE.canvas.setPointerCapture(e.pointerId);
-  if (SE.audio) SE.audio.unlock();
 });
 SE.canvas.addEventListener('pointerup', (e) => {
+  if (SE.audio) SE.audio.unlock(); // iOS only lets sound start on the touch's release
+  if (claimed('up', e)) return;
   toLogical(e);
   SE.mouse.down = false;
   SE.mouse.released = true;
 });
+SE.canvas.addEventListener('pointercancel', (e) => { if (!claimed('up', e)) SE.mouse.down = false; });
 SE.canvas.addEventListener('wheel', (e) => { SE.mouse.wheel += Math.sign(e.deltaY); }, { passive: true });
 SE.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 window.addEventListener('keydown', (e) => {
@@ -88,7 +98,7 @@ window.addEventListener('keyup', (e) => SE.keys.delete(e.code));
 window.addEventListener('blur', () => { SE.keys.clear(); SE.mouse.down = false; });
 SE.key = (code) => SE.keysPressed.has(code);
 SE.anyKey = (...codes) => codes.some((c) => SE.keysPressed.has(c));
-SE.held = (...codes) => codes.some((c) => SE.keys.has(c));
+SE.held = (...codes) => codes.some((c) => SE.keys.has(c) || SE.vkeys.has(c));
 
 // ---------------------------------------------------------------- assets
 SE.loadImages = function (list) {

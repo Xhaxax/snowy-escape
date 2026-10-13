@@ -380,7 +380,7 @@
     if (!s.pop.id || s.pop.a < 0.03) return;
     const p = SE.PLACES[s.pop.id];
     const go = s.pop.id === 'cabin' ? 'go home' : 'go in';
-    const hint = `E · Enter: ${go}`;
+    const hint = SE.touch.on ? `Tap here: ${go}` : `E · Enter: ${go}`;
     const w = Math.max(SE.measure(p.label, 10), SE.measure(p.desc, 7), SE.measure(hint, 7) + 40) + 20;
     const x = SE.W / 2 - w / 2, y = 30 - (1 - s.pop.a) * 8;
     SE.panel(x, y, w, 42, { alpha: s.pop.a, fill: 'rgba(48,40,70,0.94)' });
@@ -414,7 +414,12 @@
       SE.text(msg, SE.W / 2, SE.H - 20, { align: 'center', size: 8 });
       return;
     }
-    if (SE.sceneTime < 10 && s.moved < 30) SE.text('WASD or arrow keys to walk · hold Shift to hurry · E to go in', SE.W / 2, SE.H - 16, { align: 'center', size: 8, color: '#fff7ea', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
+    if (SE.sceneTime < 10 && s.moved < 30) {
+      const tip = SE.touch.on ? 'Drag on the left to walk · tap the card to go in' : 'WASD or arrow keys to walk · hold Shift to hurry · E to go in';
+      const cx = SE.W / 2 + (SE.touch.on ? 30 : 0), w = SE.measure(tip, 8) + 14; // touch: clear of the stick
+      SE.panel(cx - w / 2, SE.H - 22, w, 15, { alpha: 0.85 });
+      SE.text(tip, cx, SE.H - 18, { align: 'center', size: 8, color: '#fff7ea', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
+    }
     if (!s.follow && SE.button(SE.W - 96, SE.H - 24, 90, 18, 'Find us')) s.follow = true;
   }
 })();

@@ -42,6 +42,7 @@
   }
 
   SE.addScene('encounter', {
+    retreating: () => !!s && s.state === 'retreat',
     enter(p) {
       const kind = ANIMALS[p.animal] ? p.animal : 'deer';
       const A = ANIMALS[kind];
@@ -116,7 +117,7 @@
     s.state = 'meet';
     s.animT = 0;
     SE.audio.sfx('woof');
-    s.msg = { text: 'The bear rises up and huffs. Back away slowly — hold ← or A.', color: '#ffb3a3', t: 0 };
+    s.msg = { text: `The bear rises up and huffs. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A'}.`, color: '#ffb3a3', t: 0 };
   }
   function drawAnimal(ctx) {
     const A = s.A;
@@ -194,7 +195,7 @@
     const A = s.A, by = SE.H - 24;
     if (A.bear && s.mood === 'agitated') {
       s.state = 'retreat'; s.back = 0;
-      if (!s.msg) s.msg = { text: 'The bear is agitated. Back away slowly — hold ← or A (no rushing).', color: '#ffb3a3', t: 0 };
+      if (!s.msg) s.msg = { text: `The bear is agitated. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A (no rushing)'}.`, color: '#ffb3a3', t: 0 };
       return;
     }
     const items = [

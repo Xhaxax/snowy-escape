@@ -36,6 +36,8 @@
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    // iPhone: play through the silent switch like a game, not like a ringtone
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = 0.9;
