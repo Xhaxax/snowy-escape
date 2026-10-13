@@ -22,3 +22,23 @@
 2. Cinematic idle scenes: choreographed loops (walks between marks, Mochi lap hop,
    Waffles fetch/pets/naps) that still allow interaction.
 3. Summit pair from behind + forest hide sprite; a few animals on the big map.
+
+## New direction from the user (next sessions)
+- A beautiful pixel UI that fits the PixelLab art (panels, buttons, icons, font) and a full Settings screen.
+- Idle scenes must feel like a movie / video, not sprites pasted onto backgrounds:
+  - Scenes have *events*: e.g. a rustling in a tree → the traveler takes his binoculars → a cinematic
+    close-up of a cardinal plays. Animals are not always visible; they walk/fly in and leave.
+  - Characters must be integrated into the scene (lighting, shadows, scale, perspective), e.g. at the
+    lake he must look like he is really there.
+- Production pipeline to follow (from the user's art-direction prompt):
+  1. One explicit view + one fixed light source per scene; consistent pixel density (no mixels).
+  2. Background first with Create Image Pro, prompt includes "no characters".
+  3. Inpaint the character into the background at its spawn area (Inpaint Pro / v3), output to its own
+     layer, remove background to isolate it, add a dedicated ground-shadow layer.
+  4. Seamless idle loops: interpolate with identical first and last frame (8-16 frames, subtle motion).
+  5. Animate environmental regions in isolation (water, fire, lamp glow): mask the region, animate,
+     freeze every other pixel to avoid background flicker.
+  6. Quantize every animation to the scene palette (~30 colours) to stop frame-to-frame colour shift;
+     max 3 shades per material, warm highlights / cool shadows, consistent outline rules,
+     pixel-correct stray pixels.
+  7. Final composition as layers: Background, Environment animations, Ground shadows, Characters.
