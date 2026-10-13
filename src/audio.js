@@ -218,6 +218,10 @@
       [[1, 0.07], [2.0, 0.035], [2.4, 0.03], [3.0, 0.02], [4.2, 0.012]].forEach(([k, g]) => tone(t, 220 * k, 3.2 / Math.sqrt(k), { type: 'sine', gain: g, send: 0.9, attack: 0.005 }));
     },
     whoosh(t) { noiseBurst(t, 0.6, { type: 'bandpass', freq: 400, freqEnd: 1800, q: 1.2, gain: 0.1, attack: 0.25 }); },
+    // a knife scraping scales off a fish: quick rasping strokes
+    scrape(t) {
+      for (let i = 0; i < 3; i++) noiseBurst(t + i * 0.16, 0.12, { type: 'bandpass', freq: 2600, freqEnd: 4200, q: 3, gain: 0.09, attack: 0.01 });
+    },
     sip(t) { noiseBurst(t, 0.35, { type: 'bandpass', freq: 900, freqEnd: 500, q: 3, gain: 0.08, attack: 0.08 }); },
   };
   const FILE_FOR = { pop: 'sfx_pop', chime: 'sfx_chime', splash: 'sfx_splash', reel: 'sfx_reel', chop: 'sfx_chop',

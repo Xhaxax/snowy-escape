@@ -200,6 +200,12 @@
     g = { cutIn: 2.6, paw: { t: 0, next: SE.rand(3, 6) }, stage: 'chop', fish, seq: Array.from({ length: 5 }, () => SE.pick(ARROW_KEYS)), i: 0, wobble: 0, cuts: [], herbs: [], done1: 0, side: 0, scores: [], knife: 0, sizzle: null, t: 0 };
   }
   const drawFish = (ctx, cx, cy, scale, cook) => SE.drawFishSprite(ctx, g.fish, cx, cy, scale, cook);
+  // once filleted, the fish is two neat fillets (PixelLab sprite), browning as they cook
+  SE.FOOD = Object.assign(SE.FOOD || {}, { fillet: { color: '#f2a08a', size: 1, img: 'props/fillet' } });
+  function drawFillets(ctx, x, y, scale, cook) {
+    if (SE.img('props/fillet')) return SE.drawFishSprite(ctx, 'fillet', x, y, scale, cook);
+    return SE.drawFishPieces(ctx, g.fish, x, y, scale, cook, g.cuts, 3);
+  }
   // Mochi cannot help herself: now and then her paw sneaks in toward the fish, then pulls back
   function drawPaw(ctx, dt, f) {
     const p = g.paw, img = SE.img('props/paw');
@@ -262,6 +268,8 @@
       ctx.fillStyle = '#2b1d2a'; ctx.fillRect(cx - 82, cy - 34, 164, 68);
       ctx.fillStyle = '#c99a62'; ctx.fillRect(cx - 80, cy - 32, 160, 64);
       ctx.fillStyle = '#b58650'; for (let i = 0; i < 5; i++) ctx.fillRect(cx - 80, cy - 26 + i * 13, 160, 1);
+      // a still panel between cuts (descaling, head and fins off, the fillets): sound does the rest
+      if (g.panel) { if (g.panel.draw(ctx, dt)) return; g.panel = null; if (g.afterPanel) { g.afterPanel(); g.afterPanel = null; } }
       // a close look first: his hands cutting the fish on the board (a short cut-in)
       if (g.stage === 'chop' && g.cutIn > 0 && SE.anims.kitchen_cut) {
         g.cutIn -= dt;
@@ -272,7 +280,7 @@
         return;
       }
       // while cutting: cut lines; once it is cut (seasoning) the pieces lie apart on the board
-      const f = g.stage === 'chop' ? drawFish(ctx, cx, cy, 3, 0) : SE.drawFishPieces(ctx, g.fish, cx, cy, 3, 0, g.cuts, 3);
+      const f = g.stage === 'chop' ? drawFish(ctx, cx, cy, 3, 0) : drawFillets(ctx, cx, cy, 3, 0);
       if (g.stage === 'chop') { ctx.fillStyle = '#5a3a3a'; for (const c of g.cuts) ctx.fillRect(Math.round(f.x + f.w * c), Math.round(f.y + 6), 1, f.h - 12); }
       drawPaw(ctx, dt, f);
       for (const h of g.herbs) { ctx.fillStyle = h.c; ctx.fillRect(Math.round(h.x), Math.round(h.y), 1, 1); }
@@ -296,7 +304,13 @@
         if (pressed) {
           if (pressed === g.seq[g.i]) {
             g.cuts.push(0.2 + g.i * 0.14); g.i++; g.knife = 1; SE.audio.sfx('chop');
-            if (g.i >= g.seq.length) { g.stage = 'season'; SE.toast('Neatly cut!'); }
+            const panelAt = { x: cx, y: CARD.y + 40 };
+            if (g.i === 2) g.panel = SE.Panel({ img: 'kitchen_scale', ...panelAt, dur: 2.4, caption: 'Scales off, against the grain…', sounds: [[0.15, 'scrape'], [0.7, 'scrape'], [1.25, 'scrape']] });
+            if (g.i === 4) g.panel = SE.Panel({ img: 'kitchen_head', ...panelAt, dur: 2.2, caption: 'Head and fins off.', sounds: [[0.2, 'chop'], [0.75, 'chop'], [1.2, 'chop']] });
+            if (g.i >= g.seq.length) {
+              g.panel = SE.Panel({ img: 'kitchen_fillet', ...panelAt, dur: 2.6, caption: 'Two neat fillets.', sounds: [[0.25, 'stir'], [1.0, 'soft']] });
+              g.afterPanel = () => { g.stage = 'season'; SE.toast('Neatly cut!'); };
+            }
           } else { g.wobble = 1; SE.audio.sfx('click'); }
         }
       } else {
@@ -323,7 +337,7 @@
       g.pos += dt * 0.11;
       const cookLevel = (g.side === 0 ? g.pos : 0.65 + g.pos * 0.3) * 0.9;
       drawOil(ctx, dt, px, py);
-      SE.drawFishPieces(ctx, g.fish, px, py - 2 + Math.sin(SE.time * 20) * 0.4, 2, cookLevel, g.cuts, 2);
+      drawFillets(ctx, px, py - 2 + Math.sin(SE.time * 20) * 0.4, 2, cookLevel);
       if (Math.random() < dt * 10) SE.spawnFloater(px + SE.rand(-PAN.rx * 0.7, PAN.rx * 0.7), py - 6, 'spark', '#fff4d6');
       // doneness bar
       const bx = cx - 90, by = CARD.y + 38, bw = 180;
@@ -348,7 +362,7 @@
       ctx.fillStyle = '#f2ece2'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 61, 27, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ddd3c4'; ctx.beginPath(); ctx.ellipse(cx, cy + 4, 46, 18, 0, 0, Math.PI * 2); ctx.fill();
       if (SE.img('item_dish')) SE.drawImg('item_dish', cx - SE.img('item_dish').width, cy - SE.img('item_dish').height + 8, { scale: 2 });
-      else SE.drawFishPieces(ctx, g.fish, cx, cy, 2, 0.7, g.cuts, 2);
+      else drawFillets(ctx, cx, cy, 2, 0.7);
       const stars = g.stars;
       for (let i = 0; i < 3; i++) SE.drawIcon('heart', cx - 18 + i * 13, CARD.y + 36, i < stars ? '#ffd166' : '#5d5577', 1);
       SE.text(`Pan-fried ${g.fish}`, cx, CARD.y + CARD.h - 44, { align: 'center', size: 10, color: '#ffe6b8' });

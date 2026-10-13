@@ -155,11 +155,14 @@
 
   function drawCouch(ctx, dt) {
     const r = bottomOf('couch_sit', POS.couch.x, POS.couch.y);
+    // the coffee table stands in front of him: hide whatever of the sprite is below its top edge
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SE.W, 196); ctx.clip();
     if (SE.anims.couch_sit) SE.drawAnim('couch_sit', r.x, r.y, SE.time * 0.55, { pingpong: true });
-    else SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
+    ctx.restore();
+    if (!SE.anims.couch_sit) SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
     // steam from the mug
     sip = Math.max(0, sip - dt);
-    const mug = { x: r.x + r.w * 0.62, y: r.y + r.h * 0.42 };
+    const mug = { x: r.x + 22, y: r.y + 36 }; // the mug in his hands (couch_sit art)
     if (sips < 6 && Math.random() < dt * (sip > 0 ? 10 : 3)) steam.push({ x: mug.x + SE.rand(-2, 2), y: mug.y, t: 0 });
     for (let i = steam.length - 1; i >= 0; i--) {
       const p = steam[i];

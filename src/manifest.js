@@ -25,8 +25,8 @@ window.SE_MANIFEST = {
    "fps": 6.0
   },
   "couch_sit": {
-   "frames": 9,
-   "fps": 5.0
+   "frames": 8,
+   "fps": 4.0
   },
   "dog_happy": {
    "frames": 8,
@@ -215,6 +215,22 @@ window.SE_MANIFEST = {
   "dog_bark": {
    "frames": 6,
    "fps": 8.0
+  },
+  "cat_lie_s": {
+   "frames": 10,
+   "fps": 3.0
+  },
+  "cat_wash_s": {
+   "frames": 12,
+   "fps": 5.0
+  },
+  "cat_yawn_s": {
+   "frames": 10,
+   "fps": 6.0
+  },
+  "cat_stretch": {
+   "frames": 11,
+   "fps": 7.0
   }
  }
 };

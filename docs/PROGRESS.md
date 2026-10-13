@@ -36,22 +36,24 @@
   on characters too), storm overcast over skies, howling wind gusts, characters shiver in cold wind, trees sway
   (row-shear of tree regions per background). PixelLab chimney smoke puffs, snow heaps, woodpile.
 
-## Latest requests (end of this session, not done yet)
-- **Mochi has more life now** (SE.Mochi in src/actors.js: random spot per visit in cabin/kitchen, sit / wash / lie,
-  walks along surfaces, jumps between linked spots) but she is always seen from the side. Give her more directions/
-  poses (front-facing loaf, curled up asleep, stretching, lap cuddle on the couch with the canonical traveler).
-- **Cooking presentation, Coffee Talk style**: show single beautiful still frames for steps (the cutting step now opens
-  with one still: assets/img/kitchen_cut.png) and let sound carry the action. Research how Coffee Talk stages its
-  drink-making with stills + sound + small UI motion and apply it to the cocoa and cooking steps (descale, head/fins
-  off, fillet = a few stills rather than animation).
-- New Waffles (Berni v2 character 98faef20…): dog_happy = idle, dog_bark = bark; he barks while a success banner is
-  up (SE.dogCheer). Petting close-up uses the new idle at 3x — check it reads well.
-- Mochi's paw sneaks into the cut/season card (assets/img/props/paw.png) — only appears once that sprite exists
-  (PixelLab job 08fc4131… had 64 candidates, pick one and save it as props/paw.png).
+## Done in the follow-up session
+- **Mochi**: front-facing poses (loaf, washing, yawn) mixed with side poses, a long stretch after lying down, yawns;
+  each rest picks a facing. Her paw (props/paw.png) sneaks into the cut/season card.
+- **Couch**: new canonical traveler with cocoa and the small Mochi asleep in his lap (couch_sit, PixelLab loop),
+  clipped behind the coffee table; steam comes from his mug.
+- **Cooking, Coffee Talk style**: research notes — Coffee Talk keeps brewing to a few clear steps (base, primary,
+  secondary ingredient) with a preview before committing, uses short comic-panel interludes (split screen, gentle
+  camera pans) rather than full animation, and lets sound carry the action (the machine beeps give the flow). Applied:
+  `SE.Panel` (src/actors.js) shows one still that slides in, drifts 1–2 px and plays timed sounds. The chop step is
+  now: still of the hands at the board → cuts → descaling panel (scrape sounds) → head & fins panel (chops) → fillet
+  panel → season/fry/plate use a PixelLab fillet sprite (props/fillet.png) instead of the whole fish.
+
+## Still open from the user's requests
+- Coffee Talk treatment for the cocoa steps (pour / scoop / marshmallows as stills + sound).
+- Mochi from more angles while walking (only side walk exists) and a proper lap-hop when he sits down.
 
 ## Next
-1. Remaining old (non-canonical) traveler sprites: couch_sit (also has the old big Mochi on the lap), chop, porch
-   rocking chair, shovel, kitchen poses. Regenerate from the canonical character at each scene's scale.
+1. Remaining old (non-canonical) traveler sprites: chop, porch rocking chair, shovel. Regenerate from the canonical character at each scene's scale.
 2. Petting close-up still uses cat_sit at 3x (now the new Mochi); maybe a dedicated close-up sprite.
 3. Cinematic idle scenes: choreographed loops (walks between marks, Mochi lap hop, Waffles fetch/pets/naps).
 4. Beautiful pixel UI (panels, buttons, icons, font) and a full Settings screen.

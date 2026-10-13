@@ -83,7 +83,7 @@
   // Fish sprite tinted per species (and browned while cooking), drawn via an offscreen canvas.
   const tmp = document.createElement('canvas');
   SE.drawFishSprite = function (ctx, species, cx, cy, scale, cook = 0, flip = false) {
-    const info = SE.FISH[species] || { color: '#ccc', size: 1 };
+    const info = SE.FISH[species] || (SE.FOOD && SE.FOOD[species]) || { color: '#ccc', size: 1 };
     const img = SE.img(info.img);
     const w = (img ? img.width : 32) * scale, h = (img ? img.height : 14) * scale;
     tmp.width = w; tmp.height = h;
@@ -132,52 +132,101 @@
     ctx.restore();
   };
 
+  // A still "comic panel" (Coffee Talk style): one beautiful frame slides in over a card, drifts a
+  // couple of pixels like a slow camera pan, and lets timed sounds carry the action; then it fades.
+  // opts: { img, x, y, dur, caption, sounds: [[seconds, sfxName], ...] }. Returns true while showing.
+  SE.Panel = function (opts) {
+    const p = { t: 0, ...opts, played: new Set() };
+    p.draw = function (ctx, dt) {
+      p.t += dt;
+      const img = SE.img(p.img);
+      if (!img || p.t > p.dur) return false;
+      for (const [i, [at, name]] of (p.sounds || []).entries()) if (p.t >= at && !p.played.has(i)) { p.played.add(i); SE.audio.sfx(name); }
+      const k = p.t / p.dur, inn = Math.min(1, p.t / 0.25), out = Math.min(1, (p.dur - p.t) / 0.35);
+      const a = Math.min(inn, out);
+      const slide = Math.round((1 - SE.ease(inn)) * 14);
+      const pan = Math.round(-1 + k * 3); // the slow drift
+      const w = img.width, h = img.height, x = Math.round(p.x - w / 2) + slide, y = Math.round(p.y);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = 'rgba(20,14,24,0.55)'; ctx.fillRect(x - 3, y - 3 + 3, w + 6, h + 6);
+      ctx.fillStyle = '#fbf3e4'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+      ctx.beginPath(); ctx.rect(x + 1, y, w - 2, h); ctx.clip(); // a 1px inset hides the edge as it pans
+      ctx.drawImage(img, x + pan, y);
+      ctx.restore();
+      if (p.caption) SE.text(p.caption, p.x, y + h + 6, { align: 'center', size: 8, color: '#ffe6b8', alpha: a });
+      return true;
+    };
+    return p;
+  };
+
   // Mochi's little life in a room. `surfaces` are the places she can be: { id: [x1, x2, feetY] };
   // `links` are the jumps between them. Each time a room is entered she is lounging somewhere new;
   // then she sits, washes herself, lies down, strolls along a counter or hops up onto a shelf.
   SE.Mochi = function (surfaces, links) {
     const ids = Object.keys(surfaces);
-    const m = { state: 'rest', t: 0, dur: SE.rand(6, 12), flip: Math.random() < 0.5, pose: SE.pick(['lie', 'lie', 'sit', 'wash']) };
+    const m = { state: 'rest', t: 0, dur: SE.rand(6, 12), flip: Math.random() < 0.5, pose: SE.pick(['lie', 'lie', 'sit', 'wash']), face: Math.random() < 0.5 ? 'front' : 'side' };
     const place = (id) => { const [a, b, y] = surfaces[id]; m.surf = id; m.x = SE.rand(a, b); m.y = y; };
     place(SE.pick(ids));
     const neighbours = () => links.filter((l) => l.includes(m.surf)).map((l) => (l[0] === m.surf ? l[1] : l[0]));
+    const frames = (n) => (SE.anims[n] ? SE.anims[n].frames : 8);
+    // settle into a resting pose, facing the room or turned sideways
+    function rest(pose, dur) {
+      m.state = 'rest'; m.t = 0; m.pose = pose; m.dur = dur;
+      m.face = Math.random() < 0.45 ? 'front' : 'side';
+    }
+    // one-shot moves: a long stretch after lying down, a big yawn now and then
+    function oneShot(pose, anim, fps) { m.state = 'once'; m.t = 0; m.pose = pose; m.anim = anim; m.dur = frames(anim) / fps; }
     function decide() {
       const [a, b] = surfaces[m.surf], r = Math.random(), nb = neighbours();
+      if (m.pose === 'lie' && m.state === 'rest' && SE.anims.cat_stretch && Math.random() < 0.6) { m.face = 'side'; oneShot('stretch', 'cat_stretch', 7); return; }
       m.t = 0;
-      if (r < 0.35 && b - a > 24) { m.state = 'walk'; m.tx = SE.rand(a, b); m.flip = m.tx < m.x; return; }
-      if (r < 0.7 && nb.length) {
+      if (r < 0.3 && b - a > 24) { m.state = 'walk'; m.tx = SE.rand(a, b); m.flip = m.tx < m.x; return; }
+      if (r < 0.6 && nb.length) {
         const to = SE.pick(nb), [c, d, y] = surfaces[to];
         m.state = 'jump'; m.from = [m.x, m.y]; m.to = [SE.clamp(m.x, c, d), y]; m.toSurf = to; m.flip = m.to[0] < m.x;
         m.dur = 0.75; return;
       }
-      m.state = 'rest'; m.pose = SE.pick(['lie', 'sit', 'wash', 'lie']); m.dur = m.pose === 'lie' ? SE.rand(14, 30) : SE.rand(6, 12);
+      if (r < 0.7 && SE.anims.cat_yawn_s) { m.face = 'front'; oneShot('yawn', 'cat_yawn_s', 6); return; }
+      const pose = SE.pick(['lie', 'sit', 'wash', 'lie']);
+      rest(pose, pose === 'lie' ? SE.rand(14, 30) : SE.rand(6, 12));
     }
     m.update = function (dt) {
       m.t += dt;
       if (m.state === 'rest' && m.t > m.dur) decide();
+      else if (m.state === 'once' && m.t > m.dur) rest(m.pose === 'stretch' ? 'sit' : 'sit', SE.rand(3, 7));
       else if (m.state === 'walk') {
         const d = m.tx - m.x, step = 15 * dt;
-        if (Math.abs(d) <= step) { m.x = m.tx; m.state = 'rest'; m.t = 0; m.pose = SE.pick(['sit', 'lie', 'wash']); m.dur = SE.rand(5, 14); }
+        if (Math.abs(d) <= step) { m.x = m.tx; rest(SE.pick(['sit', 'lie', 'wash']), SE.rand(5, 14)); }
         else m.x += Math.sign(d) * step;
       } else if (m.state === 'jump') {
         const k = Math.min(1, m.t / m.dur);
         m.x = SE.lerp(m.from[0], m.to[0], k);
         const lift = Math.max(14, m.from[1] - m.to[1] + 12);
         m.y = SE.lerp(m.from[1], m.to[1], k) - Math.sin(k * Math.PI) * lift * (m.to[1] < m.from[1] ? 1 : 0.5);
-        if (k >= 1) { m.y = m.to[1]; m.surf = m.toSurf; m.state = 'rest'; m.t = 0; m.pose = SE.pick(['sit', 'wash']); m.dur = SE.rand(4, 9); }
+        if (k >= 1) { m.y = m.to[1]; m.surf = m.toSurf; rest(SE.pick(['sit', 'wash']), SE.rand(4, 9)); }
       }
     };
+    // which strip and frame to show for what she is doing, facing the room or sideways
+    function look() {
+      const loop = (n, fps) => Math.floor(m.t * fps) % frames(n);
+      const swing = (n, fps) => { const c = frames(n) * 2 - 2; let f = Math.floor(m.t * fps) % c; if (f >= frames(n)) f = c - f; return f; };
+      if (m.state === 'walk') return ['cat_walk', loop('cat_walk', 10)];
+      if (m.state === 'jump') return ['cat_jump', Math.min(frames('cat_jump') - 1, Math.floor((m.t / m.dur) * frames('cat_jump')))];
+      if (m.state === 'once') return [m.anim, Math.min(frames(m.anim) - 1, Math.floor((m.t / m.dur) * frames(m.anim)))];
+      const front = m.face === 'front';
+      if (m.pose === 'lie') return front && SE.anims.cat_lie_s ? ['cat_lie_s', swing('cat_lie_s', 2)] : ['cat_lie', swing('cat_lie', 2)];
+      if (m.pose === 'wash') return front && SE.anims.cat_wash_s ? ['cat_wash_s', loop('cat_wash_s', 5)] : ['cat_sit', loop('cat_sit', 5)];
+      return front && SE.anims.cat_wash_s ? ['cat_wash_s', 0] : ['cat_sit', 0];
+    }
     // draws her (feet at m.y) and returns her box for petting hotspots
     m.draw = function () {
-      let anim = 'cat_sit', frame = 0;
-      if (m.state === 'walk' && SE.anims.cat_walk) { anim = 'cat_walk'; frame = Math.floor(m.t * 10) % SE.anims.cat_walk.frames; }
-      else if (m.state === 'jump' && SE.anims.cat_jump) { anim = 'cat_jump'; frame = Math.min(SE.anims.cat_jump.frames - 1, Math.floor((m.t / m.dur) * SE.anims.cat_jump.frames)); }
-      else if (m.pose === 'lie' && SE.anims.cat_lie) { anim = 'cat_lie'; const n = SE.anims.cat_lie.frames, c = n * 2 - 2; let f = Math.floor(m.t * 2) % c; if (f >= n) f = c - f; frame = f; }
-      else if (m.pose === 'wash' && SE.anims.cat_sit) { frame = Math.floor(m.t * 5) % SE.anims.cat_sit.frames; }
+      let [anim, frame] = look();
+      if (!SE.anims[anim]) { anim = 'cat_sit'; frame = 0; }
       if (!SE.anims[anim]) return null;
       const sz = SE.animSize(anim);
       const x = Math.round(m.x - sz.w / 2), y = Math.round(m.y - sz.h);
-      SE.drawAnim(anim, x, y, 0, { frame, flip: m.flip });
+      SE.drawAnim(anim, x, y, 0, { frame, flip: m.flip && m.face !== 'front' });
       return { x, y, w: sz.w, h: sz.h };
     };
     return m;
