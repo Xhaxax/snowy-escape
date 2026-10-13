@@ -394,7 +394,7 @@
 
   // -------------------------------------------------------------- pour / sizzle loops for minigames
   A.loop = function (kind) {
-    if (!ctx) return { stop() {} };
+    if (!ctx) return { set() {}, stop() {} };
     const l = kind === 'sizzle' ? loopNoise(noiseBuf, 'highpass', 4000, 0.7) : loopNoise(noiseBuf, 'bandpass', 420, 4);
     l.g.disconnect(); l.g.connect(sfxBus);
     l.g.gain.setTargetAtTime(kind === 'sizzle' ? 0.08 : 0.2, ctx.currentTime, 0.1);

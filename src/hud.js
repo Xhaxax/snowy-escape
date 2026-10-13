@@ -5,11 +5,11 @@
   const H = (SE.hud = { panel: null, alpha: 1, tab: 0 });
 
   SE.FISH = {
-    'Brook Trout': { color: '#d98b6a', rarity: 0.32, size: 1 },
-    'Arctic Char': { color: '#e86f5b', rarity: 0.24, size: 1.1 },
-    'Lake Whitefish': { color: '#c9d4e2', rarity: 0.22, size: 1 },
-    'Northern Pike': { color: '#8fae6a', rarity: 0.14, size: 1.35 },
-    'Golden Perch': { color: '#f2c84b', rarity: 0.08, size: 0.9 },
+    'Brook Trout': { color: '#d98b6a', rarity: 0.32, size: 1, img: 'fish/brook' },
+    'Arctic Char': { color: '#e86f5b', rarity: 0.24, size: 1.1, img: 'fish/char' },
+    'Lake Whitefish': { color: '#c9d4e2', rarity: 0.22, size: 1, img: 'fish/white' },
+    'Northern Pike': { color: '#8fae6a', rarity: 0.14, size: 1.35, img: 'fish/pike' },
+    'Golden Perch': { color: '#f2c84b', rarity: 0.08, size: 0.9, img: 'fish/perch' },
   };
   SE.DISHES = {
     'Pan-fried Fish': 'Crispy skin, butter and dill.',
@@ -69,7 +69,12 @@
     H.alpha = SE.approach(H.alpha, target, target ? 10 : 1.2, SE.dt);
     SE.uiAlpha = H.alpha;
     const a = H.alpha;
-    if (a < 0.02 && !H.panel) { drawTimerPill(ctx, 0.55); return; }
+    if (a < 0.02 && !H.panel) {
+      drawTimerPill(ctx, 0.55);
+      // keep a faint "Watching" toggle so watch mode can always be switched off
+      if (SE.watching() && opts.watch !== false && SE.button(SE.W - 76, 6, 70, 18, 'Watching', { icon: 'play', active: true, alpha: 0.5 })) SE.toggleWatch();
+      return;
+    }
 
     // location label
     if (opts.title) {
@@ -77,6 +82,10 @@
       SE.panel(6, 6, w, 18, { alpha: a * 0.9 });
       SE.text(opts.title, 16, 10, { size: 10, alpha: a, color: '#ffe6b8' });
       const status = `Day ${SE.save.day} · ${SE.weather.clockLabel()} · ${SE.weather.label()}`;
+      // a soft backing so the status lines stay readable on bright snow
+      const sw = Math.max(SE.measure(status, 7), opts.subtitle ? SE.measure(opts.subtitle, 7) : 0) + 8;
+      ctx.fillStyle = `rgba(26,22,40,${0.45 * a})`;
+      ctx.fillRect(5, 26, sw, opts.subtitle ? 20 : 11);
       SE.text(status, 8, 27, { size: 7, alpha: a * 0.9, color: '#ffe6b8' });
       if (opts.subtitle) SE.text(opts.subtitle, 8, 37, { size: 7, alpha: a * 0.85, color: '#dfe8ff' });
     }
@@ -202,7 +211,8 @@
       for (const d of Object.keys(SE.DISHES)) line(d + ' made', sv.dishes[d] || 0);
       line('Meals cooked in total', sv.cooked);
     } else {
-      line('Deer sketched in the woods', sv.deerPhotos);
+      const sk = sv.sketches || {};
+      line('Sketched: deer · elk · fox · hare · owl · bird', `${sk.deer || sv.deerPhotos || 0}·${sk.elk || 0}·${sk.fox || 0}·${sk.hare || 0}·${sk.owl || 0}·${sk.bird || 0}`);
       line('Wishes on shooting stars', sv.wishes);
       line('Calm breaths at the summit', sv.breaths);
       line('Belly rubs for Waffles', sv.petsDog);

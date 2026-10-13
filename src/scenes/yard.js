@@ -5,7 +5,7 @@
   const WINDOWS = [{ x: 188, y: 183, r: 22 }, { x: 275, y: 183, r: 22 }, { x: 230, y: 118, r: 16 }, { x: 354, y: 183, r: 18 }, { x: 231, y: 180, r: 10 }];
   const PATH = { x: 168, y: 230, w: 140, h: 42 };
   const SPOT = {
-    chop: { x: 40, y: 262 },   // feet of the chopper
+    chop: { x: 30, y: 268 },   // feet of the chopper (his stump is part of the sprite)
     dog: { x: 128, y: 262 },
     porch: { x: 282, y: 236 }, // rocking chair on the porch
     shovel: { x: 196, y: 264 },
@@ -44,7 +44,7 @@
       if (SE.weather.stormy() && s.t > 2 && !s.leaving) {
         s.leaving = true;
         SE.toast('The storm is too strong — back inside you go!', '#cfe6ff');
-        setTimeout(() => SE.go('cabin', {}), 1600);
+        setTimeout(() => { if (SE.sceneName === 'yard') SE.go('cabin', {}); }, 1600);
       }
       if (SE.watching()) direct(dt);
 
@@ -86,22 +86,24 @@
   // ------------------------------------------------------------ actors
   function drawActors(ctx, dt) {
     const sz = (n) => SE.animSize(n);
-    // the chopper is always out by the block unless shoveling or rocking
-    if (mode !== 'shovel' && mode !== 'porch' || true) {
-      const chopping = mode === 'chop';
-      if (SE.anims.chop) {
-        const t = chopping ? s.chopAnim : 0;
-        if (mode !== 'shovel' && mode !== 'porch') SE.drawAnim('chop', SPOT.chop.x, SPOT.chop.y - sz('chop').h, 0, { frame: chopping ? Math.floor(t) % SE.anims.chop.frames : 0 });
-      } else if (mode === 'chop') SE.drawActorFallback(ctx, SPOT.chop.x + 10, SPOT.chop.y - 40, '#a0522d');
-    }
-    // Waffles: cheering (bouncy, tongue out) or calmly resting
-    const dogAnim = s.cheer && mode === 'chop' ? 'dog_happy' : 'dog_sit';
-    const dogPos = mode === 'porch' ? { x: SPOT.porch.x + 44, y: SPOT.porch.y } : mode === 'shovel' ? { x: SPOT.shovel.x + 70, y: SPOT.shovel.y - 2 } : SPOT.dog;
-    if (SE.anims[dogAnim]) {
-      const d = sz(dogAnim);
-      const hop = dogAnim === 'dog_happy' ? Math.abs(Math.sin(s.t * 6)) * 2 : 0;
-      SE.drawAnim(dogAnim, dogPos.x, dogPos.y - d.h - hop, s.t * (dogAnim === 'dog_happy' ? 1.6 : 0.5), { pingpong: true });
-      if (dogAnim === 'dog_happy' && Math.random() < dt * 0.8) SE.spawnFloater(dogPos.x + d.w / 2, dogPos.y - d.h, Math.random() < 0.5 ? 'note' : 'heart');
+    // the chopping corner: stump with the axe waiting in it, and a woodpile that grows
+    SE.drawWoodpile(ctx, 108, 266, SE.save.wood);
+    if (mode === 'chop' && SE.anims.chop) {
+      const frame = s.chopAnim > 0 ? Math.floor(s.chopAnim) % SE.anims.chop.frames : 0;
+      SE.drawAnim('chop', SPOT.chop.x, SPOT.chop.y - sz('chop').h, 0, { frame });
+    } else if (SE.img('chop_area')) SE.drawImg('chop_area', 22, 268 - SE.img('chop_area').height);
+
+    // Waffles: cheering while you chop or shovel, otherwise resting on his tummy
+    const cheering = (mode === 'chop' && s.cheer) || mode === 'shovel';
+    if (cheering && SE.anims.dog_happy) {
+      const d = sz('dog_happy');
+      const pos = mode === 'shovel' ? { x: 300, y: 266 } : { x: 160, y: 266 };
+      const hop = Math.abs(Math.sin(s.t * 6)) * 2;
+      SE.drawAnim('dog_happy', pos.x, pos.y - d.h - hop, s.t * 1.6, { pingpong: true });
+      if (Math.random() < dt * 0.8) SE.spawnFloater(pos.x + d.w / 2, pos.y - d.h, Math.random() < 0.5 ? 'note' : 'heart');
+    } else {
+      const pos = mode === 'porch' ? { x: 336, y: 240, flip: true } : mode === 'chop' ? { x: 150, y: 268 } : { x: 236, y: 270, flip: true };
+      SE.drawDogRest(pos.x, pos.y, { flip: pos.flip });
     }
     s.cheerT -= dt;
     if (s.cheerT <= 0) {
@@ -142,7 +144,7 @@
       SE.audio.sfx('chop');
       const good = v > 0.62;
       const perfect = v > 0.78;
-      for (let i = 0; i < (perfect ? 16 : 7); i++) s.chips.push({ x: SPOT.chop.x + 40, y: SPOT.chop.y - 16, vx: SE.rand(-60, 60), vy: SE.rand(-90, -30), t: 0, s: Math.random() < 0.3 ? 2 : 1, c: SE.pick(['#c99a62', '#e8c99a', '#8a5a34']) });
+      for (let i = 0; i < (perfect ? 16 : 7); i++) s.chips.push({ x: SPOT.chop.x + 44, y: SPOT.chop.y - 20, vx: SE.rand(-60, 60), vy: SE.rand(-90, -30), t: 0, s: Math.random() < 0.3 ? 2 : 1, c: SE.pick(['#c99a62', '#e8c99a', '#8a5a34']) });
       if (good) {
         SE.save.wood = Math.min(40, SE.save.wood + (perfect ? 2 : 1));
         SE.save.logs++;
@@ -176,6 +178,7 @@
       SE.persist();
       SE.celebrate('Path is clear!', `The valley is all yours again. ${SE.pick(SE.PROPS)}`);
       mode = 'yard';
+      s.dir.dur = 0; // let the watch-mode director pick the next little scene right away
     }
   }
 
@@ -200,12 +203,12 @@
     }
     if (mode === 'chop' && !SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.6 * a + 0.2 });
     if (SE.watching()) return;
-    const by = SE.H - 24;
     const items = mode === 'yard'
       ? [['Chop wood', 62, () => (mode = 'chop')], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else mode = 'shovel'; }], ['Rocking chair', 74, () => (mode = 'porch')], ['Go inside', 58, () => { SE.audio.sfx('door'); SE.go('cabin'); }], ['Wander off', 64, leave]]
       : [['Done', 50, () => (mode = 'yard')]];
-    let x = SE.W - 6 - items.reduce((sum, i) => sum + i[1] + 4, 0);
-    for (const [label, w, cb] of items) { if (SE.button(x, by, w, 18, label, { alpha: a })) cb(); x += w + 4; }
+    // a column on the right, so the woodpile and Waffles stay visible along the bottom
+    let y = SE.H - 6 - items.length * 20;
+    for (const [label, , cb] of items) { if (SE.button(SE.W - 86, y, 80, 18, label, { alpha: a })) cb(); y += 20; }
   }
   function leave() {
     if (SE.weather.stormy()) { SE.toast('Too stormy to wander. Stay cozy.', '#cfe6ff'); return; }

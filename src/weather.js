@@ -44,15 +44,7 @@
     else if (mode === 'windy') SE.toast('The wind is picking up…', '#cfe6ff');
     else if (prev === 'windy') SE.toast('The wind calms down.', '#cfe6ff');
     else SE.toast(MODES[mode].label + '.', '#cfe6ff');
-    if (mode === 'storm' && ['lake', 'forest', 'summit'].includes(SE.sceneName)) {
-      const from = SE.save.location;
-      setTimeout(() => {
-        if (SE.sceneName !== 'lake' && SE.sceneName !== 'forest' && SE.sceneName !== 'summit') return;
-        const a = SE.PLACES[from], b = SE.PLACES.cabin;
-        SE.toast('You and Waffles hurry home through the storm.', '#cfe6ff');
-        SE.go('travel', { from, to: 'cabin', dist: Math.round(Math.hypot(a.x - b.x, a.y - b.y) * 9) });
-      }, 3500);
-    }
+    if (mode === 'storm') W.stormCheck();
   };
   function autoNext() {
     const opts = NEXT[W.mode];
@@ -116,7 +108,7 @@
     // time flows, snow piles up (or melts a little in the sun), the fire burns down
     const prevH = sv.clock;
     sv.clock = (sv.clock + dt * W.HOURS_PER_SEC) % 24;
-    if (sv.clock < prevH) { sv.day++; SE.toast(`Day ${sv.day}. A new morning in the mountains.`, '#ffe6b8'); }
+    if (sv.clock < prevH - 12) { sv.day++; SE.toast(`Day ${sv.day}. A new morning in the mountains.`, '#ffe6b8'); }
     sv.snowDepth = SE.clamp(sv.snowDepth + (W.intensity * 0.0011 - W.sun * 0.0004) * dt, 0, 1);
     sv.fire = SE.clamp(sv.fire - dt / (35 * 60), 0, 1);
     sv.stove = SE.clamp(sv.stove - dt / (25 * 60), 0, 1);
@@ -242,4 +234,18 @@
     ctx.restore();
   };
   W.label = () => MODES[W.mode].label;
+
+  // Outdoors when a storm is (or gets) going: head home along the paths. Called on storm start
+  // and by each outdoor scene on enter, so arriving somewhere mid-storm also sends you home.
+  const OUTDOORS = ['lake', 'forest', 'summit', 'trail'];
+  let homeTimer = null;
+  W.stormCheck = function () {
+    if (!W.stormy() || !OUTDOORS.includes(SE.sceneName) || homeTimer) return;
+    homeTimer = setTimeout(() => {
+      homeTimer = null;
+      if (!W.stormy() || !OUTDOORS.includes(SE.sceneName)) return;
+      SE.toast('You and Waffles head home through the storm.', '#cfe6ff');
+      SE.go('map', { walkTo: 'cabin' });
+    }, 3000);
+  };
 })();

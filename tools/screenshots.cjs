@@ -24,8 +24,8 @@ fs.mkdirSync(out, { recursive: true });
   if (want('title')) await shot('01_title', 1500);
   if (want('cabin')) { await go('cabin'); await shot('02_cabin_room'); }
   if (want('couch')) { await go('cabin', { mode: 'couch' }); await shot('03_cabin_couch', 2000); }
-  if (want('map')) { await go('map'); await shot('04_map'); }
-  if (want('travel')) { await go('travel', { from: 'cabin', to: 'lake', dist: 2200 }); await shot('05_travel', 3000); }
+  if (want('map')) { await go('map'); await shot('04_map'); await go('map', { walkTo: 'lake' }); await shot('04b_map_walking', 9000); }
+  if (want('trail')) { await go('trail'); await shot('05_trail', 3000); }
   if (want('lake')) { await go('lake'); await shot('06_lake', 2000); }
   if (want('forest')) { await go('forest'); await page.evaluate(() => { SE.idleTime = 0; }); await shot('07_forest', 9000); }
   if (want('summit')) { await go('summit'); await shot('08_summit', 2000); }

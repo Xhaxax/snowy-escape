@@ -164,6 +164,7 @@ SE.defaultSave = () => ({
   cocoa: 1,
   cooked: 0,
   deerPhotos: 0,
+  sketches: {},
   photos: [],        // {kind, t}
   wishes: 0,
   breaths: 0,
@@ -288,7 +289,10 @@ SE.button = function (x, y, w, h, label, opts = {}) {
     alpha: opts.alpha,
   });
   if (opts.icon) {
+    SE.ctx.save();
+    SE.ctx.globalAlpha = opts.alpha == null ? 1 : opts.alpha;
     SE.drawIcon(opts.icon, x + (label ? 5 : w / 2 - 4), y + h / 2 - 4 + (pressed ? 1 : 0), active ? '#3a2433' : '#fff7ea');
+    SE.ctx.restore();
   }
   if (label) {
     SE.text(label, x + (opts.icon ? w / 2 + 5 : w / 2), y + h / 2 - (opts.size || 8) / 2 + (pressed ? 1 : 0), {
@@ -347,7 +351,7 @@ SE.toast = function (msg, color) {
   if (SE.toasts.length > 3) SE.toasts.shift();
 };
 SE.drawToasts = function (dt) {
-  let y = SE.H - 30;
+  let y = SE.H - 46;
   for (let i = SE.toasts.length - 1; i >= 0; i--) {
     const t = SE.toasts[i];
     t.t += dt;
@@ -403,14 +407,16 @@ SE.PROPS = [
   'Look at you go!', 'That was lovely.', 'Cozy skills: maxed.', 'Wonderful, truly.', 'Gold star for you.',
 ];
 SE.celebration = null;
-SE.celebrate = function (title, sub) {
+// opts.y: draw the banner lower (e.g. when the top of the screen is busy)
+SE.celebrate = function (title, sub, opts = {}) {
   if (SE.audio) SE.audio.sfx('jingle');
-  SE.celebration = { title, sub: sub || SE.pick(SE.PROPS), t: 0 };
+  SE.celebration = { title, sub: sub || SE.pick(SE.PROPS), t: 0, y: opts.y };
   for (let i = 0; i < 16; i++) SE.spawnFloater(SE.W / 2 + SE.rand(-80, 80), 54 + SE.rand(-6, 10), Math.random() < 0.5 ? 'spark' : 'heart', SE.pick(['#ffd166', '#ff8fa3', '#cfe6ff', '#fff4c2']));
 };
 SE.frameHooks.push(function drawCelebration(ctx, dt) {
   const c = SE.celebration;
-  if (!c) return;
+  // while a result card is open the jingle already played; the banner waits for the card to close
+  if (!c || SE.cardOpen) return;
   c.t += dt;
   const life = 3.2;
   if (c.t > life) { SE.celebration = null; return; }
@@ -418,7 +424,7 @@ SE.frameHooks.push(function drawCelebration(ctx, dt) {
   const a = Math.min(inn, out);
   const bounce = Math.sin(Math.min(1, c.t * 3) * Math.PI) * 4;
   const w = Math.max(SE.measure(c.title, 14), SE.measure(c.sub, 8)) + 34;
-  const y = 44 - bounce - (1 - inn) * 10;
+  const y = (c.y || 44) - bounce - (1 - inn) * 10;
   SE.panel(SE.W / 2 - w / 2, y, w, 38, { alpha: a, fill: 'rgba(72,52,96,0.96)' });
   SE.ctx.save(); SE.ctx.globalAlpha = a;
   SE.drawIcon('heart', SE.W / 2 - w / 2 + 6, y + 6, '#ff8fa3');
@@ -432,7 +438,7 @@ SE.frameHooks.push(function drawCelebration(ctx, dt) {
 
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = SE.clamp((now - last) / 1000, 0, 0.05);
   last = now;
   SE.dt = dt;
   SE.time += dt;
@@ -449,8 +455,13 @@ function frame(now) {
 
   if (SE.save && SE.weather) SE.weather.update(dt);
   if (SE.scene) {
-    SE.scene.update && SE.scene.update(dt);
-    SE.scene.draw && SE.scene.draw(ctx, dt);
+    try {
+      SE.scene.update && SE.scene.update(dt);
+      SE.scene.draw && SE.scene.draw(ctx, dt);
+    } catch (e) {
+      // never freeze the cozy loop over one bad frame
+      if (!SE._lastErr || SE.time - SE._lastErr > 5) { console.error(e); SE._lastErr = SE.time; }
+    }
   }
   for (const h of SE.frameHooks) h(ctx, dt);
   SE.drawFloaters(dt);

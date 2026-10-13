@@ -20,6 +20,7 @@
       if (p.arrived) SE.toast('You made it. Waffles flops down beside you, panting happily.', '#ffe6b8');
     },
     update(dt) {
+      SE.weather.stormCheck();
       SE.audio.setAmbience({ wind: 0.5 + SE.weather.wind / 70, chimes: 1, storm: SE.weather.stormy() ? 1 : 0 });
     },
     draw(ctx, dt) {
@@ -63,7 +64,7 @@
           SE.mouse.released = false;
           SE.audio.sfx('wish');
           SE.save.wishes++; SE.persist();
-          setTimeout(() => SE.celebrate('Wish made', 'You wish for ' + SE.pick(WISHES) + '.'), 400);
+          setTimeout(() => { if (SE.sceneName === 'summit') SE.celebrate('Wish made', 'You wish for ' + SE.pick(WISHES) + '.', { y: 150 }); }, 400);
           for (let i = 0; i < 14; i++) SE.spawnFloater(x + SE.rand(-10, 10), y + SE.rand(-6, 6), 'spark', '#fff4c2');
           s.star = null;
         } else if (st.t > 1.2) s.star = null;
@@ -108,7 +109,7 @@
       SE.audio.sfx('soft');
       if (b.phase === 0) {
         b.cycles++; SE.save.breaths++; SE.persist();
-        if (b.cycles % 5 === 0) SE.celebrate('So calm', `${b.cycles} slow breaths above the clouds. ${SE.pick(SE.PROPS)}`);
+        if (b.cycles % 5 === 0) SE.celebrate('So calm', `${b.cycles} slow breaths above the clouds. ${SE.pick(SE.PROPS)}`, { y: 150 });
       }
     }
     const k = b.t / len;

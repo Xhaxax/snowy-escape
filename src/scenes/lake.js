@@ -3,7 +3,7 @@
 
 (function () {
   const HOLE = { x: 190, y: 235, rx: 44, ry: 9 };
-  const POS = { man: { x: 96, y: 246 }, dog: { x: 58, y: 248 } };
+  const POS = { man: { x: 96, y: 250 }, dog: { x: 30, y: 254 } };
   let s = null;
 
   function pickSpecies() {
@@ -25,7 +25,9 @@
       SE.audio.setMusic('outdoors');
       if (p.arrived) SE.toast('Waffles sniffs the ice and settles down beside you.', '#cfe6ff');
     },
+    exit() { SE.cardOpen = false; },
     update(dt) {
+      SE.weather.stormCheck();
       SE.audio.setAmbience({ wind: 0.4 + SE.weather.wind / 80, creaks: 1, storm: SE.weather.stormy() ? 1 : 0 });
     },
     draw(ctx, dt) {
@@ -52,7 +54,9 @@
       if (s.state === 'nibble') s.dip = Math.max(0, Math.sin(s.t * 9)) * 3;
       else s.dip = SE.approach(s.dip, 0, 6, dt);
       const bob = Math.sin(s.t * 1.6) * 0.8 + s.dip;
-      const tip = SE.anims.fishing ? { x: POS.man.x + SE.FISHING_TIP.x, y: POS.man.y - SE.animSize('fishing').h + SE.FISHING_TIP.y } : { x: 150, y: 200 };
+      const reeling = !!(s.mini || (s.card && s.card.t < 1.2));
+      const fsz = SE.animSize('fishing');
+      const tip = reeling ? { x: POS.man.x + fsz.w - 6, y: POS.man.y - fsz.h + 12 } : { x: POS.man.x + SE.FISHING_TIP.x, y: POS.man.y - fsz.h + SE.FISHING_TIP.y + Math.round(Math.sin(s.t * 2.4)) };
       const bx = HOLE.x + 14, by = HOLE.y - 2 + bob;
       ctx.strokeStyle = 'rgba(235,235,245,0.7)'; ctx.lineWidth = 0.5;
       ctx.beginPath(); ctx.moveTo(tip.x, tip.y); ctx.quadraticCurveTo((tip.x + bx) / 2, tip.y + 6, bx, by); ctx.stroke();
@@ -60,14 +64,15 @@
       ctx.fillStyle = '#fff7ea'; ctx.fillRect(Math.round(bx) - 1, Math.round(by), 3, 1);
 
       // the traveler and Waffles
+      // the traveler on his stool (the art faces left, so it is mirrored toward the hole)
       if (SE.anims.fishing) {
-        const sz = SE.animSize('fishing');
-        SE.drawAnim('fishing', POS.man.x, POS.man.y - sz.h, s.t * 0.8, { pingpong: true });
+        const anim = reeling && SE.anims.fishing_reel ? 'fishing_reel' : 'fishing';
+        SE.drawAnim(anim, POS.man.x, POS.man.y - fsz.h, reeling ? s.t * 1.6 : s.t * 0.7, { pingpong: true, flip: true });
       } else SE.drawActorFallback(ctx, POS.man.x + 20, POS.man.y - 40, '#a0522d');
-      if (SE.anims.dog_sit) {
-        const sz = SE.animSize('dog_sit');
-        SE.drawAnim('dog_sit', POS.dog.x, POS.dog.y - sz.h, s.t * 0.7, { pingpong: true });
-      }
+      // Waffles keeps you company: resting, then sitting up when a fish bites
+      if (s.state === 'nibble' || s.mini || s.card) {
+        if (SE.anims.dog_happy) { const sz = SE.animSize('dog_happy'); SE.drawAnim('dog_happy', POS.dog.x + 10, POS.dog.y - sz.h, s.t * 1.6, { pingpong: true }); }
+      } else SE.drawDogRest(POS.dog.x - 16, POS.dog.y + 2, { seed: 2 });
 
       SE.weather.draw(ctx);
 
@@ -121,7 +126,7 @@
     for (let i = 0; i < 8; i++) ctx.fillRect(bar.x, bar.y + ((i * 23 + m.t * 10) % bar.h), bar.w, 1);
 
     // player zone: hold to rise, release to sink — floaty and forgiving
-    let hold = SE.mouse.down || SE.held('Space', 'ArrowUp', 'KeyW');
+    let hold = !SE.modal && (SE.mouse.down || SE.held('Space', 'ArrowUp', 'KeyW'));
     if (SE.watching()) {
       // the traveler reels by himself: steer the zone toward the fish, a little lazily
       const center = m.zone + m.zoneH / 2 + m.zv * 0.3;
@@ -157,6 +162,7 @@
       s.mini = null;
       SE.audio.sfx('splash');
       const f = SE.FISH[s.species];
+      SE.cardOpen = true;
       s.card = { species: s.species, cm: Math.round((22 + Math.random() * 20) * f.size), t: 0, first: !SE.save.caught[s.species] };
       SE.addFish(s.species);
       SE.celebrate(s.card.first ? 'New species!' : 'Nice catch!', `${s.species} · ${s.card.cm} cm — ${SE.pick(SE.PROPS)}`);
@@ -180,9 +186,10 @@
     SE.text(`${c.cm} cm · cook it in the cabin kitchen`, SE.W / 2, y + 89, { align: 'center', size: 7, color: '#dfe8ff' });
     if (SE.button(SE.W / 2 - 34, y + H - 22, 68, 16, 'Lovely ♥', { active: true }) || SE.key('Space') || (SE.watching() && c.t > 3.5)) {
       s.card = null;
+      SE.cardOpen = false;
       reset();
       if (Math.random() < 0.5) { SE.audio.sfx('woof'); SE.toast('Waffles approves. Loudly.', '#cfe6ff'); }
     }
   }
-  SE.FISHING_TIP = { x: 60, y: 10 };
+  SE.FISHING_TIP = { x: 53, y: 27 }; // rod tip inside the (mirrored) fishing sprite
 })();

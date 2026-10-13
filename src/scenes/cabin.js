@@ -4,7 +4,7 @@
 (function () {
   const WINDOWS = [{ x: 265, y: 66, w: 78, h: 64 }, { x: 443, y: 58, w: 34, h: 104 }];
   const POS = {
-    dog: { x: 128, y: 252 },  // feet line / left of the dog on the rug
+    dog: { x: 120, y: 254 },  // Waffles on the rug in front of the fire
     cat: { x: 292, y: 134 },  // Mochi on the windowsill, watching the snow
     fire: { x: 76, y: 150, w: 56, h: 66 },
     couch: { x: 250, y: 197 }, // traveler sitting on the couch
@@ -95,11 +95,9 @@
       if (mode === 'room' && !SE.watching() && hotspot(POS.fire, fire < 0.35 ? `Add a log (${SE.save.wood} left) — fire is low` : `Add a log (${SE.save.wood} left)`)) addLog(false);
 
       // the dog dozing on the rug by the fire
-      if (SE.anims.dog_sit) {
-        const r = bottomOf('dog_sit', POS.dog.x, POS.dog.y);
-        SE.drawAnim('dog_sit', r.x, r.y, SE.time * 0.5, { pingpong: true });
-        if (mode === 'room' && !SE.watching() && hotspot(r, 'Pet Waffles')) startPet('dog');
-      }
+      // Waffles naps on the rug by the fire, lifting his head now and then
+      const r = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
+      if (r && mode === 'room' && !SE.watching() && hotspot(r, 'Pet Waffles')) startPet('dog');
       if (mode === 'couch') drawCouch(ctx, dt);
       else if (SE.anims.cat_sit) {
         const r = bottomOf('cat_sit', POS.cat.x, POS.cat.y);
@@ -185,7 +183,7 @@
       if (drawCouch.autoPet <= 0) {
         drawCouch.autoPet = SE.rand(6, 11);
         SE.audio.sfx('purr');
-        for (let i = 0; i < 4; i++) setTimeout(() => SE.spawnFloater(lap.x + lap.w * Math.random(), lap.y, 'heart'), i * 300);
+        for (let i = 0; i < 4; i++) setTimeout(() => { if (SE.sceneName === 'cabin' && mode === 'couch') SE.spawnFloater(lap.x + lap.w * Math.random(), lap.y, 'heart'); }, i * 300);
       }
       return;
     }

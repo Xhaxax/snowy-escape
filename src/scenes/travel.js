@@ -1,4 +1,4 @@
-// Travel: walk through the snow with Waffles. Crunchy footsteps, footprints, little thoughts.
+// Long Walk: an endless stroll through the snow with Waffles. Crunchy footsteps, footprints, little thoughts.
 'use strict';
 
 (function () {
@@ -17,19 +17,19 @@
   ];
   let s = null;
 
-  SE.addScene('travel', {
-    enter(p) {
-      const dist = p.dist || 1500;
+  SE.addScene('trail', {
+    enter() {
+      SE.save.location = 'trail';
+      SE.persist();
       s = {
-        from: p.from, to: p.to, dist,
-        dur: SE.clamp(9 + dist / 160, 10, 24),
         t: 0, scroll: 0, prints: [], lastFrame: -1, lastDogFrame: -1,
-        thought: SE.pick(THOUGHTS), thoughtT: 0, hurry: false, arrived: false,
+        thought: SE.pick(THOUGHTS), thoughtT: 0, hurry: false, arrived: false, walked: 0,
       };
       SE.audio.setMusic('outdoors');
       SE.audio.setAmbience({ wind: 0.5 + SE.weather.wind / 80, birds: 0.25 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 1 : 0 });
     },
     update(dt) {
+      SE.weather.stormCheck();
       SE.audio.setAmbience({ wind: 0.5 + SE.weather.wind / 80, birds: 0.25 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 1 : 0 });
     },
     draw(ctx, rdt) {
@@ -86,7 +86,6 @@
         if (walking && frame !== s.lastFrame && (frame === 1 || frame === 5)) {
           SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.save.snowDepth > 0.6 });
           s.prints.push({ x: tx + (frame === 1 ? 4 : 14), y: GROUND + 2 + (frame === 1 ? 0 : 3), s: s.scroll });
-          SE.save.distance += 0.7;
         }
         s.lastFrame = frame;
       } else SE.drawActorFallback(ctx, tx + 6, ty + 10, '#a0522d');
@@ -100,18 +99,10 @@
 
       SE.weather.draw(ctx);
 
-      // progress bar
-      const from = SE.PLACES[s.from], to = SE.PLACES[s.to];
-      const prog = SE.clamp(s.t / s.dur, 0, 1);
-      const PX = 8, PW = 220;
-      SE.panel(PX, 8, PW, 30, { alpha: 0.9 });
-      SE.text(from.label, PX + 8, 12, { size: 7, color: '#dfe8ff' });
-      SE.text(to.label, PX + PW - 8, 12, { size: 7, align: 'right', color: '#ffe6b8' });
-      ctx.fillStyle = 'rgba(20,16,30,0.9)'; ctx.fillRect(PX + 10, 26, PW - 20, 3);
-      ctx.fillStyle = '#e8aa60'; ctx.fillRect(PX + 10, 26, Math.round((PW - 20) * prog), 3);
-      ctx.fillStyle = '#fff7ea'; ctx.fillRect(PX + 9 + Math.round((PW - 20) * prog), 24, 3, 7);
-      SE.text(`Day ${SE.save.day} · ${SE.weather.clockLabel()} · ${SE.weather.label()}`, PX + 2, 42, { size: 7, color: '#ffe6b8' });
-
+      // how far we've wandered today
+      const stepM = (walking ? 34 * dt : 0) * 0.5;
+      s.walked += stepM;
+      SE.save.distance += stepM;
       // little thoughts
       s.thoughtT += rdt;
       if (s.thoughtT > 7) { s.thoughtT = 0; let n; do n = SE.pick(THOUGHTS); while (n === s.thought); s.thought = n; }
@@ -122,16 +113,10 @@
         SE.text(s.thought, SE.W / 2, 54, { align: 'center', size: 8, alpha: ta, color: '#fff7ea' });
       }
 
-      if (SE.button(SE.W - 96, SE.H - 24, 90, 18, s.hurry ? 'Stroll slowly' : 'Walk faster', { active: s.hurry })) s.hurry = !s.hurry;
-
-      if (!s.arrived && s.t >= s.dur) {
-        s.arrived = true;
-        SE.save.location = s.to;
-        SE.persist();
-        if (s.to === 'cabin') SE.audio.sfx('door');
-        SE.go(to.scene, { arrived: true });
-      }
-      SE.hud.draw(ctx, { watch: false });
+      const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
+      if (SE.button(SE.W - 96, SE.H - 24, 90, 18, s.hurry ? 'Stroll slowly' : 'Walk faster', { active: s.hurry, alpha: a })) s.hurry = !s.hurry;
+      if (SE.button(6, SE.H - 24, 84, 18, 'Head back', { icon: 'back', alpha: a })) SE.go('map', { walkTo: 'cabin' });
+      SE.hud.draw(ctx, { watch: false, title: 'Long Walk', subtitle: `${Math.round(s.walked)} m wandered`, map: true });
     },
   });
 })();

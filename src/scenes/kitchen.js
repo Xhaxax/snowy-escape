@@ -7,8 +7,11 @@
   const ARROW_KEYS = Object.keys(ARROWS);
   let mode = 'idle', g = null, steam = [];
 
-  const CARD = { x: 90, y: 40, w: 300, h: 200 };
-  const confirm = () => SE.mouse.pressed || SE.key('Space') || SE.key('Enter') || (g && g.tap);
+  const CARD = { x: 90, y: 50, w: 300, h: 194 };
+  // a press inside the card (or Space/Enter) — never a click on the HUD, a panel or 'Leave it'
+  const confirm = () => (g && g.tap) || (!SE.modal && ((SE.mouse.pressed && SE.inRect(SE.mouse.x, SE.mouse.y, CARD)) || SE.key('Space') || SE.key('Enter')));
+  const playing = () => !SE.modal;
+  function clearAuto() { if (!g) return; g.tap = false; g.autoKey = null; g.autoHold = false; g.autoDrop = false; g.autoServe = false; g.autoSprinkle = false; g.autoEnjoy = false; }
 
   function card(ctx, title, hint) {
     ctx.fillStyle = 'rgba(18,12,26,0.55)';
@@ -90,7 +93,7 @@
   }
   function cocoa(ctx, dt) {
     g.t += dt;
-    if (SE.watching()) autoCocoa(dt);
+    if (SE.watching()) autoCocoa(dt); else clearAuto();
     const titles = { milk: 'Pour the milk', cocoa: 'Two scoops of cocoa', stir: 'Stir it smooth', top: 'Marshmallows?' };
     const hints = {
       milk: 'Hold the mouse (or Space) to pour — stop at the green line',
@@ -103,7 +106,7 @@
     const mug = drawMug(ctx, cx, cy, { level: g.level, choc: g.choc, swirl: g.stage === 'stir' ? g.swirl : 0, target: g.stage === 'milk' ? 0.78 : 0, marsh: g.marsh });
 
     if (g.stage === 'milk') {
-      const pouring = SE.mouse.down || SE.held('Space') || g.autoHold;
+      const pouring = (playing() && (SE.mouse.down && SE.inRect(SE.mouse.x, SE.mouse.y, CARD) || SE.held('Space'))) || g.autoHold;
       // milk jug
       const jx = cx - 50, jy = CARD.y + 34 + (pouring ? 4 : 0);
       ctx.fillStyle = '#2b1d2a'; ctx.fillRect(jx - 1, jy - 1, 30, 26);
@@ -143,7 +146,7 @@
       }
     } else if (g.stage === 'stir') {
       const ang = Math.atan2(SE.mouse.y - cy, SE.mouse.x - cx);
-      if (g.lastAng != null && SE.mouse.moved > 0) {
+      if (g.lastAng != null && SE.mouse.moved > 0 && playing()) {
         let d = ang - g.lastAng;
         if (d > Math.PI) d -= Math.PI * 2;
         if (d < -Math.PI) d += Math.PI * 2;
@@ -151,7 +154,7 @@
         g.swirl += d;
       }
       g.lastAng = ang;
-      const key = SE.key('ArrowLeft') ? 'L' : SE.key('ArrowRight') ? 'R' : null;
+      const key = !playing() ? null : SE.key('ArrowLeft') ? 'L' : SE.key('ArrowRight') ? 'R' : null;
       if (key && key !== g.lastKey) { g.stir += 0.07; g.swirl += 0.9; g.lastKey = key; }
       if (Math.random() < SE.mouse.moved * 0.01) SE.audio.sfx('stir');
       if (key) SE.audio.sfx('stir');
@@ -198,11 +201,11 @@
   }
   function cook(ctx, dt) {
     g.t += dt;
-    if (SE.watching()) autoCook(dt);
+    if (SE.watching()) autoCook(dt); else clearAuto();
     const titles = { chop: 'Chop', season: 'Season', fry: g.side === 0 ? 'Fry — first side' : 'Fry — second side', plate: 'Plate up' };
     const hints = {
       chop: 'Press the arrow shown (keyboard or the buttons below)',
-      season: `Click over the fish to sprinkle dill & salt (${g.herbs.length}/6)`,
+      season: `Click over the fish to sprinkle dill & salt (${Math.floor(g.herbs.length / 9)}/6)`,
       fry: 'Flip when the marker is in the golden zone (click or Space)',
       plate: '',
     };
@@ -244,7 +247,7 @@
       } else {
         let sp = null;
         if (g.autoSprinkle) { g.autoSprinkle = false; sp = { x: f.x + SE.rand(8, f.w - 8), y: f.y + SE.rand(6, f.h - 6) }; }
-        else if (SE.mouse.pressed && SE.inRect(SE.mouse.x, SE.mouse.y, { x: f.x - 6, y: f.y - 6, w: f.w + 12, h: f.h + 12 })) sp = { x: SE.mouse.x, y: SE.mouse.y };
+        else if (playing() && SE.mouse.pressed && SE.inRect(SE.mouse.x, SE.mouse.y, { x: f.x - 6, y: f.y - 6, w: f.w + 12, h: f.h + 12 })) sp = { x: SE.mouse.x, y: SE.mouse.y };
         if (sp) {
           for (let i = 0; i < 9; i++) g.herbs.push({ x: sp.x + SE.rand(-7, 7), y: sp.y + SE.rand(-5, 5), c: Math.random() < 0.6 ? '#5f9a4a' : '#ffffff' });
           SE.audio.sfx('click');
@@ -280,7 +283,7 @@
         SE.audio.sfx('whoosh');
         SE.toast(score > 0.85 ? 'Golden!' : g.pos < 0.5 ? 'A little rare — still tasty.' : 'Nice and crispy.');
         if (g.side === 0) { g.side = 1; g.pos = 0; }
-        else { g.stage = 'plate'; g.sizzle.stop(); finishDish(); }
+        else { g.stage = 'plate'; g.sizzle.stop(); SE.cardOpen = true; finishDish(); }
       }
     } else if (g.stage === 'plate') {
       ctx.fillStyle = '#2b1d2a'; ctx.beginPath(); ctx.ellipse(cx, cy + 6, 64, 30, 0, 0, Math.PI * 2); ctx.fill();
@@ -293,6 +296,7 @@
       SE.text(`Pan-fried ${g.fish}`, cx, CARD.y + CARD.h - 44, { align: 'center', size: 10, color: '#ffe6b8' });
       SE.text(['', 'Rustic and honest.', 'Really good!', 'Chef-level. Waffles is drooling.'][stars], cx, CARD.y + CARD.h - 30, { align: 'center', size: 8 });
       if (SE.button(CARD.x + CARD.w - 74, CARD.y + 34, 64, 18, 'Enjoy ♥', { active: true }) || g.autoEnjoy) {
+        SE.cardOpen = false;
         SE.toast('You eat by the window. Waffles and Mochi each get a tiny piece.', '#ffe6b8');
         SE.audio.sfx('purr');
         SE.audio.sfx('woof');
@@ -352,8 +356,8 @@
 
   // ------------------------------------------------------------ scene
   SE.addScene('kitchen', {
-    enter() { mode = 'idle'; SE.audio.setMusic('cabin'); },
-    exit() { if (g && g.sizzle) g.sizzle.stop(); if (g && g.pour) g.pour.stop(); },
+    enter() { mode = 'idle'; SE.cardOpen = false; SE.audio.setMusic('cabin'); },
+    exit() { SE.cardOpen = false; if (g && g.sizzle) g.sizzle.stop(); if (g && g.pour) g.pour.stop(); },
     update(dt) {
       SE.audio.setAmbience({ fire: SE.save.stove * 0.6, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.6 : 0, muffled: true });
     },
@@ -397,7 +401,12 @@
       if (idleT > 4) {
         idleT = 0;
         if (SE.save.stove < 0.3 && SE.save.wood > 0) { feedStove(true); return; }
-        if (stoveCold()) return;
+        if (stoveCold()) {
+          // out of firewood: the traveler heads out to chop some (a little film of its own)
+          SE.toast('Out of firewood — off to the chopping block.', '#ffe6b8');
+          SE.go('yard', { mode: 'chop' });
+          return;
+        }
         const fishes = Object.entries(SE.save.fish).filter(([, n]) => n > 0);
         if (fishes.length && Math.random() < 0.5) startCook(SE.pick(fishes)[0]);
         else startCocoa();
@@ -411,7 +420,7 @@
     const needHeat = (fn) => () => { if (stoveCold()) SE.toast('The oven is cold — add a log first.', '#cfe6ff'); else fn(); };
     btn('Make hot chocolate', 100, needHeat(startCocoa), { icon: 'cup' });
     if (fishes.length) {
-      fishes.slice(0, 2).forEach(([name, n]) => btn(`Cook ${name.split(' ').pop()} ×${n}`, 84, needHeat(() => startCook(name)), { icon: 'fish' }));
+      fishes.slice(0, 2).forEach(([name, n]) => btn(`Cook ${name.split(' ').pop()} ×${n}`, Math.max(84, SE.measure(`Cook ${name.split(' ').pop()} ×${n}`, 8) + 26), needHeat(() => startCook(name)), { icon: 'fish' }));
     } else {
       btn('No fish yet', 70, () => SE.toast('Catch some at the Frozen Lake first!'), { icon: 'fish', fill: 'rgba(60,54,80,0.6)' });
     }

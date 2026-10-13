@@ -11,6 +11,38 @@
     else { ctx.fillRect(x, y + 10, 14, 26); ctx.fillStyle = '#e0b18d'; ctx.fillRect(x + 3, y, 9, 10); ctx.fillStyle = '#b63a3a'; ctx.fillRect(x + 2, y - 3, 11, 5); }
   };
 
+  // Waffles resting on his tummy: mostly breathing with his chin down, now and then he lifts
+  // his head to look around, then settles again. Each instance gets its own rhythm via `seed`.
+  SE.drawDogRest = function (x, feetY, opts = {}) {
+    const a = SE.anims.dog_rest;
+    if (!a) return null;
+    const sz = SE.animSize('dog_rest');
+    const cycle = 14, t = (SE.time + (opts.seed || 0) * 5.3) % cycle;
+    let frame;
+    if (t < 9) frame = Math.floor(t * 0.8) % 2;            // slow breathing, head down
+    else frame = 2 + Math.min(a.frames - 3, Math.floor((t - 9) * 1.6)); // look up, then settle
+    SE.drawAnim('dog_rest', x, feetY - sz.h, 0, { frame, flip: opts.flip, scale: opts.scale });
+    return { x, y: feetY - sz.h, w: sz.w, h: sz.h };
+  };
+
+  // A little stack of split firewood that grows with what you've chopped.
+  SE.drawWoodpile = function (ctx, x, baseY, count) {
+    const n = Math.min(count, 28);
+    let i = 0;
+    for (let row = 0; i < n; row++) {
+      const perRow = Math.max(1, 7 - row);
+      for (let k = 0; k < perRow && i < n; k++, i++) {
+        // round log ends, seen from the front
+        const lx = Math.round(x + k * 6 + row * 3), ly = Math.round(baseY - 6 - row * 5);
+        ctx.fillStyle = '#3a2418'; ctx.fillRect(lx, ly - 1, 5, 7); ctx.fillRect(lx - 1, ly, 7, 5);
+        ctx.fillStyle = '#8a5a34'; ctx.fillRect(lx, ly, 5, 5);
+        ctx.fillStyle = '#e8bd86'; ctx.fillRect(lx + 1, ly, 3, 5); ctx.fillRect(lx, ly + 1, 5, 3);
+        ctx.fillStyle = '#c08c58'; ctx.fillRect(lx + 2, ly + 2, 1, 1);
+      }
+    }
+    if (n > 0) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(Math.round(x + 2), Math.round(baseY - 6 - Math.ceil(n / 7) * 5), Math.min(30, n * 3), 1); }
+  };
+
   // Warm flickering light (fireplace, lamps).
   SE.glow = function (ctx, x, y, r, rgb, strength) {
     ctx.save();
@@ -41,8 +73,8 @@
   // Fish sprite tinted per species (and browned while cooking), drawn via an offscreen canvas.
   const tmp = document.createElement('canvas');
   SE.drawFishSprite = function (ctx, species, cx, cy, scale, cook = 0, flip = false) {
-    const img = SE.img('item_fish');
     const info = SE.FISH[species] || { color: '#ccc', size: 1 };
+    const img = SE.img(info.img);
     const w = (img ? img.width : 32) * scale, h = (img ? img.height : 14) * scale;
     tmp.width = w; tmp.height = h;
     const t = tmp.getContext('2d');
@@ -50,9 +82,6 @@
     if (img) t.drawImage(img, 0, 0, w, h);
     else { t.fillStyle = info.color; t.fillRect(0, h * 0.2, w, h * 0.6); }
     t.globalCompositeOperation = 'source-atop';
-    t.globalAlpha = 0.3;
-    t.fillStyle = info.color;
-    t.fillRect(0, 0, w, h);
     if (cook > 0) { t.globalAlpha = Math.min(0.75, cook * 0.85); t.fillStyle = cook > 0.85 ? '#5a3418' : '#c07a32'; t.fillRect(0, 0, w, h); }
     ctx.save();
     if (flip) { ctx.translate(Math.round(cx + w / 2), Math.round(cy - h / 2)); ctx.scale(-1, 1); ctx.drawImage(tmp, 0, 0); }
@@ -92,7 +121,7 @@
         } else {
           const over = SE.inRect(px, py, box);
           if (over) SE.cursor = 'grab';
-          stroking = over && SE.mouse.down;
+          stroking = over && SE.mouse.down && !SE.modal;
           if (stroking) SE.cursor = 'grabbing';
         }
         if (stroking) {

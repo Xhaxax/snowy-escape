@@ -6,7 +6,8 @@
   SE.weather.catchUp();
   window.addEventListener('beforeunload', () => SE.persist());
   const M = window.SE_MANIFEST || { images: [], anims: {} };
-  const images = ['bg_living', 'bg_kitchen', 'bg_lake', 'bg_forest', 'bg_summit', 'bg_cabin', 'bg_map', 'bg_trail']
+  const images = ['bg_living', 'bg_kitchen', 'bg_lake', 'bg_forest', 'bg_summit', 'bg_cabin', 'bg_map', 'bg_trail',
+    'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td']
     .concat(M.images, Object.keys(M.anims));
   for (const [name, a] of Object.entries(M.anims)) SE.defAnim(name, name, a.frames, a.fps);
 
