@@ -42,3 +42,21 @@
      max 3 shades per material, warm highlights / cool shadows, consistent outline rules,
      pixel-correct stray pixels.
   7. Final composition as layers: Background, Environment animations, Ground shadows, Characters.
+
+## Added requests (latest session)
+- A little **chapel** in the valley where the traveler goes to pray — create it with PixelLab
+  (chapel interior idle scene: background via Create Image Pro with "no characters", wooden pews,
+  altar with candles and an open Bible, wooden cross, arched window with snowfall; plus a top-down
+  chapel map object with a small bell tower, placed on the big map and connected by a path).
+  A calm prayer idle loop for the traveler (Waffles resting by the pews), integrated per the pipeline above.
+- A small **wooden cross on the wall and a Bible** (e.g. on the side table) in the traveler's cabin.
+
+## Status at end of session
+- The planning workflow (production bible / asset manifest / implementation plan) did NOT run:
+  all agents hit the usage limit. Re-run it next session (script idea: research PixelLab pipeline
+  with small experiments + codebase map + UI/Settings spec + per-scene film scripts incl. the chapel,
+  then synthesize docs/PRODUCTION_BIBLE.md, docs/asset_manifest.json, docs/IMPLEMENTATION_PLAN.md
+  and critique them).
+- Chapel / cross / Bible assets were not generated yet.
+- PixelLab: ~1,912 generations left this cycle (Tier 1, 8 concurrent jobs, resets 2026-11-13).
+- Local test: `npx http-server -p 8123 .` then `NODE_PATH=$(npm root -g) node tools/screenshots.cjs`.
