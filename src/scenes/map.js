@@ -331,7 +331,7 @@
     if (s.alert.t > 1.2 && !s.alert.gone) {
       s.alert.gone = true;
       SE.mapReturn = { x: s.hero.x, y: s.hero.y };
-      SE.go('encounter', { animal: s.alert.kind, from: 'map' });
+      SE.moment('alert', { go: ['encounter', { animal: s.alert.kind, from: 'map' }] });
     }
   }
   function enterPlace(id) {
@@ -340,7 +340,10 @@
     SE.persist();
     if (id === 'cabin') SE.audio.sfx('door');
     const buried = id === 'cabin' && SE.save.snowDepth >= 0.6;
-    SE.go(buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40 });
+    const to = [buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40 }];
+    // arriving somewhere special plays a little still-frame moment first (sound carries it)
+    if (SE.MOMENTS && SE.MOMENTS[id]) SE.moment(id, { go: to });
+    else SE.go(...to);
   }
   function drawWalker(ctx, who, a) {
     const name = `${who === 'hero' ? 'td_trav' : 'td_dog'}_${a.dir === 'w' ? 'e' : a.dir}`;

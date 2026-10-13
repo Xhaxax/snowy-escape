@@ -211,7 +211,7 @@
     if (mode === 'chop' && !SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.6 * a + 0.2 });
     if (SE.watching()) return;
     const items = mode === 'yard'
-      ? [['Chop wood', 62, () => (mode = 'chop')], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else mode = 'shovel'; }], ['Rocking chair', 74, () => (mode = 'porch')], ['Go inside', 58, () => { SE.audio.sfx('door'); SE.go('cabin'); }], ['Wander off', 64, leave]]
+      ? [['Chop wood', 62, () => { mode = 'chop'; SE.moment('chop'); }], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else { mode = 'shovel'; SE.moment('shovel'); } }], ['Rocking chair', 74, () => { mode = 'porch'; SE.moment('porch'); }], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', {}] })], ['Wander off', 64, leave]]
       : [['Done', 50, () => (mode = 'yard')]];
     // a column on the right, so the woodpile and Waffles stay visible along the bottom
     let y = SE.H - 6 - items.length * 20;
@@ -220,7 +220,7 @@
   function leave() {
     if (SE.weather.stormy()) { SE.toast('Too stormy to wander. Stay cozy.', '#cfe6ff'); return; }
     if (SE.save.snowDepth >= 0.6) { SE.toast('The path is buried in snow — shovel it first.', '#cfe6ff'); mode = 'shovel'; return; }
-    SE.go('map');
+    SE.moment('leave', { go: ['map', {}] }); // a little cutscene: the door, the snow, Waffles bounding off
   }
   function direct(dt) {
     const d = s.dir;

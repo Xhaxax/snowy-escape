@@ -70,17 +70,23 @@
   };
 
   // -------------------------------------------------------------- file overrides
-  const OVERRIDES = ['music_cabin', 'music_outdoors', 'sfx_step1', 'sfx_step2', 'sfx_step3', 'sfx_splash', 'sfx_reel',
-    'sfx_chop', 'sfx_sizzle', 'sfx_pour', 'sfx_purr', 'sfx_woof', 'sfx_pop', 'sfx_chime', 'sfx_camera', 'sfx_door'];
+  // Recorded/generated sounds (tools/gen_sfx.py writes them with ElevenLabs) replace the synth:
+  // assets/audio/index.json lists what exists, e.g. ["sfx_step1", "sfx_creak", "music_cabin"]; any
+  // sfx_<name>.mp3 then plays instead of SFX[name] (footsteps pick one of sfx_step1..N at random).
   function loadOverrides() {
     if (location.protocol === 'file:') return;
-    for (const name of OVERRIDES) {
-      fetch('assets/audio/' + name + '.mp3')
-        .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
-        .then((ab) => ctx.decodeAudioData(ab))
-        .then((buf) => { files[name] = buf; })
-        .catch(() => {});
-    }
+    fetch('assets/audio/index.json')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        for (const name of list) {
+          fetch('assets/audio/' + name + '.mp3')
+            .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject()))
+            .then((ab) => ctx.decodeAudioData(ab))
+            .then((buf) => { files[name] = buf; })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
   }
   function playFile(name, bus, gain = 1, rate = 1) {
     const buf = files[name];
@@ -130,15 +136,19 @@
   // -------------------------------------------------------------- SFX
   const SFX = {
     step(t, opts = {}) {
-      // crunchy fresh snow: a cluster of tiny bright grains over a soft thump
-      const deep = opts.deep ? 1.3 : 1;
-      noiseBurst(t, 0.09 * deep, { type: 'lowpass', freq: 260, gain: 0.32, attack: 0.01, brown: true });
-      const grains = 10 + Math.floor(Math.random() * 8);
+      // a boot sinking into dry, cold snow: a dull compressing thump, then a dense burst of tiny
+      // crystals breaking (the crunch), with the squeaky 'scrunch' of packed snow on top
+      const deep = opts.deep ? 1.35 : 1, len = 0.16 * deep;
+      noiseBurst(t, 0.11 * deep, { type: 'lowpass', freq: 320, gain: 0.55, attack: 0.008, brown: true });
+      noiseBurst(t + 0.01, len, { type: 'bandpass', freq: 1100, freqEnd: 650, q: 0.9, gain: 0.16, attack: 0.012 });
+      const grains = 22 + Math.floor(Math.random() * 14);
       for (let i = 0; i < grains; i++) {
-        const gt = t + Math.random() * 0.13 * deep;
-        noiseBurst(gt, 0.012 + Math.random() * 0.02, { type: 'bandpass', freq: 1400 + Math.random() * 3200, q: 2.2, gain: 0.05 + Math.random() * 0.08 });
+        const k = Math.random();
+        const gt = t + 0.008 + k * k * len; // most crystals break early in the step
+        noiseBurst(gt, 0.006 + Math.random() * 0.016, { type: 'bandpass', freq: 1600 + Math.random() * 4200, q: 2.6, gain: 0.08 + Math.random() * 0.12 });
       }
-      noiseBurst(t + 0.01, 0.16 * deep, { type: 'bandpass', freq: 900, freqEnd: 500, q: 0.8, gain: 0.06, attack: 0.02 });
+      // the squeak of compressed snow (only in proper cold)
+      if (Math.random() < 0.7) tone(t + 0.03, 1900 + Math.random() * 500, 0.07, { type: 'sawtooth', gain: 0.012, freqEnd: 1500 + Math.random() * 300 });
     },
     pop(t) { tone(t, 620, 0.07, { type: 'sine', gain: 0.12, freqEnd: 900 }); },
     chime(t) {
@@ -222,17 +232,41 @@
     scrape(t) {
       for (let i = 0; i < 3; i++) noiseBurst(t + i * 0.16, 0.12, { type: 'bandpass', freq: 2600, freqEnd: 4200, q: 3, gain: 0.09, attack: 0.01 });
     },
+    // ---- cutscene sounds (sound carries the action while the picture stays still)
+    creak(t) { // an old wooden door swinging open
+      const o = tone(t, 120, 1.3, { type: 'sawtooth', gain: 0.045, attack: 0.15, freqEnd: 210 });
+      o.frequency.setValueCurveAtTime(new Float32Array([120, 150, 132, 180, 160, 205, 190]), t, 1.2);
+      noiseBurst(t, 1.2, { type: 'bandpass', freq: 900, q: 6, gain: 0.03, attack: 0.2 });
+    },
+    latch(t) { noiseBurst(t, 0.12, { type: 'lowpass', freq: 500, gain: 0.5, brown: true }); tone(t, 140, 0.15, { gain: 0.12, freqEnd: 70 }); noiseBurst(t + 0.02, 0.03, { type: 'highpass', freq: 2500, gain: 0.12 }); },
+    stomp(t) { for (let i = 0; i < 2; i++) { noiseBurst(t + i * 0.32, 0.12, { type: 'lowpass', freq: 380, gain: 0.6, brown: true }); noiseBurst(t + i * 0.32 + 0.02, 0.22, { type: 'highpass', freq: 3000, gain: 0.06, attack: 0.01 }); } },
+    icecrack(t) {
+      noiseBurst(t, 0.04, { type: 'highpass', freq: 1800, gain: 0.35 });
+      tone(t, 2400, 0.9, { type: 'sine', gain: 0.05, freqEnd: 300, send: 0.9 });
+      tone(t + 0.05, 1600, 0.7, { type: 'sine', gain: 0.03, freqEnd: 180, send: 0.9 });
+    },
+    auger(t) { // a hand auger biting into thick ice: rhythmic grinding
+      for (let i = 0; i < 6; i++) noiseBurst(t + i * 0.28, 0.24, { type: 'bandpass', freq: 700 + (i % 2) * 300, freqEnd: 1400, q: 2, gain: 0.16, attack: 0.04 });
+    },
+    rustle(t) { for (let i = 0; i < 9; i++) noiseBurst(t + Math.random() * 0.7, 0.05 + Math.random() * 0.08, { type: 'bandpass', freq: 2500 + Math.random() * 2500, q: 1.2, gain: 0.07 + Math.random() * 0.06 }); },
+    twig(t) { noiseBurst(t, 0.025, { type: 'highpass', freq: 1200, gain: 0.45 }); noiseBurst(t + 0.03, 0.02, { type: 'bandpass', freq: 3000, q: 3, gain: 0.25 }); },
+    match(t) { noiseBurst(t, 0.18, { type: 'bandpass', freq: 3500, freqEnd: 1800, q: 1.5, gain: 0.22, attack: 0.01 }); noiseBurst(t + 0.16, 0.7, { type: 'lowpass', freq: 900, gain: 0.12, attack: 0.05, brown: true }); },
+    gust(t) { noiseBurst(t, 2.6, { type: 'bandpass', freq: 380, freqEnd: 900, q: 1.4, gain: 0.32, attack: 1.1 }); },
     sip(t) { noiseBurst(t, 0.35, { type: 'bandpass', freq: 900, freqEnd: 500, q: 3, gain: 0.08, attack: 0.08 }); },
   };
   const FILE_FOR = { pop: 'sfx_pop', chime: 'sfx_chime', splash: 'sfx_splash', reel: 'sfx_reel', chop: 'sfx_chop',
     sizzle: 'sfx_sizzle', pour: 'sfx_pour', purr: 'sfx_purr', woof: 'sfx_woof', camera: 'sfx_camera', door: 'sfx_door' };
 
   A.sfx = function (name, opts) {
-    if (!ctx || !SFX[name]) return;
+    if (!ctx) return;
     if (name === 'step') {
-      const pick = 'sfx_step' + (1 + Math.floor(Math.random() * 3));
-      if (files[pick]) return playFile(pick, sfxBus, 0.8, 0.9 + Math.random() * 0.2);
-    } else if (FILE_FOR[name] && files[FILE_FOR[name]]) return playFile(FILE_FOR[name], sfxBus);
+      const steps = Object.keys(files).filter((k) => k.startsWith('sfx_step'));
+      if (steps.length) return playFile(SE.pick(steps), sfxBus, opts && opts.deep ? 1 : 0.85, 0.9 + Math.random() * 0.2);
+    } else {
+      const f = files['sfx_' + name] ? 'sfx_' + name : FILE_FOR[name];
+      if (f && files[f]) return playFile(f, sfxBus, 1, 0.97 + Math.random() * 0.06);
+    }
+    if (!SFX[name]) return;
     return SFX[name](ctx.currentTime + 0.005, opts);
   };
 

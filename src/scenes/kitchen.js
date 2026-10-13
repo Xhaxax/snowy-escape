@@ -79,6 +79,7 @@
 
   function startCocoa() {
     mode = 'cocoa';
+    SE.moment('cocoa'); // milk going into the pan: a still and the sound of pouring
     g = { stage: 'milk', level: 0, choc: 0, scoops: 0, stir: 0, swirl: 0, marsh: [], t: 0, spoonT: 0, lastAng: null, quality: 1, poured: false, pour: null, lastKey: null };
   }
   function autoCocoa(dt) {
@@ -97,6 +98,7 @@
     }
   }
   function cocoa(ctx, dt) {
+    if (SE.momentPlaying()) return;
     g.t += dt;
     if (SE.watching()) autoCocoa(dt); else clearAuto();
     const titles = { milk: 'Pour the milk', cocoa: 'Two scoops of cocoa', stir: 'Stir it smooth', top: 'Marshmallows?' };

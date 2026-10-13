@@ -65,7 +65,7 @@
         s.wildT -= dt;
         if (s.wildT <= 0 && !s.alertT) { s.alertT = 0.01; SE.audio.sfx('woof'); }
       }
-      if (s.alertT) { s.alertT += rdt; if (s.alertT > 1.2) { s.alertT = 0; s.wildT = SE.rand(60, 120); SE.go('encounter', { animal: SE.pickEncounter(), from: 'trail' }); } }
+      if (s.alertT) { s.alertT += rdt; if (s.alertT > 1.2) { s.alertT = 0; s.wildT = SE.rand(60, 120); SE.moment('alert', { go: ['encounter', { animal: SE.pickEncounter(), from: 'trail' }] }); } }
 
       // background panorama (mirrored tiling = seamless); the path runs along the bottom
       const bgName = SE.img('bg_trail2') ? 'bg_trail2' : 'bg_trail';

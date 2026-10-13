@@ -77,6 +77,8 @@
       mochi = SE.Mochi(CAT_SURF, CAT_LINKS);
       SE.audio.setMusic('cabin');
       if (p.arrived) SE.toast('Home. Mochi was waiting by the door.', '#ffe6b8');
+      // the first time in the cabin after dark each day, he lights the lantern (a little moment)
+      if (SE.weather.night() > 0.5 && SE.save.lanternDay !== SE.save.day) { SE.save.lanternDay = SE.save.day; SE.persist(); setTimeout(() => { if (SE.sceneName === 'cabin') SE.moment('lantern'); }, 700); }
     },
     update(dt) {
       SE.audio.setAmbience({ fire: 0.2 + SE.save.fire * 0.8, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.6 : 0, muffled: true });

@@ -48,6 +48,22 @@
   now: still of the hands at the board → cuts → descaling panel (scrape sounds) → head & fins panel (chops) → fillet
   panel → season/fry/plate use a PixelLab fillet sprite (props/fillet.png) instead of the whole fish.
 
+## Moments (Coffee Talk-style cutscenes) and sound — latest session
+- `src/moments.js`: `SE.moment(name, { go, then })` plays a little cutscene with no animation: dip to black while a
+  sound starts the story, one PixelLab still (assets/img/cut/*.png, 240x136 drawn at 2x) fades in between letterbox
+  bars, drifts 4px, one typed line of text, timed sounds carry the action, then it fades into the (new) scene.
+  Click/Space/Esc skips; each moment has a 2-minute cooldown so they stay special.
+  Moments: leave (yard → valley), home (yard → cabin), lake / chapel / summit / forest / trail (arriving from the
+  map), alert (Waffles notices an animal → encounter), lantern (first time in the cabin after dark each day),
+  cocoa (milk on the stove), chop / shovel / porch (yard activities), pray (kneeling in the chapel).
+- Research basis: Coffee Talk is a visual novel that tells its story with commissioned illustrated stills and lets
+  sound effects and music carry motion and atmosphere (rain, the brewing machine) instead of animating.
+- Sound: much stronger synthesized snow crunch; new synth SFX creak, latch, stomp, icecrack, auger, rustle, twig,
+  match, gust, scrape. Any `assets/audio/sfx_<name>.mp3` listed in `assets/audio/index.json` replaces the synth
+  (`sfx_step1..N` are picked at random). `tools/gen_sfx.py` generates all of them with ElevenLabs — the proxy-injected
+  ElevenLabs credential was rejected (401 invalid authorization header) this session, so the files are not there yet:
+  reconnect ElevenLabs, then run `python3 tools/gen_sfx.py`.
+
 ## Still open from the user's requests
 - Coffee Talk treatment for the cocoa steps (pour / scoop / marshmallows as stills + sound).
 - Mochi from more angles while walking (only side walk exists) and a proper lap-hop when he sits down.

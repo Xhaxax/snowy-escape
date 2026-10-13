@@ -36,6 +36,7 @@
 
   function startPrayer() {
     if (s.mode !== 'stand') return;
+    if (!SE.watching()) SE.moment('pray'); // hands folded over the Bible, a candle, the bell far off
     s.mode = 'kneel'; s.k = 0; s.prayT = 0; s.prayed = false;
     s.verse = SE.pick(VERSES.filter((v) => v !== s.verse));
     s.verseT = 0;
