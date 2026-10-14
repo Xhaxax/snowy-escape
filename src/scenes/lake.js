@@ -79,6 +79,9 @@
         ctx.fillStyle = '#fff7ea'; ctx.fillRect(Math.round(bx) - 1, Math.round(by), 3, 1);
       }
       drawCatchMoment(ctx, dt);
+      // the lantern stands on the ice behind the two of them
+      const LANT = { x: POS.man.x - 16, y: POS.man.y - 26 };
+      SE.lanternBehind(ctx, LANT.x, LANT.y);
 
       // the traveler and Waffles
       // the traveler on his stool (the art faces left, so it is mirrored toward the hole)
@@ -98,7 +101,7 @@
 
       // night and weather light fall on everyone in the scene, not just the background
       SE.weather.tint(ctx);
-      SE.travelerLight(ctx, POS.man.x - 20, POS.man.y - 4, 1, 1, s.headAt); // a lantern on the ice beside him (or the headlamp on his beanie)
+      SE.travelerLight(ctx, LANT.x, LANT.y, 1, 1, s.headAt, { behind: true }); // the lantern behind them (or the headlamp on his beanie)
       SE.weather.stars(ctx, 40);
       SE.weather.sunshine(ctx, 180);
       SE.weather.draw(ctx);

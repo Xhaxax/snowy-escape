@@ -156,5 +156,5 @@
 
 ### Light sources, lantern, leaving still
 - Kitchen and living room after dark: `SE.weather.interior(ctx, lights)` cuts the night dim away around the room's real light sources (oven fire / fireplace, lit lanterns and lamp), so the flames visibly light their corner and the rest falls into shadow. The oven firebox gets a brighter flickering flame glow plus a warm spill on the floor.
-- Traveler's light: headlamp only in a real snowstorm; any other night he carries a PixelLab oil lantern sprite (`props/lantern.png`) with a calm, steady glow (half size on the map). It throws a stronger glow and a warm pool on the snow; in the woodlot it stands by the chopping block, clear of Waffles.
+- Traveler's light: headlamp only in a real snowstorm; any other night he carries a PixelLab oil lantern sprite (`props/lantern.png`) with a calm, steady glow (half size on the map). It throws a stronger glow and a warm pool on the snow; in the woodlot it stands by the chopping block, clear of Waffles; at the lake it stands on the ice behind him and Waffles (`SE.lanternBehind` draws it before them, then only its glowing glass is redrawn over the night tint).
 - `cut/leave_out`: beanie removed from the hook and Mochi removed from the shot (PixelLab inpaint).

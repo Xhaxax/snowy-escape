@@ -97,7 +97,27 @@
   // when the snow comes down hard (its beam cuts a cone through the flakes the way he faces).
   // (x, y) is about his hand; dir is +1 facing right, -1 facing left. Drawn after the night tint.
   // head: where his forehead is in this scene's sprite, so the headlamp sits on his beanie
-  SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1, head = null) {
+  // the lantern's own pixels, and just its bright glass and flame (drawn again over the night tint
+  // when the lantern stands behind someone and was drawn before them)
+  let flameOnly = null;
+  function lanternFlame(im) {
+    if (flameOnly || !im) return flameOnly;
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) if (!(p[i] > 190 && p[i + 1] > 110 && p[i + 3] > 0)) p[i + 3] = 0;
+    x.putImageData(d, 0, 0);
+    return (flameOnly = c);
+  }
+  const lanternOut = () => !SE.weather.stormy() && SE.weather.night() >= 0.35;
+  // A lantern set down BEHIND the characters: draw this before them (it takes the night tint like
+  // the rest of the scene), then call SE.travelerLight(..., { behind: true }) after the tint.
+  SE.lanternBehind = function (ctx, x, y) {
+    const im = SE.img('props/lantern');
+    if (!im || !lanternOut()) return;
+    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(im, Math.round(x) - 10, Math.round(y) - 18); ctx.restore();
+  };
+  SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1, head = null, opts = {}) {
     const W = SE.weather, n = W.night();
     // the headlamp only comes out in a real snowstorm; any other night he carries the oil lantern
     const heavy = W.stormy();
@@ -123,7 +143,11 @@
     const sw = s < 1 ? Math.sin(SE.time * 1.6) * 0.8 : 0; // carried on the map it sways a little; set down it stands still
     const lx = Math.round(x + sw), ly = Math.round(y);
     // the lantern itself (its flame sits at 10,18 in the sprite), then the soft light it throws
-    if (im) {
+    if (im && opts.behind) {
+      // its body was drawn behind the characters; only the glowing glass shows through the dark
+      ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = k;
+      ctx.drawImage(lanternFlame(im), lx - 10, ly - 18); ctx.restore();
+    } else if (im) {
       const w = Math.round(im.width * s), h = Math.round(im.height * s);
       ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.5 + 0.5 * k;
       ctx.drawImage(im, lx - Math.round(10 * s), ly - Math.round(18 * s), w, h); ctx.restore();
