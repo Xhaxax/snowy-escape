@@ -51,8 +51,10 @@ SE.resize = function () {
   vw *= pref; vh *= pref;
   const fit = Math.min(vw / SE.W, vh / SE.H);
   // Prefer whole-number device-pixel scaling for crisp pixels, unless it wastes a lot of screen.
+  // Phones and tablets always fill the screen: their pixels are fine enough that it stays crisp.
+  const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
   let s = Math.floor(fit * dpr);
-  if (s < 1 || s / (fit * dpr) < 0.8) s = Math.max(1, fit * dpr);
+  if (coarse || s < 1 || s / (fit * dpr) < 0.8) s = Math.max(1, fit * dpr);
   SE.scale = s;
   SE.canvas.width = Math.round(SE.W * s);
   SE.canvas.height = Math.round(SE.H * s);

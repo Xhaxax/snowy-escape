@@ -121,7 +121,7 @@
     };
     btn('full', () => {
       if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => {});
+      else if (SE.goFullscreen) SE.goFullscreen().catch(() => SE.toast('Full screen on iPhone: tap Share, then "Add to Home Screen"', '#ffe6b8'));
     });
     btn('eye', () => {
       SE.save.settings.hideUi = !SE.save.settings.hideUi; SE.persist();

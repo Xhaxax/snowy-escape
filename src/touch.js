@@ -96,4 +96,26 @@
   // portrait phones: ask for landscape (shown by CSS only when it applies)
   const turn = document.getElementById('turn');
   if (turn) turn.addEventListener('click', () => turn.classList.add('dismissed'));
+
+  // Phones: the first tap takes the game fullscreen and turns it to landscape (Android Chrome). An
+  // iPhone doesn't let a web page go fullscreen, so there it suggests Add to Home Screen instead,
+  // which opens the game fullscreen like an app (manifest.webmanifest).
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches) || navigator.standalone;
+  SE.goFullscreen = function () {
+    const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    const lock = () => { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); };
+    if (!req) return Promise.reject(new Error('no fullscreen'));
+    return Promise.resolve(req.call(el, { navigationUI: 'hide' })).then(lock);
+  };
+  function iosHint() {
+    if (!/iPhone|iPad|iPod/.test(navigator.userAgent) || standalone()) return;
+    try { if (sessionStorage.getItem('se_a2hs')) return; sessionStorage.setItem('se_a2hs', '1'); } catch (e) { /* private mode */ }
+    setTimeout(() => SE.toast('Full screen on iPhone: tap Share, then "Add to Home Screen"', '#ffe6b8'), 1500);
+  }
+  let tried = false;
+  window.addEventListener('touchend', () => {
+    if (tried || standalone() || document.fullscreenElement) return;
+    tried = true;
+    SE.goFullscreen().catch(iosHint);
+  }, { passive: true });
 })();
