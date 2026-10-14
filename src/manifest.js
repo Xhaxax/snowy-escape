@@ -231,7 +231,7 @@ window.SE_MANIFEST = {
    "fps": 6.0
   },
   "couch_sip": {
-   "frames": 10,
+   "frames": 12,
    "fps": 5.0
   },
   "chop_big": {

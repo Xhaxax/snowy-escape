@@ -124,5 +124,5 @@
 - Cabin: Mochi no longer sits in the middle of the couch. Her spots are the two armrests, the corner of the couch back, the window sill, the bookshelf top, the coffee table, the rug and the doormat.
 - PixelLab budget: 119 generations left until 2026-11-13.
 - Couch: the cross-legged sprite (which looked like he sat on the coffee table) is gone. couch_scene is a PixelLab inpaint of the living room: he leans back on the left cushion in a knit sweater, his socked feet up on the seat, the boots on the rug, Mochi asleep on his lap. A sip plays couch_sip (PixelLab animate_image, 10 frames): the mug goes up to his lips and back down, with the slurp halfway.
-- Couch: both socked feet are whole now (a third inpaint where they met the plaid blanket).
+- Couch: repainted in one pass from the clean room (body, legs, feet and boots together) so the couch colours behind the legs match, then two small touch-ups for the toes and the boots; couch_sip re-animated from the new painting (12 frames).
 - Headphones are parked (SE.HEADPHONES = false): drawn on top of the beanie they never sat on his ears in any scene. The "music" put-them-on cutscene is skipped too. Future feature: paint headphones into his sprites/stills (PixelLab edit of each pose) and switch the flag back on.

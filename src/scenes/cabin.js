@@ -251,7 +251,7 @@
   // (the boots stand on the rug, his wool socks up on the seat), Mochi asleep on his lap. It is laid
   // over the room (couch_scene, the changed pixels only), and a sip is a short animation of him
   // lifting the mug to his lips (couch_sip) over the same spot.
-  const COUCH = { x: 176, y: 16 }, SIP = { x: 212, y: 104 }, SIP_LEN = 2;
+  const COUCH = { x: 176, y: 16 }, SIP = { x: 212, y: 104 }, SIP_LEN = 2.4;
   function drawCouchArt(ctx) {
     const img = SE.img('couch_scene');
     if (!img) return;
@@ -267,7 +267,7 @@
     if (!SE.img('couch_scene')) SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
     // steam from the mug while it rests in his hands
     sip = Math.max(0, sip - dt);
-    const mug = { x: 257, y: 143 };
+    const mug = { x: 262, y: 139 };
     if (sips < 6 && sip <= 0 && Math.random() < dt * 3) steam.push({ x: mug.x + SE.rand(-2, 2), y: mug.y, t: 0 });
     for (let i = steam.length - 1; i >= 0; i--) {
       const p = steam[i];
@@ -279,7 +279,7 @@
       ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 2);
     }
     // stroke the cat on the lap
-    const lap = { x: 256, y: 158, w: 36, h: 20 };
+    const lap = { x: 264, y: 152, w: 36, h: 18 };
     if (!SE.modal && SE.inRect(SE.mouse.x, SE.mouse.y, lap)) {
       SE.cursor = 'grab';
       if (SE.mouse.down && SE.mouse.moved > 0) {
