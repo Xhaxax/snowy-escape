@@ -174,7 +174,8 @@
     if (!pick) { if (then) then(); return; }
     lastPet[kind] = pick[0];
     SE.MOMENTS.pet = [{ img: pick[0], dur: 4.2, text: pick[1], pan: Math.random() < 0.5 ? 1 : -1,
-      sounds: kind === 'dog' ? [[0.5, 'soft'], [2.4, 'woof']] : [[0.4, 'purr'], [2.2, 'purr'], [3.4, 'meow']] }];
+      // Waffles: hands deep in his fur, his happy breathing and snuffling, then the low contented groan
+      sounds: kind === 'dog' ? [[0.1, 'furrub'], [0.7, 'dogbreath'], [2.1, 'furrub'], [2.7, 'doggroan']] : [[0.4, 'purr'], [2.2, 'purr'], [3.4, 'meow']] }];
     SE.moment('pet', { force: true, then });
   };
   // Every still exists for the weather and the time of day it is shown in: 'day' (a sunny spell),

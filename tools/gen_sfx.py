@@ -40,6 +40,10 @@ SOUNDS = {
     'sfx_sizzle': ('fish fillets sizzling in butter in a cast iron pan', 2.5),
     'sfx_scrape': ('knife scraping scales off a fresh trout on a wooden board', 1.0),
     'sfx_purr': ('a small cat purring contentedly, close', 2.0),
+    # petting Waffles: hands in thick fur, his happy breathing, the contented groan of a big dog being scratched
+    'sfx_furrub': ('two hands rubbing and scratching the thick long fur of a big fluffy dog, soft rhythmic ruffling and scratching of fur, very close, no voice, no music', 2.6),
+    'sfx_dogbreath': ('a big happy Bernese mountain dog breathing close by while being petted: soft relaxed panting, snuffling through the nose and a long contented sigh, intimate, no bark, no music', 2.8),
+    'sfx_doggroan': ('a big dog making a deep low contented groan of happiness while being scratched behind the ears, a soft rumbling grumble and a happy sigh, close, no bark, no growl, no music', 1.8),
     'sfx_woof': ('one single deep low bark of a big heavy Bernese mountain dog, a chesty booming woof, deep voice, friendly, close, outdoors, no other sounds', 0.8),
     'sfx_camera': ('vintage film camera shutter click and film advance lever', 0.8),
     'sfx_pop': ('soft wooden ui click, cozy', 0.5),
