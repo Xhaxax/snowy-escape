@@ -37,8 +37,18 @@ SE.ctx = SE.canvas.getContext('2d');
 
 SE.resize = function () {
   const dpr = window.devicePixelRatio || 1;
-  const de = document.documentElement;
-  const vw = Math.min(window.innerWidth, de.clientWidth || window.innerWidth), vh = Math.min(window.innerHeight, de.clientHeight || window.innerHeight);
+  // The visible area: on phones the browser bars (and the notch / home bar) can cover the edges of
+  // the window, so take the smallest honest measure and keep clear of the safe-area insets.
+  const de = document.documentElement, vv = window.visualViewport;
+  let vw = Math.min(window.innerWidth, de.clientWidth || window.innerWidth, vv ? vv.width : 1e9);
+  let vh = Math.min(window.innerHeight, de.clientHeight || window.innerHeight, vv ? vv.height : 1e9);
+  const probe = SE._safe || (SE._safe = (() => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'; document.body.appendChild(d); return d; })());
+  const cs = getComputedStyle(probe);
+  vw -= (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  vh -= (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  // the player's own "Screen size" setting shrinks it further if anything is still cut off
+  const pref = SE.save && SE.save.settings && SE.save.settings.screen ? SE.save.settings.screen : 1;
+  vw *= pref; vh *= pref;
   const fit = Math.min(vw / SE.W, vh / SE.H);
   // Prefer whole-number device-pixel scaling for crisp pixels, unless it wastes a lot of screen.
   let s = Math.floor(fit * dpr);
@@ -209,6 +219,7 @@ SE.load = function () {
     const raw = localStorage.getItem('snowy-escape-save');
     if (raw) {
       const data = JSON.parse(raw);
+      SE.hadSave = true;
       const d = SE.defaultSave();
       SE.save = Object.assign(d, data, { settings: Object.assign(d.settings, data.settings || {}) });
       return;
@@ -281,9 +292,38 @@ SE.wrap = function (str, maxW, size = 8) {
 };
 
 // Soft pixel panel (rounded by chopping corners).
+// The wooden UI skin (ui/kit.png, from the PixelLab UI sheet): a snow-capped walnut plank with gold
+// rivets, 41x18, drawn as a nine-slice. Rows: 0 normal, 1 hover, 2 active (honey), 3 dim.
+const KIT = { w: 41, h: 18, l: 8, r: 8, t: 6, b: 6 };
+SE.drawSkin = function (ctx, row, x, y, w, h, alpha) {
+  const img = SE.img('ui/kit');
+  if (!img || w < 14 || h < 12) return false;
+  const sy = row * KIT.h, mw = KIT.w - KIT.l - KIT.r, mh = KIT.h - KIT.t - KIT.b;
+  ctx.save();
+  if (alpha != null) ctx.globalAlpha = alpha;
+  ctx.imageSmoothingEnabled = false;
+  // the top and bottom rows shrink together on short buttons
+  const t = Math.min(KIT.t, Math.floor(h / 2)), b = Math.min(KIT.b, h - t);
+  const cols = [[0, KIT.l, x, KIT.l]];
+  for (let cx = x + KIT.l; cx < x + w - KIT.r; cx += mw) cols.push([KIT.l, Math.min(mw, x + w - KIT.r - cx), cx, Math.min(mw, x + w - KIT.r - cx)]);
+  cols.push([KIT.w - KIT.r, KIT.r, x + w - KIT.r, KIT.r]);
+  for (const [sx, sw, dx, dw] of cols) {
+    ctx.drawImage(img, sx, sy, sw, t, dx, y, dw, t);
+    for (let cy = y + t; cy < y + h - b; cy += mh) {
+      const hh = Math.min(mh, y + h - b - cy);
+      ctx.drawImage(img, sx, sy + KIT.t, sw, hh, dx, cy, dw, hh);
+    }
+    ctx.drawImage(img, sx, sy + KIT.h - b, sw, b, dx, y + h - b, dw, b);
+  }
+  ctx.restore();
+  return true;
+};
+// the standard dark-violet panels are drawn as wood; panels with their own colour keep it
+const PLAIN = /^rgba\((48,40,70|54,46,78|72,52,96|92,80,128),/;
 SE.panel = function (x, y, w, h, opts = {}) {
   const ctx = SE.ctx;
   x = Math.round(x); y = Math.round(y); w = Math.round(w); h = Math.round(h);
+  if (!opts.plain && (!opts.fill || PLAIN.test(opts.fill)) && SE.drawSkin(ctx, opts.skin || 0, x, y, w, h, opts.alpha)) return;
   ctx.save();
   if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
   ctx.fillStyle = opts.border || 'rgba(26,22,40,0.92)';
@@ -303,10 +343,13 @@ SE.button = function (x, y, w, h, label, opts = {}) {
   if (hover) { SE.cursor = 'pointer'; SE._hot = true; }
   const pressed = hover && SE.mouse.down;
   const active = opts.active;
-  SE.panel(x, y + (pressed ? 1 : 0), w, h, {
+  const skin = active ? 2 : hover ? 1 : opts.fill ? 3 : 0;
+  if (!SE.drawSkin(SE.ctx, skin, x, y + (pressed ? 1 : 0), w, h, opts.alpha)) SE.panel(x, y + (pressed ? 1 : 0), w, h, {
     fill: active ? 'rgba(232,170,96,0.95)' : hover ? 'rgba(92,80,128,0.95)' : opts.fill || 'rgba(54,46,78,0.88)',
-    alpha: opts.alpha,
+    alpha: opts.alpha, plain: true,
   });
+  const skinned = !!SE.img('ui/kit') && w >= 14 && h >= 12;
+  y += skinned ? 1 : 0; // the snow cap sits on top: centre the label on the plank
   if (opts.icon) {
     SE.ctx.save();
     SE.ctx.globalAlpha = opts.alpha == null ? 1 : opts.alpha;

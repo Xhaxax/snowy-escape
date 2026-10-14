@@ -155,7 +155,11 @@
         const v = SE.slider('vol-' + key, px + 72, y, 110, s[key]);
         if (v !== s[key]) { s[key] = v; SE.audio.applyVolumes(); SE.persist(); }
       });
-      SE.text('Synthesized live — drop mp3s in assets/audio to swap.', px + pw / 2, py + ph - 16, { align: 'center', size: 6, color: '#b9b1d6' });
+      // on phones: shrink the game if the browser covers its edges
+      SE.text('Screen', px + 14, py + 108, { size: 8 });
+      const sv = SE.slider('vol-screen', px + 72, py + 112, 110, ((s.screen || 1) - 0.6) / 0.4);
+      const ns = Math.round((0.6 + sv * 0.4) * 100) / 100;
+      if (ns !== (s.screen || 1)) { s.screen = ns; SE.persist(); SE.resize(); }
     } else if (H.panel === 'weather') {
       SE.text('Weather', px + 12, py + 8, { size: 10, color: '#ffe6b8' });
       const opts = [['auto', 'Let nature decide'], ['sunny', 'Sunny spell'], ['calm', 'Gentle snow'], ['snowy', 'Heavy snowfall'], ['windy', 'Windy'], ['storm', 'Snowstorm']];

@@ -14,7 +14,7 @@
     enter() {
       SE.save.location = 'woodlot';
       SE.persist();
-      s = { t: 0, chips: [], meter: 0, chopAnim: 0, auto: 0, splits: 0, busy: false, cheer: true, cheerT: SE.rand(10, 20) };
+      s = { t: 0, chips: [], meter: 0, chopAnim: 0, auto: 0, splits: 0, busy: false };
       SE.audio.setMusic('outdoors');
       SE.moment('chop'); // the axe biting into a log: a still and the sound
     },
@@ -51,15 +51,10 @@
       SE.drawAnim('chop', CHOP.x - 40, CHOP.y - SE.animSize('chop').h, 0, { frame });
       SE.headphones(ctx, CHOP.x - 40 + 32, CHOP.y - SE.animSize('chop').h + 8);
     }
-    // Waffles: cheering you on, or lying in the snow watching
-    const dA = SE.dogCheer();
-    if (s.cheer && SE.anims[dA]) {
-      const d = SE.animSize(dA), hop = Math.abs(Math.sin(s.t * 6)) * 2;
-      SE.drawAnim(dA, DOG.x, DOG.y - d.h - hop, s.t * 1.6, { pingpong: dA === 'dog_happy', flip: true });
-      if (Math.random() < dt * 0.6) SE.spawnFloater(DOG.x + d.w / 2, DOG.y - d.h, Math.random() < 0.5 ? 'note' : 'heart');
-    } else SE.drawDogRest(DOG.x + 20, DOG.y + 4, { flip: true });
-    s.cheerT -= dt;
-    if (s.cheerT <= 0) { s.cheer = !s.cheer; s.cheerT = s.cheer ? SE.rand(12, 22) : SE.rand(15, 30); }
+    // Waffles lies in the snow watching; a good split gets a bark from where he lies, then a grin
+    s.woof = (s.woof == null ? -1 : s.woof) + (s.woof >= 0 ? dt : 0);
+    if (!SE.drawDogLieCheer(DOG.x + 20, DOG.y + 4, s.woof, { flip: true })) { s.woof = -1; SE.drawDogRest(DOG.x + 20, DOG.y + 4, { flip: true }); }
+    else if (s.woof > 0.3 && s.woof < 0.3 + dt) SE.spawnFloater(DOG.x + 34, DOG.y - 30, 'heart');
   }
 
   // stop the swing in the sweet spot
@@ -90,7 +85,7 @@
     SE.persist();
     s.splits++;
     SE.toast(perfect ? 'Clean split! +2 firewood' : '+1 firewood', '#ffe6b8');
-    if (s.cheer && Math.random() < 0.5) SE.audio.sfx('woof');
+    if (!(s.woof >= 0)) { s.woof = 0; setTimeout(() => SE.audio.sfx('woof'), 160); }
     if (s.splits >= ROUND) finishRound();
   }
   // the round is done: stack it, carry an armful in, and the fire gets a fresh log

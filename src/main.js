@@ -14,7 +14,7 @@
     'cut/stack', 'cut/carry_in', 'cut/bible_read', 'cut/music', 'cut/sleep', 'cut/pocket',
     'cut/pet_dog1', 'cut/pet_dog2', 'cut/pet_dog3', 'cut/pet_cat1', 'cut/pet_cat2', 'cut/pet_cat3',
     'lake_hands', 'props/woodpile', 'snow/heap_big', 'snow/heap_small', 'smoke/p0', 'smoke/p1', 'smoke/p2', 'smoke/p3', 'smoke/p4',
-    'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td', 'map/chapel_td', 'bg_chapel', 'bg_woodlot', 'bg_bedroom', 'ui/notebook', 'lit/bg_cabin', 'lit/cabin_td', 'lit/chapel_td', 'bg_forest_dim']
+    'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td', 'map/chapel_td', 'bg_chapel', 'bg_woodlot', 'bg_bedroom', 'ui/notebook', 'ui/kit', 'lit/bg_cabin', 'lit/cabin_td', 'lit/chapel_td', 'bg_forest_dim']
     .concat(M.images, Object.keys(M.anims))
     // each cutscene still in its other weathers and times of day (src/moments.js)
     .concat(...Object.entries(SE.CUT_VARIANTS || {}).map(([n, vs]) => vs.map((v) => `cut/${n}_${v}`)))

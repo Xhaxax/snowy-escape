@@ -115,3 +115,11 @@
 - Bedroom (src/scenes/bedroom.js): bed, lamp, Mochi on the quilt, Waffles on the rug; "Go to sleep" only at night → cut/sleep with zzz from all three → morning (clock 7:12, new day).
 - Mochi v4 (PixelLab character ef64e189…, smaller): walk SE/SW/NE/NW, sit (SE, mirrored), loaf SE/SW, jump SE/SW. No side views; she loafs on counters, shelves, the couch back and the quilt.
 - PixelLab budget: ~45 generations left until 2026-11-13.
+
+## Round: title menu, settings, wooden UI, mobile fit
+- Title (src/scenes/title.js): "Continue · day N" when a journey is saved (resumes the scene you were in), "New journey" (asks first, then wipes the save) and "Settings" (music / ambience / effects, screen size, weather, time, UI fade). The save is kept in localStorage as before.
+- Mobile: the canvas is sized from visualViewport minus the safe-area insets (notch, home bar), and a "Screen size" slider (title settings and the HUD sound panel) shrinks the whole game if a browser still covers the buttons.
+- UI skin: PixelLab UI sheet (create_ui_asset) → tools/make_ui_kit.py → assets/img/ui/kit.png, a snow-capped walnut plank with gold rivets in four states (normal, hover, honey-gold active, dim). SE.button and the standard SE.panel draw it as a nine-slice; panels with their own colour keep the flat style.
+- Woodlot: the oversized felled trunks in front were inpainted away (snow, a couple of small split logs) so the chopper is in proportion with the clearing. Waffles stays lying in the snow and after every good split barks from where he lies and grins (dog_lie_cheer); the lake uses the same lying cheer when a fish bites.
+- Cabin: Mochi no longer sits in the middle of the couch. Her spots are the two armrests, the corner of the couch back, the window sill, the bookshelf top, the coffee table, the rug and the doormat.
+- PixelLab budget: 119 generations left until 2026-11-13.

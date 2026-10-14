@@ -233,6 +233,10 @@ window.SE_MANIFEST = {
   "mochi_loaf_sw": {
    "frames": 9,
    "fps": 5.0
+  },
+  "dog_lie_cheer": {
+   "frames": 10,
+   "fps": 6.0
   }
  }
 };

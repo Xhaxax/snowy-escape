@@ -203,7 +203,18 @@
   };
 
   // Waffles celebrates with you: while a success banner is up he barks and grins.
-  SE.dogCheer = () => (SE.anims.dog_bark && SE.celebration && SE.celebration.t < 2.6 ? 'dog_bark' : 'dog_happy');
+  SE.dogCheer = () => (SE.anims.dog_lie_cheer ? 'dog_lie_cheer' : SE.anims.dog_bark && SE.celebration && SE.celebration.t < 2.6 ? 'dog_bark' : 'dog_happy');
+  // Waffles stays lying where he is, lifts his head for a bark or two and then grins with his tongue
+  // out. `t` is seconds since it started; returns false once it has played through (then he rests).
+  SE.drawDogLieCheer = function (x, feetY, t, opts = {}) {
+    const a = SE.anims.dog_lie_cheer;
+    if (!a || t < 0) return false;
+    const frame = Math.floor(t * a.fps);
+    if (frame >= a.frames && !opts.loop) return false;
+    const sz = SE.animSize('dog_lie_cheer');
+    SE.drawAnim('dog_lie_cheer', x, feetY - sz.h, 0, { frame: frame % a.frames, flip: opts.flip });
+    return true;
+  };
 
   // The fish once it is cut: the same sprite in pieces, a small gap at each cut (fractions 0..1).
   SE.drawFishPieces = function (ctx, species, cx, cy, scale, cook, cuts, gap = 2) {

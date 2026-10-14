@@ -12,8 +12,9 @@
     couch: { x: 250, y: 197 }, // traveler sitting on the couch
   };
   // where Mochi can be in the living room, and the jumps between those spots
-  const CAT_SURF = { sill: [266, 340, 134], couchBack: [236, 350, 142], couch: [212, 365, 166], coffee: [278, 292, 200], shelf: [198, 234, 68], mat: [404, 428, 240], rug: [200, 300, 256] };
-  const CAT_LINKS = [['rug', 'couch'], ['couch', 'couchBack'], ['couchBack', 'sill'], ['couch', 'coffee'], ['coffee', 'rug'], ['rug', 'mat'], ['couchBack', 'shelf']];
+  // (cat spots, not the middle of the couch: the armrests, the corner of the couch back, the sill)
+  const CAT_SURF = { sill: [262, 336, 134], armL: [203, 209, 164], armR: [365, 371, 167], couchBack: [222, 232, 142], coffee: [318, 326, 200], shelf: [198, 234, 68], mat: [404, 428, 240], rug: [200, 300, 256] };
+  const CAT_LINKS = [['rug', 'armL'], ['armL', 'couchBack'], ['couchBack', 'sill'], ['couchBack', 'shelf'], ['rug', 'armR'], ['armR', 'sill'], ['rug', 'coffee'], ['rug', 'mat']];
   let mochi = null;
   let mode = 'room', sip = 0, sips = 0, drink = 'cocoa', steam = [], idleHint = 0;
 
