@@ -475,6 +475,8 @@
   // a recorded loop (assets/audio/amb_*.mp3) on the ambience bus, faded by its own gain
   function loopFile(name) {
     const src = ctx.createBufferSource(); src.buffer = files[name]; src.loop = true;
+    // skip the encoder's few ms of silence at either end, so the loop seam never clicks
+    src.loopStart = 0.05; src.loopEnd = Math.max(0.1, files[name].duration - 0.05);
     const g = ctx.createGain(); g.gain.value = 0;
     src.connect(g).connect(ambBus);
     src.start(0, Math.random() * Math.max(0.1, files[name].duration - 1));

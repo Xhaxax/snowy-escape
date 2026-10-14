@@ -47,7 +47,7 @@ SOUNDS = {
     'sfx_wood1': (WOOD, 0.5), 'sfx_wood2': (WOOD + ', a faint low creak of the board', 0.6), 'sfx_wood3': (WOOD + ', softer', 0.5), 'sfx_wood4': (WOOD + ', slightly heavier', 0.5),
     'sfx_sip': ('a man taking a small slow sip of hot chocolate from a ceramic mug, a soft slurp and a contented exhale, close', 1.4),
     # long loops for the ambience (they replace the synthesized wind and fire)
-    'amb_fire': ('a big roaring wood fire in a stone fireplace: deep low rumbling roar of flames, heavy logs burning, strong full crackling and deep wood pops, warm bass, close, continuous, no high clicks, no music, no voices', 22.0),
+    'amb_fire': ('a cozy log fire burning in a cabin fireplace, recorded close in high quality: a warm full-bodied deep roar of flames, rich satisfying crackling of dry birch and pine logs, deep resonant wood pops and snaps now and then, embers hissing softly, a log settling, steady and continuous, immersive, no music, no voices, no wind', 22.0),
     'amb_wind': ('gentle cold winter wind blowing softly through snowy pine trees outdoors, calm low whoosh, continuous, no rain, no birds, no music', 20.0),
     # Whispering Pines: the animals
     'sfx_sniff': ('a deer sniffing the cold air, short quick nasal sniffs, quiet snowy forest', 1.4),

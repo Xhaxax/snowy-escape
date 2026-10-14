@@ -203,3 +203,7 @@
 - Woodlot: the lantern on the woodshed lights up after dusk (a warm pool that also rim-lights him). Chop animation: detached, inconsistent wood chips removed from the frames.
 - Cocoa: one pour (no more pouring over and over), a cocoa powder sound for the spoons, a stirring sound, the chocolate plops into the milk, and no sip at the end.
 - Chapel prayer: he stays kneeling (watch mode no longer stands him up; only "Stand up" does), and every 20–40 s he lifts his eyes to the cross, rests there a few seconds and bows his head again (9 more PixelLab frames interpolated from the kneeling pose; a cross PixelLab drew into the air was erased).
+- Chapel scale: the prayer animation was rebuilt at 128 px, the woodlot chop's own scale (about 90 px standing), measured against the chapel door and altar; at the old 96 px size he looked like a child. 28 frames: stand, kneel, breathing hold, look up to the cross.
+- Home still: the traveler redrawn with realistic adult proportions (small head, long legs) from a proportion guide built from the game sprite, in the couch outfit; day/storm rebuilt.
+- Sound: the fireplace and wind loops had been empty 462-byte files since they were first made, so the fire only clicked. Both regenerated with ElevenLabs (a warm, deep crackling log fire; soft wind in the pines), made into seamless loops (the end crossfades into the start) and levelled; the loop player skips the encoder's silent edges.
+- Mobile: the thumb-stick no longer switches to the hurry pace at its rim; he always walks at the calm valley pace.

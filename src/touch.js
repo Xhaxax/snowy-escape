@@ -1,5 +1,5 @@
 // Touch play (phones, tablets): a floating thumb-stick on the left half of the valley that stands in
-// for WASD / the arrow keys (push it to the rim to hurry), and a hold button for backing away from a
+// for WASD / the arrow keys (always the calm walking pace, no hurrying), and a hold button for backing away from a
 // bear. Everything else in the game is already tap-friendly. It switches itself on with the first
 // touch, so desktop play never sees it. Add ?touch to the URL to force it on.
 'use strict';
@@ -29,7 +29,6 @@
     if (ax < -0.38) SE.vkeys.add('ArrowLeft');
     if (ay > 0.38) SE.vkeys.add('ArrowDown');
     if (ay < -0.38) SE.vkeys.add('ArrowUp');
-    if (d > R * 0.92) SE.vkeys.add('ShiftLeft');
   }
   function release(id) {
     if (T.stick && T.stick.id === id) { T.stick = null; setStickKeys(0, 0); return true; }

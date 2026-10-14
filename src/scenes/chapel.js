@@ -98,7 +98,7 @@
   const WIN = { x: 30, y: 56, w: 48, h: 126, spring: 80 }; // spring: where the arch meets the straight sides
   const FLAMES = [{ x: 393, y: 136 }, { x: 436, y: 140 }];
   const BIBLE = { x: 398, y: 144, w: 32, h: 14 };
-  const KNEEL = { x: 368, y: 208 };   // the traveler's feet, on the altar step facing the altar
+  const KNEEL = { x: 352, y: 208 };   // the traveler's feet, on the altar step facing the altar
   const DOG = { x: 394, y: 241 };     // Waffles stretched out at the foot of the altar step
   const LEDGE = { x: 54, y: 180 };    // outside the window, where the cardinal lands
   const VOTIVES = [384, 389, 446, 451, 456, 380, 461]; // little candles on the altar, either side of the Bible
@@ -109,11 +109,11 @@
   // the kneel animation: frame 0 standing, then down onto the knees; the last few frames are the
   // held prayer pose, which breathes gently back and forth
   function prayAnim() { return SE.anims.trav_pray ? 'trav_pray' : null; }
-  // trav_pray (96px PixelLab frames, like the woodlot chop): 0 standing bareheaded with the beanie in
-  // hand, 1-11 kneeling down, 11-17 the held prayer pose breathing, 18-26 looking up to the cross; his feet sit at x 40 of the frame
-  const PRAY_HOLD = 11, PRAY_AX = 40;
+  // trav_pray (128px PixelLab frames at the same scale as the woodlot chop): 0 standing bareheaded with the beanie in
+  // hand, 1-12 kneeling down, 12-18 the held prayer pose breathing, 19-27 looking up to the cross; his feet sit at x 34 of the frame
+  const PRAY_HOLD = 12, PRAY_AX = 34;
   // frames LOOK_FROM.. : still kneeling, he raises his eyes to the cross, rests there, bows again
-  const LOOK_FROM = 18, LOOK_PEAK = 4, LOOK_REST = 3.5;
+  const LOOK_FROM = 19, LOOK_PEAK = 4, LOOK_REST = 3.5;
   function lookFrame(dt, a) {
     const n = a.frames - LOOK_FROM;
     if (n <= 0) return null;
