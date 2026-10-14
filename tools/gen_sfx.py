@@ -41,7 +41,7 @@ SOUNDS = {
     'sfx_purr': ('a small cat purring contentedly, close', 2.0),
     'sfx_woof': ('a big friendly Bernese mountain dog giving one happy bark', 0.7),
     'sfx_camera': ('vintage film camera shutter click and film advance lever', 0.8),
-    'sfx_pop': ('soft wooden ui click, cozy', 0.3),
+    'sfx_pop': ('soft wooden ui click, cozy', 0.5),
 }
 
 

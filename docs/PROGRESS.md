@@ -60,9 +60,7 @@
   sound effects and music carry motion and atmosphere (rain, the brewing machine) instead of animating.
 - Sound: much stronger synthesized snow crunch; new synth SFX creak, latch, stomp, icecrack, auger, rustle, twig,
   match, gust, scrape. Any `assets/audio/sfx_<name>.mp3` listed in `assets/audio/index.json` replaces the synth
-  (`sfx_step1..N` are picked at random). `tools/gen_sfx.py` generates all of them with ElevenLabs — the proxy-injected
-  ElevenLabs credential was rejected (401 invalid authorization header) this session, so the files are not there yet:
-  reconnect ElevenLabs, then run `python3 tools/gen_sfx.py`.
+  (`sfx_step1..N` are picked at random). `tools/gen_sfx.py` generates all of them with ElevenLabs. Done: all 26 are in assets/audio (the network secret now holds a working `sk_` key with sound-generation access); sounds without a file (sip, whoosh, soft…) stay synthesized.
 
 ## Still open from the user's requests
 - Coffee Talk treatment for the cocoa steps (pour / scoop / marshmallows as stills + sound).
