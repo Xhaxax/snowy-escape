@@ -482,9 +482,10 @@ function frame(now) {
       if (!SE._lastErr || SE.time - SE._lastErr > 5) { console.error(e); SE._lastErr = SE.time; }
     }
   }
-  for (const h of SE.frameHooks) h(ctx, dt);
-  SE.drawFloaters(dt);
-  SE.drawToasts(dt);
+  // during a cutscene the picture has the screen to itself: messages wait until it is over
+  const still = SE.momentPlaying && SE.momentPlaying();
+  if (still) for (const h of SE.frameHooks) h(ctx, dt);
+  else { SE.drawFloaters(dt); for (const h of SE.frameHooks) h(ctx, dt); SE.drawToasts(dt); }
 
   // scene fade
   const f = SE.fade;

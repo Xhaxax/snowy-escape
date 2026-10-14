@@ -22,6 +22,8 @@
     ],
     summit: [
       { black: 0.8, sounds: [[0.0, 'gust']] },
+      { img: 'cut/climb1', dur: 3.4, text: 'Step by step up the ridge. Waffles leads the way.', pan: 1, sounds: [[0.3, 'stomp'], [0.9, 'step'], [1.5, 'stomp'], [2.1, 'step'], [2.7, 'woof']] },
+      { img: 'cut/climb2', dur: 3.4, text: 'Breathless — and then the whole world opens up.', pan: -1, sounds: [[0.2, 'gust']] },
       { img: 'cut/summit', dur: 4.0, text: 'Above the clouds.', pan: -1, sounds: [[0.3, 'step'], [0.75, 'step'], [1.2, 'step'], [1.9, 'gust']] },
     ],
     alert: [
@@ -58,13 +60,64 @@
     cocoa: [
       { img: 'cut/cocoa', dur: 2.8, text: 'Milk on the stove…', pan: 1, sounds: [[0.2, 'pour']] },
     ],
+
+    // ---- whole actions told in stills (no minigame): each ends with the job done
+    shovelling: [
+      { black: 0.5, sounds: [[0.05, 'stomp']] },
+      { img: 'cut/shovel', dur: 3.4, text: 'Knee-deep. One scoop at a time.', pan: -1, sounds: [[0.3, 'scrape'], [0.9, 'stomp'], [1.7, 'scrape'], [2.4, 'stomp']] },
+      { img: 'cut/shovel2', dur: 3.4, text: 'Scrape… lift… fwump.', pan: 1, sounds: [[0.2, 'scrape'], [0.8, 'stomp'], [1.6, 'scrape'], [2.3, 'stomp'], [2.9, 'woof']] },
+      { img: 'cut/shovel3', dur: 3.6, text: 'Clear, all the way to the door.', pan: -1, sounds: [[0.4, 'step'], [0.8, 'step'], [1.6, 'soft']] },
+    ],
+    porchRest: [
+      { img: 'cut/porch', dur: 3.6, text: 'A blanket, a mug, the slow creak of the chair.', pan: 1, sounds: [[0.3, 'creak'], [1.6, 'creak']] },
+      { img: 'cut/porch2', dur: 4.2, text: 'Warm hands, cold nose. The snow keeps falling.', pan: -1, sounds: [[0.6, 'sip'], [2.2, 'creak'], [3.2, 'purr']] },
+    ],
+    climb: [
+      { black: 0.6, sounds: [[0.05, 'gust']] },
+      { img: 'cut/climb1', dur: 3.6, text: 'Step by step up the ridge. Waffles leads the way.', pan: 1, sounds: [[0.3, 'stomp'], [0.9, 'step'], [1.5, 'stomp'], [2.1, 'step'], [2.7, 'woof']] },
+      { img: 'cut/climb2', dur: 3.8, text: 'Breathless — and then the whole world opens up.', pan: -1, sounds: [[0.2, 'gust'], [1.8, 'soft']] },
+    ],
+    cocoaMake: [
+      { img: 'cut/cocoa', dur: 3.0, text: 'Milk on the stove…', pan: 1, sounds: [[0.2, 'pour']] },
+      { img: 'cut/cocoa2', dur: 3.0, text: 'Two heaped spoons of cocoa.', pan: -1, sounds: [[0.5, 'stir'], [1.4, 'stir']] },
+      { anim: 'cocoa_stir', dur: 3.2, text: 'Stir until it is smooth and dark.', sounds: [[0.3, 'stir'], [1.0, 'stir'], [1.7, 'stir'], [2.4, 'stir']] },
+      { img: 'cut/cocoa3', dur: 3.4, text: 'Marshmallows. Obviously.', pan: 1, sounds: [[0.5, 'pop'], [1.1, 'pop'], [1.6, 'pop'], [2.4, 'sip']] },
+    ],
+    cook: [
+      { img: 'kitchen_cut', dur: 2.6, text: 'A sharp knife, a steady hand.', sounds: [[0.3, 'chop'], [1.0, 'chop']] },
+      { img: 'kitchen_scale', dur: 2.6, text: 'Scales off, against the grain…', sounds: [[0.2, 'scrape'], [0.8, 'scrape'], [1.4, 'scrape']] },
+      { img: 'kitchen_head', dur: 2.4, text: 'Head and fins off.', sounds: [[0.3, 'chop'], [0.9, 'chop'], [1.4, 'chop']] },
+      { img: 'kitchen_fillet', dur: 2.8, text: 'Two neat fillets. Dill and salt.', sounds: [[0.4, 'stir'], [1.4, 'soft']] },
+      { anim: 'kitchen_fry_raw', dur: 3.4, text: 'Into the hot pan. Sssss.', sounds: [[0.1, 'sizzle'], [1.6, 'sizzle']] },
+      { anim: 'kitchen_fry_gold', dur: 3.2, text: 'Flip. Golden.', sounds: [[0.05, 'whoosh'], [0.3, 'sizzle']] },
+      { img: 'cut/eat', dur: 3.8, text: 'Dinner by the window. Everyone is very interested.', pan: 1, sounds: [[0.6, 'purr'], [1.8, 'woof']] },
+    ],
+    photo: [
+      { img: 'cut/camera', dur: 2.6, text: '', pan: 1, sounds: [[0.4, 'rustle'], [1.7, 'camera']] },
+    ],
+    sketch: [
+      { img: 'cut/sketch', dur: 3.4, text: 'A few quick lines while it holds still.', pan: -1, sounds: [[0.4, 'scrape'], [1.2, 'scrape'], [2.0, 'scrape']] },
+    ],
+  };
+  // petting: two of these stills each time, never the same pair in a row
+  SE.PET_STILLS = {
+    dog: [['cut/pet_dog1', 'Right behind the ears. His favourite spot.'], ['cut/pet_dog2', 'A big fluffy head lands in your lap.'], ['cut/pet_dog3', 'Belly up. Tail thumping the rug.']],
+    cat: [['cut/pet_cat1', 'Chin scratches. She approves.'], ['cut/pet_cat2', 'A head bump. You have been chosen.'], ['cut/pet_cat3', 'Kneading, purring, a little bit of claw.']],
+  };
+  SE.petMoment = function (kind, then) {
+    const list = SE.PET_STILLS[kind].filter(([img]) => SE.img(img));
+    const pick = list.sort(() => Math.random() - 0.5).slice(0, 2);
+    SE.MOMENTS.pet = pick.map(([img, text], i) => ({ img, dur: 3.4, text, pan: i ? -1 : 1, sounds: kind === 'dog' ? [[0.5, 'soft'], [1.6, i ? 'woof' : 'soft']] : [[0.4, 'purr'], [2.0, 'purr']] }));
+    if (!pick.length) { if (then) then(); return; }
+    SE.moment('pet', { force: true, then });
   };
   // Every still exists for the weather and the time of day it is shown in: 'day' (a sunny spell),
   // 'snow' (overcast, snowing), 'storm' (wind and whiteout) and 'night'. BASE says which of those the
   // plain cut/<name>.png already is; the others live in cut/<name>_<variant>.png.
   const BASE = {
     alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
-    shovel: 'snow', leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night', cocoa: 'any',
+    shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'day', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
+    leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night', cocoa: 'any',
   };
   SE.CUT_VARIANTS = {
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
@@ -127,20 +180,25 @@
     const a = Math.min(1, first ? m.t / 0.35 : 1) * Math.min(1, last ? (len - m.t) / 0.45 : 1);
     ctx.fillStyle = `rgba(6,5,10,${SE.clamp(a, 0, 1)})`;
     ctx.fillRect(0, 0, SE.W, SE.H);
-    if (b.img) {
-      const img = SE.img(b.img);
-      if (img) {
+    if (b.img || b.anim) {
+      // a still picture, or (rarely) a looping PixelLab strip such as the frying pan
+      const img = b.img ? SE.img(b.img) : null;
+      const size = b.anim ? (SE.anims[b.anim] && SE.animSize(b.anim)) : img && { w: img.width, h: img.height };
+      if (size) {
         const k = SE.clamp(m.t / b.dur, 0, 1);
         const ia = Math.min(1, m.t / 0.5) * Math.min(1, (b.dur - m.t) / 0.45);
-        const s = Math.max(1, Math.floor(Math.min(SE.W / img.width, SE.H / img.height))); // whole pixels; bars crop the top/bottom
-        const w = img.width * s, h = img.height * s;
+        const s = Math.max(1, Math.floor(Math.min(SE.W / size.w, SE.H / size.h))); // whole pixels; bars crop the top/bottom
+        const w = size.w * s, h = size.h * s;
         const pan = Math.round(((b.pan || 0) * (k - 0.5)) * 4); // a 4px drift across the shot
         const x = Math.round((SE.W - w) / 2) + pan, y = Math.round((SE.H - h) / 2);
         ctx.save();
         ctx.globalAlpha = SE.clamp(ia, 0, 1);
         ctx.beginPath(); ctx.rect(4, 22, SE.W - 8, SE.H - 44); ctx.clip();
-        ctx.drawImage(img, x, y, w, h);
+        if (b.anim) SE.drawAnim(b.anim, x, y, m.t, { scale: s }); else ctx.drawImage(img, x, y, w, h);
+        // smaller pictures (the cooking panels) get a thin warm frame, like a photo on the table
+        if (w < SE.W - 40) { ctx.strokeStyle = 'rgba(243,230,207,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3); }
         ctx.restore();
+        if (b.draw) b.draw(ctx, { x, y, w, h, s, t: m.t, k }); // extras on top (falling herbs, …)
       }
       // letterbox bars, with the line of text in the lower one (typed out gently)
       ctx.fillStyle = `rgba(6,5,10,${SE.clamp(a, 0, 1)})`;

@@ -77,7 +77,6 @@
       SE.weather.stars(ctx, 60);
       SE.weather.draw(ctx, { density: 0.5 });
       if (s.flash > 0) { s.flash -= dt * 3; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
-      if (s.state === 'camera') drawViewfinder(ctx);
       if (s.photo) drawPhoto(ctx, dt);
       else if (s.sketch) drawSketch(ctx, dt);
       else drawChoices(ctx);
@@ -224,8 +223,8 @@
       return;
     }
     const items = [
-      ['Take a photo', 84, () => { s.state = 'camera'; }, 'cam'],
-      [A.bear ? 'Note it down' : 'Sketch it', 76, () => startSketch(), 'book'],
+      ['Take a photo', 84, takePhoto, 'cam'],
+      [A.bear ? 'Note it down' : 'Sketch it', 76, sketchIt, 'book'],
       [A.bear ? 'Back away' : 'Let it be', 66, () => (A.bear ? (s.state = 'retreat', s.back = 0) : leave()), null],
     ];
     let x = SE.W - 6 - items.reduce((t, i) => t + i[1] + 4, 0);
@@ -237,31 +236,21 @@
     else SE.go('map', { resume: true });
   }
 
-  function drawViewfinder(ctx) {
-    // corner brackets, a focus box on the animal and a shutter hint
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.fillRect(0, 0, SE.W, 22); ctx.fillRect(0, SE.H - 22, SE.W, 22);
-    ctx.fillStyle = '#fff7ea';
-    const L = 14, m = 30;
-    for (const [x, y, dx, dy] of [[m, m, 1, 1], [SE.W - m, m, -1, 1], [m, SE.H - m, 1, -1], [SE.W - m, SE.H - m, -1, -1]]) {
-      ctx.fillRect(x, y, dx * L, dy); ctx.fillRect(x, y, dx, dy * L);
-    }
-    const fx = s.A.perch || s.kind === 'bird' ? s.ax : s.ax + 24, fy = s.A.perch || s.kind === 'bird' ? s.ay - 10 : FEET - 22;
-    ctx.strokeStyle = 'rgba(255,209,102,0.9)'; ctx.lineWidth = 1;
-    ctx.strokeRect(Math.round(fx - 22) + 0.5, Math.round(fy - 16) + 0.5, 44, 32);
-    ctx.fillStyle = '#e04848'; ctx.fillRect(SE.W - 48, 28, 4, 4);
-    SE.text('REC', SE.W - 42, 27, { size: 6, color: '#fff7ea' });
-    SE.text('Click or press Space to take the photo · Esc to lower the camera', SE.W / 2, SE.H - 16, { align: 'center', size: 7, color: '#fff7ea' });
-    if (SE.key('Escape')) { s.state = 'meet'; return; }
-    if (!SE.modal && (SE.mouse.released || SE.key('Space'))) {
-      SE.mouse.released = false;
-      SE.audio.sfx('camera');
+  // Photo and sketch are little cutscenes: his hands raising the camera (the shutter clicks), or the
+  // pencil moving over the notebook, and then the print or the finished page.
+  function takePhoto() {
+    s.state = 'busy';
+    SE.moment('photo', { force: true, then: () => {
       s.flash = 1;
-      const shot = nextShot(s.kind);
-      s.photo = { ...shot, t: 0 };
+      s.photo = { ...nextShot(s.kind), t: 0 };
       // the click of the shutter can unsettle a bear
       if (s.A.bear && Math.random() < 0.25) s.photo.spooks = true;
-    }
+      s.state = 'meet';
+    } });
+  }
+  function sketchIt() {
+    s.state = 'busy';
+    SE.moment('sketch', { force: true, then: () => { s.state = 'meet'; startSketch(); } });
   }
   function drawPhoto(ctx, dt) {
     const p = s.photo;
@@ -311,7 +300,6 @@
       ctx.restore();
     }
     SE.text(s.A.note, x + w / 2, y + h - 18, { align: 'center', size: 7, color: '#4a3a32', shadow: false });
-    if (k.t < 1.5 && Math.random() < 0.4) SE.audio.sfx('click');
     if (k.t > 1.5 && SE.button(SE.W / 2 - 40, SE.H - 24, 80, 18, 'Close notebook') ) { s.sketch = null; if (s.A.bear) s.state = 'meet'; else leave(); }
   }
   function banner(text, color) {

@@ -15,15 +15,21 @@
   const CAT_SURF = { sill: [266, 340, 134], couchBack: [236, 350, 142], couch: [212, 365, 166], coffee: [278, 292, 200], shelf: [198, 234, 68], mat: [404, 428, 240], rug: [200, 300, 256] };
   const CAT_LINKS = [['rug', 'couch'], ['couch', 'couchBack'], ['couchBack', 'sill'], ['couch', 'coffee'], ['coffee', 'rug'], ['rug', 'mat'], ['couchBack', 'shelf']];
   let mochi = null;
-  let mode = 'room', pet = null, sip = 0, sips = 0, drink = 'cocoa', steam = [], idleHint = 0;
+  let mode = 'room', sip = 0, sips = 0, drink = 'cocoa', steam = [], idleHint = 0;
 
   function bottomOf(anim, x, y) { const s = SE.animSize(anim); return { x: Math.round(x), y: Math.round(y - s.h), w: s.w, h: s.h }; }
 
+  // Petting is a little cutscene: two close-up stills (out of three per pet), purring or a happy
+  // thump of the tail carrying it; no minigame.
   function startPet(kind) {
-    mode = kind === 'dog' ? 'petDog' : 'petCat';
-    pet = SE.PetCloseup(kind === 'dog'
-      ? { anim: 'dog_happy', name: 'Waffles', kind: 'dog', scale: 3, doneText: 'Waffles rolls over, tail thumping the rug.', onDone: () => { SE.save.petsDog++; SE.persist(); } }
-      : { anim: 'cat_sit', name: 'Mochi', kind: 'cat', scale: 3, doneText: 'Mochi slow-blinks at you. That means love.', onDone: () => { SE.save.petsCat++; SE.persist(); } });
+    mode = 'busy';
+    SE.petMoment(kind, () => {
+      mode = 'room';
+      if (kind === 'dog') SE.save.petsDog++; else SE.save.petsCat++;
+      SE.persist();
+      SE.toast(kind === 'dog' ? 'Waffles sighs happily and flops back onto the rug.' : 'Mochi slow-blinks at you. That means love.', '#ffe6b8');
+      dir.dur = 0;
+    });
   }
 
   function sitDown(auto) {
@@ -118,15 +124,15 @@
   const dir = { t: 0, dur: 0, last: null };
   function direct(dt) {
     dir.t += dt;
-    const petDone = (mode === 'petDog' || mode === 'petCat') && pet.st.done && pet.st.t - pet.st.doneAt > 4;
-    if (SE.save.fire < 0.4 && SE.save.wood > 0 && mode !== 'petDog' && mode !== 'petCat' && (dir.fireT = (dir.fireT || 0) + dt) > 3) { dir.fireT = 0; addLog(true); }
-    if (dir.t < dir.dur && !petDone) return;
+    if (mode === 'busy' || SE.momentPlaying()) return;
+    if (SE.save.fire < 0.4 && SE.save.wood > 0 && (dir.fireT = (dir.fireT || 0) + dt) > 3) { dir.fireT = 0; addLog(true); }
+    if (dir.t < dir.dur) return;
     const options = ['couch', 'couch', 'petDog', 'petCat', 'room'].filter((m) => m !== dir.last && m !== mode);
     const next = SE.pick(options);
     dir.last = next; dir.t = 0;
     if (next === 'couch') { sitDown(true); dir.dur = SE.rand(35, 55); }
     else if (next === 'room') { mode = 'room'; dir.dur = SE.rand(12, 20); }
-    else { startPet(next === 'petDog' ? 'dog' : 'cat'); dir.dur = 60; }
+    else { startPet(next === 'petDog' ? 'dog' : 'cat'); dir.dur = 999; }
   }
 
   SE.addScene('cabin', {
@@ -182,12 +188,7 @@
       v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(30,12,20,0.45)');
       ctx.fillStyle = v; ctx.fillRect(0, 0, SE.W, SE.H);
 
-      if (mode === 'petDog' || mode === 'petCat') {
-        pet.draw(ctx, dt);
-        if (!SE.watching() && SE.button(SE.W / 2 - 36, SE.H - 26, 72, 18, 'All done')) mode = 'room';
-        SE.hud.draw(ctx, { title: 'The Cabin', map: false });
-        return;
-      }
+      if (mode === 'busy') { SE.hud.draw(ctx, { title: 'The Cabin', map: false }); return; }
 
       const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
       if (mode === 'room' && !SE.watching()) {

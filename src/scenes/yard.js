@@ -1,19 +1,14 @@
-// Porch & Yard: chop firewood (Waffles cheers or naps), shovel the path, rock on the porch.
+// Porch & Yard: chop firewood (Waffles cheers or naps); shovelling the path and resting on the porch
+// are little cutscenes (stills and sound), so only the chopping asks anything of you.
 'use strict';
 
 (function () {
-  const WINDOWS = [{ x: 188, y: 183, r: 22 }, { x: 275, y: 183, r: 22 }, { x: 230, y: 118, r: 16, pool: false }, { x: 354, y: 183, r: 18 }, { x: 231, y: 180, r: 10, pool: false }];
+  const WINDOWS = [{ x: 186, y: 175, r: 20 }, { x: 277, y: 176, r: 20 }, { x: 230, y: 118, r: 16, pool: false }, { x: 356, y: 183, r: 18 }, { x: 256, y: 171, r: 9, pool: false }];
   const PATH = { x: 168, y: 230, w: 140, h: 42 };
   const SPOT = {
     chop: { x: 30, y: 268 },   // feet of the chopper (his stump is part of the sprite)
     dog: { x: 128, y: 262 },
-    porch: { x: 282, y: 236 }, // rocking chair on the porch
-    shovel: { x: 196, y: 264 },
   };
-  const THOUGHTS = [
-    'The air smells like pine and woodsmoke.', 'Snow settles on your shoulders.', 'Waffles catches a snowflake on his tongue.',
-    'The chair creaks softly. Back and forth.', 'Somewhere, an owl hoots once.', 'The chimney puffs little clouds.',
-  ];
   let mode = 'yard', s = null;
 
   // the mounds of snow on the path come from the snow depth
@@ -43,7 +38,9 @@
   SE.addScene('yard', {
     enter(p) {
       SE.save.location = 'cabin';
-      mode = p.mode || 'yard';
+      mode = p.mode === 'chop' ? 'chop' : 'yard';
+      // arriving to shovel (the path was buried) or to sit on the porch: straight into its cutscene
+      if (p.mode === 'shovel' || p.mode === 'porch') setTimeout(() => { if (SE.sceneName === 'yard' && mode === 'yard') (p.mode === 'shovel' ? shovel : porch)(); }, 700);
       s = { t: 0, chips: [], meter: 0, chopAnim: 0, cheer: true, cheerT: SE.rand(10, 20), thought: null, thoughtT: 4, dir: { t: 0, dur: 0, last: null }, auto: 0, splitT: 0 };
       SE.audio.setMusic('outdoors');
       if (SE.save.snowDepth > 0.6) SE.toast('So much snow on the path! Grab the shovel when you like.', '#cfe6ff');
@@ -53,7 +50,7 @@
     },
     draw(ctx, dt) {
       s.t += dt;
-      if (SE.weather.stormy() && mode !== 'yard') mode = 'yard';
+      if (SE.weather.stormy() && mode === 'chop') mode = 'yard';
       if (SE.weather.stormy() && s.t > 2 && !s.leaving) {
         s.leaving = true;
         SE.toast('The storm is too strong — back inside you go!', '#cfe6ff');
@@ -82,7 +79,6 @@
         ctx.fillStyle = c.c; ctx.fillRect(Math.round(c.x), Math.round(c.y), c.s, c.s);
       }
       if (mode === 'chop') drawChopMeter(ctx, dt);
-      if (mode === 'porch') drawThoughts(dt);
 
       drawButtons(ctx);
       const snowPct = Math.round(SE.save.snowDepth * 100);
@@ -100,17 +96,17 @@
       SE.drawAnim('chop', SPOT.chop.x, SPOT.chop.y - sz('chop').h, 0, { frame });
     } else if (SE.img('chop_area')) SE.drawImg('chop_area', 22, 268 - SE.img('chop_area').height);
 
-    // Waffles: cheering while you chop or shovel, otherwise resting on his tummy
-    const cheering = (mode === 'chop' && s.cheer) || mode === 'shovel';
+    // Waffles: cheering while you chop, otherwise resting on his tummy
+    const cheering = mode === 'chop' && s.cheer;
     const dA = SE.dogCheer();
     if (cheering && SE.anims[dA]) {
       const d = sz(dA);
-      const pos = mode === 'shovel' ? { x: 300, y: 266 } : { x: 160, y: 266 };
+      const pos = { x: 160, y: 266 };
       const hop = Math.abs(Math.sin(s.t * 6)) * 2;
       SE.drawAnim(dA, pos.x, pos.y - d.h - hop, s.t * 1.6, { pingpong: dA === 'dog_happy' });
       if (Math.random() < dt * 0.8) SE.spawnFloater(pos.x + d.w / 2, pos.y - d.h, Math.random() < 0.5 ? 'note' : 'heart');
     } else {
-      const pos = mode === 'porch' ? { x: 336, y: 240, flip: true } : mode === 'chop' ? { x: 150, y: 268 } : { x: 236, y: 270, flip: true };
+      const pos = mode === 'chop' ? { x: 150, y: 268 } : { x: 236, y: 270, flip: true };
       SE.drawDogRest(pos.x, pos.y, { flip: pos.flip });
     }
     s.cheerT -= dt;
@@ -118,14 +114,6 @@
       s.cheer = !s.cheer;
       s.cheerT = s.cheer ? SE.rand(12, 22) : SE.rand(15, 30);
       if (mode === 'chop') SE.toast(s.cheer ? 'Waffles jumps up to cheer you on!' : 'Waffles lies down for a calm little rest.', '#ffe6b8');
-    }
-    if (mode === 'porch') {
-      if (SE.anims.porch) SE.drawAnim('porch', SPOT.porch.x, SPOT.porch.y - sz('porch').h, s.t * 0.9, { pingpong: true });
-      else SE.drawActorFallback(ctx, SPOT.porch.x, SPOT.porch.y - 40, '#a0522d');
-    }
-    if (mode === 'shovel') {
-      if (SE.anims.shovel) SE.drawAnim('shovel', SPOT.shovel.x, SPOT.shovel.y - sz('shovel').h, s.t * 1.2, {});
-      else SE.drawActorFallback(ctx, SPOT.shovel.x, SPOT.shovel.y - 40, '#a0522d');
     }
   }
 
@@ -166,53 +154,30 @@
     }
   }
 
-  // ------------------------------------------------------------ shoveling
-  function shovelTick(auto) {
-    const ms = mounds();
-    if (!ms.length) return;
-    let target = null;
-    if (auto) target = ms[ms.length - 1];
-    else {
-      target = ms.find((m) => Math.hypot(SE.mouse.x - m.x, SE.mouse.y - m.y) < m.r + 6);
-      if (!target && SE.inRect(SE.mouse.x, SE.mouse.y, PATH)) target = ms[ms.length - 1];
-    }
-    if (!target) return;
-    SE.audio.sfx('step', { deep: true });
-    for (let i = 0; i < 10; i++) s.chips.push({ x: target.x, y: target.y - 2, vx: SE.rand(-50, 80), vy: SE.rand(-90, -40), t: 0, s: Math.random() < 0.4 ? 2 : 1, c: '#f4f7ff' });
-    SE.save.snowDepth = Math.max(0, SE.save.snowDepth - 1 / 14);
-    if (SE.save.snowDepth < 0.04) {
-      SE.save.snowDepth = 0;
-      SE.save.shoveled++;
-      SE.persist();
+  // ------------------------------------------------------------ shovelling & the porch: cutscenes
+  // Three stills carry the shovelling (deep snow, the trench half dug, the path clear), sound does
+  // the work; when they end the path really is clear.
+  function shovel() {
+    if (SE.save.snowDepth < 0.04) { SE.toast('The path is already clear!'); return; }
+    mode = 'busy';
+    SE.moment('shovelling', { force: true, then: () => {
+      SE.save.snowDepth = 0; SE.save.shoveled++; SE.persist();
+      mode = 'yard'; s.dir.dur = 0;
       SE.celebrate('Path is clear!', `The valley is all yours again. ${SE.pick(SE.PROPS)}`);
-      mode = 'yard';
-      s.dir.dur = 0; // let the watch-mode director pick the next little scene right away
-    }
+    } });
   }
-
-  function drawThoughts(dt) {
-    s.thoughtT -= dt;
-    if (s.thoughtT <= 0) { s.thought = SE.pick(THOUGHTS); s.thoughtT = 9; }
-    if (!s.thought) return;
-    const a = Math.min(1, (9 - s.thoughtT) * 2, s.thoughtT * 1.5);
-    const w = SE.measure(s.thought, 8) + 16;
-    SE.panel(SE.W / 2 - w / 2, 52, w, 16, { alpha: a * 0.85 });
-    SE.text(s.thought, SE.W / 2, 56, { align: 'center', size: 8, alpha: a });
+  function porch() {
+    mode = 'busy';
+    SE.moment('porchRest', { force: true, then: () => { mode = 'yard'; s.dir.dur = 0; SE.save.porchSits = (SE.save.porchSits || 0) + 1; SE.persist(); } });
   }
 
   // ------------------------------------------------------------ buttons & watch director
   function drawButtons(ctx) {
     const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
-    if (mode === 'shovel') {
-      const clickable = !SE.modal && SE.mouse.y < SE.H - 28 && SE.mouse.y > 30;
-      if (clickable) SE.cursor = 'pointer';
-      if (!SE.watching() && clickable && SE.mouse.pressed) shovelTick(false);
-      SE.text(SE.watching() ? 'Scrape… scrape… fwump.' : 'Click the snow piles to shovel them away', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.7 + 0.3 * Math.sin(SE.time * 3) });
-    }
     if (mode === 'chop' && !SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.6 * a + 0.2 });
-    if (SE.watching()) return;
+    if (SE.watching() || mode === 'busy' || SE.momentPlaying()) return;
     const items = mode === 'yard'
-      ? [['Chop wood', 62, () => { mode = 'chop'; SE.moment('chop'); }], ['Shovel snow', 70, () => { if (SE.save.snowDepth < 0.04) SE.toast('The path is already clear!'); else { mode = 'shovel'; SE.moment('shovel'); } }], ['Rocking chair', 74, () => { mode = 'porch'; SE.moment('porch'); }], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', { inDoor: true }] })], ['Wander off', 64, leave]]
+      ? [['Chop wood', 62, () => { mode = 'chop'; SE.moment('chop'); }], ['Shovel snow', 70, shovel], ['Rocking chair', 74, porch], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', { inDoor: true }] })], ['Wander off', 64, leave]]
       : [['Done', 50, () => (mode = 'yard')]];
     // a column on the right, so the woodpile and Waffles stay visible along the bottom
     let y = SE.H - 6 - items.length * 20;
@@ -220,24 +185,22 @@
   }
   function leave() {
     if (SE.weather.stormy()) { SE.toast('Too stormy to wander. Stay cozy.', '#cfe6ff'); return; }
-    if (SE.save.snowDepth >= 0.6) { SE.toast('The path is buried in snow — shovel it first.', '#cfe6ff'); mode = 'shovel'; return; }
+    if (SE.save.snowDepth >= 0.6) { SE.toast('The path is buried in snow — shovel it first.', '#cfe6ff'); shovel(); return; }
     SE.moment('leave', { go: ['map', {}] }); // a little cutscene: the door, the snow, Waffles bounding off
   }
   function direct(dt) {
     const d = s.dir;
+    if (mode === 'busy' || SE.momentPlaying()) return;
     d.t += dt;
-    if (mode === 'shovel') {
-      s.autoShovel = (s.autoShovel || 1) - dt;
-      if (s.autoShovel <= 0) { s.autoShovel = SE.rand(1.1, 1.8); shovelTick(true); }
-      if (SE.save.snowDepth > 0) return;
-    }
     if (d.t < d.dur) return;
     d.t = 0;
     let next;
     if (SE.save.snowDepth > 0.35 && d.last !== 'shovel') next = 'shovel';
     else next = SE.pick(['chop', 'porch', 'chop', 'porch'].filter((m) => m !== d.last));
     d.last = next;
+    if (next === 'shovel') { shovel(); d.dur = 999; return; }
+    if (next === 'porch') { porch(); d.dur = 999; return; }
     mode = next;
-    d.dur = next === 'chop' ? SE.rand(35, 55) : next === 'porch' ? SE.rand(45, 70) : 999;
+    d.dur = SE.rand(35, 55);
   }
 })();
