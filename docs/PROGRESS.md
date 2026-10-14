@@ -147,3 +147,4 @@
 - Rocking chair: longer cutscene, then an idle screen with the PixelLab animation cut/porch_rock_0..15 (animate_image of porch2: rocking, sipping, Waffles breathing), bright daylight relight, creak + sip each loop; not in a snowstorm.
 - Text: small text now uses bitmap pixel fonts at their native 10px (Tiny5; Micro 5 for size-6 notes) — Pixelify Sans at 8px blurred B/G together and fused "fi" into an "A" ("Arewood"). Headings ≥12px stay Pixelify. A zero-width non-joiner also keeps f+i/l apart.
 - Fewer hearts: none on banners or celebration bursts (sparkles only), none on buttons, rare when stroking Mochi. New ElevenLabs reward jingle (sfx_jingle: soft music box and bells).
+- Mochi v5: every existing animation (walk ×4, sit, jump ×2, loaf ×2 — 74 frames) upscaled 1.5× and reskinned with PixelLab transfer_outfit to match her cutscenes: a chunky, fluffy grey tabby with dark stripes, white chest, muzzle and paws (~36px instead of ~25px). Same poses and timing.
