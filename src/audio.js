@@ -279,25 +279,66 @@
   // -------------------------------------------------------------- music
   const SONGS = {
     cabin: {
-      bpm: 68,
+      title: 'Fireside', bpm: 68,
       chords: [[53, 57, 60, 64], [52, 55, 59, 62], [50, 53, 57, 60], [48, 52, 55, 59], [46, 50, 53, 57], [45, 48, 52, 55], [50, 53, 57, 60], [43, 47, 50, 53]],
       scale: [72, 74, 76, 79, 81, 84, 86, 88],
       voice: 'keys', density: 0.32, bars: 1,
     },
     outdoors: {
-      bpm: 56,
+      title: 'Valley Air', bpm: 56,
       chords: [[45, 52, 57, 59, 64], [41, 48, 53, 57, 64], [48, 55, 60, 64, 67], [43, 50, 55, 59, 64]],
       scale: [69, 72, 74, 76, 79, 81, 84, 88],
       voice: 'pad', density: 0.18, bars: 2,
     },
     // the chapel: a slow, hymn-like progression with a bell now and then
     chapel: {
-      bpm: 48,
+      title: 'Vespers', bpm: 48,
       chords: [[48, 55, 60, 64], [41, 53, 57, 60], [43, 50, 55, 59], [45, 52, 57, 60], [41, 48, 53, 57], [43, 50, 55, 62], [48, 52, 55, 60], [48, 55, 60, 64]],
       scale: [72, 74, 76, 79, 81, 84],
       voice: 'pad', density: 0.1, bars: 2,
     },
+    // more of the same quiet music, so a long work or study session doesn't loop one song for hours
+    cabin2: {
+      title: 'Cocoa Steam', bpm: 70,
+      chords: [[41, 56, 60, 63, 67], [46, 56, 62, 67], [39, 55, 58, 62, 65], [36, 51, 55, 58, 62], [44, 55, 60, 63, 67], [43, 53, 58, 62, 65], [41, 56, 60, 63, 65], [46, 56, 60, 63, 65]],
+      scale: [75, 77, 79, 82, 84, 87],
+      voice: 'keys', density: 0.26, bars: 1,
+    },
+    cabin3: {
+      title: 'Snow on the Sill', bpm: 62,
+      chords: [[45, 57, 60, 64, 67], [41, 57, 60, 64], [40, 55, 60, 64], [43, 55, 59, 64]],
+      scale: [76, 79, 81, 84, 86, 88],
+      voice: 'box', density: 0.12, bars: 2,
+    },
+    study: {
+      title: 'Study Lamp', bpm: 76,
+      chords: [[38, 54, 57, 61, 64], [35, 50, 54, 57, 61], [43, 54, 57, 59, 62], [45, 54, 59, 61, 64]],
+      scale: [74, 76, 78, 81, 83, 86],
+      voice: 'keys', density: 0.2, bars: 2,
+    },
+    outdoors2: {
+      title: 'Pine Trail', bpm: 60,
+      chords: [[38, 53, 57, 60, 64], [38, 55, 59, 62, 67], [41, 53, 57, 60, 64], [36, 52, 55, 57, 64]],
+      scale: [74, 76, 77, 79, 81, 83, 86],
+      voice: 'padarp', density: 0.14, bars: 2,
+    },
+    outdoors3: {
+      title: 'Blue Hour', bpm: 50,
+      chords: [[41, 53, 57, 60, 64, 71], [41, 55, 59, 62, 67], [40, 55, 59, 62, 64], [45, 55, 60, 64, 71]],
+      scale: [72, 74, 76, 79, 83, 84],
+      voice: 'pad', density: 0.12, bars: 2,
+    },
+    chapel2: {
+      title: 'Candlelight', bpm: 46,
+      chords: [[43, 55, 59, 62], [40, 55, 59, 64], [36, 55, 60, 64], [38, 54, 57, 62]],
+      scale: [74, 79, 81, 83, 86],
+      voice: 'box', density: 0.06, bars: 2,
+    },
   };
+  // each place has a little playlist; a song plays ~4 minutes, then the next one takes over on a bar line
+  const PLAYLISTS = { cabin: ['cabin', 'cabin2', 'cabin3', 'study'], outdoors: ['outdoors', 'outdoors2', 'outdoors3'], chapel: ['chapel', 'chapel2'] };
+  const TRACK_LEN = 240;
+  let list = null, listIdx = 0, trackStart = 0, wantNext = false;
   let song = null, songName = null, nextBeat = 0, beat = 0, schedTimer = null, songGain = null, fileMusic = null;
 
   function keys(t, n, dur, vel) {
@@ -331,6 +372,11 @@
     tone(t, midi(n), 2.2, { gain: 0.06 * vel, bus: songGain, send: 0.9 });
     tone(t, midi(n) * 3.01, 0.8, { gain: 0.012 * vel, bus: songGain, send: 0.9 });
   }
+  // a music box: soft high plinks with a quick decay
+  function box(t, n, vel) {
+    tone(t, midi(n), 1.4, { gain: 0.045 * vel, bus: songGain, send: 0.7 });
+    tone(t, midi(n) * 2.0, 0.5, { gain: 0.012 * vel, bus: songGain, send: 0.7 });
+  }
   function vinyl(t, len) {
     for (let i = 0; i < 6; i++) noiseBurst(t + Math.random() * len, 0.004, { type: 'highpass', freq: 2500, gain: 0.02 + Math.random() * 0.03, bus: songGain });
   }
@@ -344,7 +390,18 @@
       const ci = Math.floor(beat / beatsPerChord) % song.chords.length;
       const chord = song.chords[ci];
       const inChord = beat % beatsPerChord;
-      if (song.voice === 'keys') {
+      // the next song starts on the first beat of a new round of chords
+      if (list && inChord === 0 && beat > 0 && (wantNext || (ci === 0 && ctx.currentTime - trackStart > TRACK_LEN))) {
+        wantNext = false; listIdx = (listIdx + 1) % list.length; song = SONGS[list[listIdx]]; trackStart = ctx.currentTime; beat = 0;
+        continue;
+      }
+      if (song.voice === 'box') {
+        if (inChord === 0) { tone(t, midi(chord[0] - 12), spb * beatsPerChord, { gain: 0.05, bus: songGain, attack: 0.8 }); }
+        // a slow arpeggio up and down the chord, two octaves up
+        const up = chord.slice(1).concat(chord.slice(1, -1).reverse());
+        box(t, up[inChord % up.length] + 12, 0.55 + Math.random() * 0.3);
+        if (Math.random() < song.density) box(t + spb * 0.5, SE.pick(song.scale), 0.4);
+      } else if (song.voice === 'keys') {
         if (inChord === 0) {
           keys(t, chord[0] - 12, spb * 3.5, 0.9);
           chord.forEach((n, i) => keys(t + i * 0.03 + 0.02, n, spb * 3.6, 0.6));
@@ -356,6 +413,7 @@
           if (Math.random() < song.density) keys(t + off * spb + Math.random() * 0.02, SE.pick(song.scale), spb * 1.4, 0.5 + Math.random() * 0.4);
         }
       } else {
+        if (song.voice === 'padarp') keys(t + 0.01, chord[1 + (inChord % (chord.length - 1))] + 12, spb * 1.6, 0.32);
         if (inChord === 0) {
           chord.forEach((n) => pad(t, n, spb * beatsPerChord, 1));
           tone(t, midi(chord[0] - 12), spb * beatsPerChord, { gain: 0.06, bus: songGain, attack: 1.5 });
@@ -388,11 +446,19 @@
       fileMusic = { src, g: songGain };
       return;
     }
-    song = SONGS[name];
+    list = PLAYLISTS[name] || null;
+    listIdx = list ? Math.floor(Math.random() * list.length) : 0;
+    song = SONGS[list ? list[listIdx] : name];
+    trackStart = t;
     beat = 0;
     nextBeat = t + 0.5;
     schedTimer = setInterval(schedule, 120);
   };
+
+  A.nextTrack = function () { if (list && list.length > 1) wantNext = true; };
+  // name of what plays now (on the next bar after "next", it changes)
+  A.trackTitle = () => (song && song.title) || '';
+  A.playlistSize = () => (list ? list.length : 1);
 
   // -------------------------------------------------------------- ambience
   const amb = {}; // layer name -> {gain node, level}

@@ -159,7 +159,7 @@
   function drawPanel(ctx) {
     ctx.fillStyle = 'rgba(14,10,24,0.45)';
     ctx.fillRect(0, 0, SE.W, SE.H);
-    const pw = 200, ph = 132;
+    const pw = 200, ph = H.panel === 'sound' ? 144 : 132;
     const px = SE.W / 2 - pw / 2, py = SE.H / 2 - ph / 2;
     SE.panel(px, py, pw, ph, { fill: 'rgba(48,40,70,0.97)' });
     if (SE.button(px + pw - 20, py + 4, 16, 14, 'x', { modal: true })) { H.close(); return; }
@@ -180,6 +180,13 @@
       const sv = SE.slider('vol-screen', px + 72, py + 112, 110, ((s.screen || 1) - 0.6) / 0.4);
       const ns = Math.round((0.6 + sv * 0.4) * 100) / 100;
       if (ns !== (s.screen || 1)) { s.screen = ns; SE.persist(); SE.resize(); }
+      // what is playing, and a way to skip to the next song
+      const title = SE.audio.trackTitle ? SE.audio.trackTitle() : '';
+      if (title) {
+        SE.text('Now playing', px + 14, py + 119, { size: 6, color: '#b9b0d0' });
+        SE.text(title, px + 14, py + 127, { size: 7, color: '#dfe8ff' });
+        if (SE.audio.playlistSize() > 1 && SE.button(px + pw - 62, py + 121, 52, 14, 'Next song', { modal: true, size: 7 })) SE.audio.nextTrack();
+      }
     } else if (H.panel === 'weather') {
       SE.text('Weather', px + 12, py + 8, { size: 10, color: '#ffe6b8' });
       const opts = [['auto', 'Let nature decide'], ['sunny', 'Sunny spell'], ['calm', 'Gentle snow'], ['snowy', 'Heavy snowfall'], ['windy', 'Windy'], ['storm', 'Snowstorm']];
