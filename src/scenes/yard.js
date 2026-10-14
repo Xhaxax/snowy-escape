@@ -97,7 +97,7 @@
     if (SE.save.snowDepth < 0.04) { SE.toast('The path is already clear!'); return; }
     mode = 'busy';
     SE.moment('shovelling', { force: true, then: () => {
-      SE.save.snowDepth = 0; SE.save.shoveled++; SE.persist();
+      SE.save.snowDepth = 0; SE.save.shoveled++; SE.persist(); SE.ach.note('shovel');
       mode = 'yard'; s.dir.dur = 0;
       SE.celebrate('Path is clear!', `The valley is all yours again. ${SE.pick(SE.PROPS)}`);
     } });

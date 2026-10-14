@@ -44,6 +44,7 @@
     enter(p) {
       const kind = ANIMALS[p.animal] ? p.animal : 'deer';
       const A = ANIMALS[kind];
+      SE.ach.note('wild', kind);
       s = { kind, A, from: p.from || 'map', state: 'intro', mood: 'calm', photo: null, sketch: null, flash: 0, msg: null, t: 0 };
       if (A.bear && Math.random() < 0.4) s.mood = 'agitated';
       SE.audio.setMusic('outdoors');

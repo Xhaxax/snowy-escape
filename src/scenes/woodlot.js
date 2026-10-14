@@ -95,7 +95,7 @@
     }, IMPACT * 1000 / 11);
     if (!good) { SE.toast('Glanced off — try again, no hurry.', '#cfe6ff'); return; }
     SE.save.wood = Math.min(40, SE.save.wood + (perfect ? 2 : 1));
-    SE.save.logs++;
+    SE.save.logs++; SE.ach.note('chop');
     SE.persist();
     s.splits++;
     SE.toast(perfect ? 'Clean split! +2 firewood' : '+1 firewood', '#ffe6b8');

@@ -238,6 +238,7 @@ SE.addFish = function (name) {
   SE.save.fish[name] = (SE.save.fish[name] || 0) + 1;
   SE.save.caught[name] = (SE.save.caught[name] || 0) + 1;
   SE.persist();
+  if (SE.ach) SE.ach.note('fish');
 };
 SE.fishCount = () => Object.values(SE.save.fish).reduce((a, b) => a + b, 0);
 

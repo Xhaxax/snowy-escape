@@ -17,7 +17,7 @@
       mode = 'idle';
       const sv = SE.save;
       sv.cocoa++; sv.dishes['Hot Chocolate'] = (sv.dishes['Hot Chocolate'] || 0) + 1;
-      sv.mugsUsed = sv.mugsUsed || {}; sv.mugsUsed[m.id || 'red'] = true;
+      sv.mugsUsed = sv.mugsUsed || {}; sv.mugsUsed[m.id || 'red'] = true; SE.ach.note('cocoa');
       SE.persist();
       SE.celebrate('Hot chocolate!', `${m.name}, marshmallows on top. ${SE.pick(SE.PROPS)}`);
     } });
@@ -36,7 +36,7 @@
       if (sv.fish[fish] <= 0) delete sv.fish[fish];
       const dish = f.dish || 'Pan-fried Fish';
       sv.dishes[dish] = (sv.dishes[dish] || 0) + 1;
-      sv.cooked++;
+      sv.cooked++; SE.ach.note('cook');
       SE.persist();
       // and then dinner, with Waffles and Mochi watching every bite
       SE.moment('eat', { force: true, then: () => { mode = 'share'; g = { fish, t: 0 }; } });
@@ -80,7 +80,7 @@
     if (sv.wood <= 0) { SE.toast('No firewood — chop some out in the yard.', '#cfe6ff'); return false; }
     if (sv.stove > 0.9) { SE.toast('The oven is nice and hot already.'); return false; }
     const wasCold = sv.stove < 0.12;
-    sv.wood--; sv.stove = Math.min(1, sv.stove + 0.6); SE.persist();
+    sv.wood--; sv.stove = Math.min(1, sv.stove + 0.6); SE.persist(); SE.ach.note('oven');
     SE.audio.sfx('whoosh');
     for (let i = 0; i < 12; i++) SE.spawnFloater(SE.rand(380, 410), SE.rand(185, 200), 'spark', '#ffb36b');
     if (wasCold && !auto) SE.celebrate('Oven lit!', `Warm and ready for cooking. ${SE.pick(SE.PROPS)}`);

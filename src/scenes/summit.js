@@ -14,6 +14,7 @@
     enter(p) {
       SE.save.location = 'summit';
       SE.persist();
+      SE.ach.note('summit');
       s = { t: 0, clouds: [], star: null, starT: SE.rand(6, 14), breathe: null, look: -1 };
       SE.audio.setMusic('outdoors');
       if (p.arrived) SE.toast('You made it. Waffles flops down beside you, panting happily.', '#ffe6b8');

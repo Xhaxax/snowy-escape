@@ -26,6 +26,7 @@
     SE.petMoment(kind, () => {
       mode = 'room';
       if (kind === 'dog') SE.save.petsDog++; else SE.save.petsCat++;
+      SE.ach.note('pet', kind === 'dog' ? 'dog' : 'cat');
       SE.persist();
       SE.toast(kind === 'dog' ? 'Waffles sighs happily and flops back onto the rug.' : 'Mochi slow-blinks at you. That means love.', '#ffe6b8');
       dir.dur = 0;
@@ -44,7 +45,7 @@
     SE.moment('bible', { force: true, then: () => {
       mode = 'room';
       const sv = SE.save;
-      sv.bibleReads = (sv.bibleReads || 0) + 1;
+      sv.bibleReads = (sv.bibleReads || 0) + 1; SE.ach.note('bible');
       sv.verses = (sv.verses || []).filter((v) => v[1] !== ref).concat([[text, ref]]).slice(-24);
       SE.persist();
       SE.toast(`Noted in the notebook: ${ref}`, '#ffe6b8');
@@ -78,7 +79,7 @@
       } });
       return true;
     }
-    sv.wood--; sv.fire = Math.min(1, sv.fire + 0.45); SE.persist();
+    sv.wood--; sv.fire = Math.min(1, sv.fire + 0.45); SE.persist(); SE.ach.note('fire');
     SE.audio.sfx('whoosh'); SE.audio.sfx('chop');
     for (let i = 0; i < 14; i++) SE.spawnFloater(SE.rand(86, 120), SE.rand(180, 200), 'spark', '#ffb36b');
     if (!auto && sv.fire > 0.85) SE.celebrate('Cozy fire!', `The cabin glows warm again. ${SE.pick(SE.PROPS)}`);

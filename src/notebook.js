@@ -13,7 +13,7 @@
   const INK = '#3b2c26', SOFT = '#7a6656', RED = '#9c3b2e';
   // the field guide: one spread per animal (sketch on the left, the photo album on the right)
   const KINDS = ['fox', 'hare', 'deer', 'elk', 'bird', 'owl', 'bear'];
-  const SPREADS = ['Days & wildlife', 'Valley map', ...KINDS.map((k) => 'field:' + k), 'Fish & kitchen', 'Notes from the Word'];
+  const SPREADS = ['Days & wildlife', 'Valley map', ...KINDS.map((k) => 'field:' + k), 'Fish & kitchen', 'Notes from the Word', 'Achievements', 'Achievements II'];
   const HINTS = { owl: 'Only out at night.', bird: 'Never in heavy snow or wind.', bear: 'Rare. Stays in its den in a storm.', elk: 'Rare, in the daytime.', fox: 'Day or night.', hare: 'Day or night, hard to spot.', deer: 'Often, if you are patient.' };
   const seenKind = (k) => { const sv = SE.save; return !!(((sv.pinesSeen || {})[k]) || ((sv.album || {})[k] || []).length || (sv.sketches || {})[k]); };
   const spreadTitle = (i) => { const t = SPREADS[i]; if (!t.startsWith('field:')) return t; const k = t.slice(6); return seenKind(k) ? `Field guide · ${(SE.PINES[k] || {}).name}` : 'Field guide · ???'; };
@@ -179,6 +179,9 @@
       row('Chin scratches · Mochi', sv.petsCat);
       row('Bears backed away from', sv.bears || 0);
       row('Focus sessions', sv.focusSessions);
+      y += 4;
+      write(`Achievements ${SE.ach.count()}/${SE.ach.list.length}  ▶`, L.x, y, { color: RED });
+      if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: L.x, y, w: L.w, h: 9 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('Achievements'); NB.turn = 1; SE.audio.sfx('page'); } }
       write('Field guide', R.x, R.y, { size: 8, color: RED });
       KINDS.forEach((k, i) => {
         const cx = R.x + (i % 2) * 52, cy = R.y + 12 + Math.floor(i / 2) * 32;
@@ -188,6 +191,17 @@
         write(seen ? `${(SE.PINES[k] || {}).name.split(' ').pop()} ${n}/${N}` : '???', cx + 24, cy + 25, { align: 'center', size: 6, color: seen ? INK : SOFT });
         if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: cy, w: 48, h: 30 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('field:' + k); NB.turn = 1; SE.audio.sfx('page'); } }
       });
+    } else if (SPREADS[NB.spread].startsWith('Achievements')) {
+      const first = SPREADS[NB.spread] === 'Achievements' ? 0 : 2;
+      const hl = SE.ach.drawPage(ctx, first, L, write, SE.mouse), hr = SE.ach.drawPage(ctx, first + 1, R, write, SE.mouse);
+      const h = hl || hr;
+      write(`${SE.ach.count()} of ${SE.ach.list.length} found`, R.x + R.w, by + BOOK.h - 44, { align: 'right', size: 6, color: SOFT });
+      if (h) {
+        const name = h.got ? h.a.name : '???', desc = h.got ? h.a.desc : 'Hidden. Keep living in the mountains and it will find you.';
+        const tw = Math.max(SE.measure(name, 8), SE.measure(desc, 6)) + 12, tx = SE.clamp(h.cx + 16 - tw / 2, 4, SE.W - tw - 4), ty = Math.min(h.cy + 34, SE.H - 28);
+        ctx.fillStyle = 'rgba(48,40,70,0.95)'; ctx.fillRect(tx, ty, tw, 24);
+        write(name, tx + 6, ty + 3, { size: 8, color: '#ffe6b8' }); write(desc, tx + 6, ty + 14, { size: 6, color: '#dfe8ff' });
+      }
     } else if (SPREADS[NB.spread] === 'Valley map') {
       drawValleyMap(ctx, L.x - 2, L.y - 1, R.x + R.w - L.x + 4, 142);
     } else if (SPREADS[NB.spread].startsWith('field:')) {

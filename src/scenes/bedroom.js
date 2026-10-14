@@ -29,7 +29,7 @@
       const sv = SE.save;
       if (sv.clock > 7) sv.day++;
       sv.clock = 7.2; // morning
-      sv.sleeps = (sv.sleeps || 0) + 1;
+      sv.sleeps = (sv.sleeps || 0) + 1; SE.ach.note('sleep');
       sv.fire = Math.max(0.2, sv.fire * 0.5);
       SE.persist();
       SE.toast(`Good morning. Day ${sv.day} in the mountains.`, '#ffe6b8');
