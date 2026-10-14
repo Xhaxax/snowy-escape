@@ -115,7 +115,14 @@
       const dogR = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
       let catR = null;
       if (mode !== 'couch' && mochi) { mochi.update(dt); catR = mochi.draw(); }
-      SE.weather.interior(ctx);
+      {
+        // after dark the fire and the reading lamp carve their light out of the room; the rest goes dim
+        const f0 = 0.25 + 0.75 * SE.save.fire, fk = 0.9 + 0.08 * Math.sin(SE.time * 9);
+        SE.weather.interior(ctx, [
+          { x: 102, y: 196, r: 110 + 120 * f0, k: SE.save.fire > 0.05 ? (0.45 + 0.5 * f0) * fk : 0.15 },
+          { x: 181, y: 136, r: 90, k: 0.75 },
+        ]);
+      }
       if (mode === 'room' && !SE.watching() && hotspot(BIBLE, 'Read the Bible')) readBible();
 
       // fire (its size follows the fire level) + lamps that matter more at night

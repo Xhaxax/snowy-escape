@@ -153,3 +153,8 @@
 - Bedroom: the door is painted out — a freestanding wardrobe with two potted plants beside it, no coat rack. Mochi's rug spots no longer overlap Waffles (bedroom and living room).
 - Lighting (src/lighting.js): SE.drawAnim records every character sprite drawn in a frame and SE.glow records every light (fire, lamps, lanterns, lit windows, headlamp). Before the HUD, each sprite near a light gets a rim of the light's colour on the side facing it plus a soft wash over the body, clipped to the sprite's pixels; lights a character carries don't outline himself. Outdoors after dark a faint cool moon rim falls from above. Indoors lamps/fire count by day too; outdoors only after dusk.
 - Headlamp: SE.travelerLight takes the forehead position per scene (woodlot, lake, summit, Long Walk) and draws the strap and lens on his beanie, the beam starting there. The woodlot lantern stands next to him in the snow.
+
+### Light sources, lantern, leaving still
+- Kitchen and living room after dark: `SE.weather.interior(ctx, lights)` cuts the night dim away around the room's real light sources (oven fire / fireplace, lit lanterns and lamp), so the flames visibly light their corner and the rest falls into shadow. The oven firebox gets a brighter flickering flame glow plus a warm spill on the floor.
+- Traveler's light: headlamp only in a real snowstorm; any other night he carries a PixelLab oil lantern sprite (`props/lantern.png`) with a calm, steady glow (half size on the map).
+- `cut/leave_out`: beanie removed from the hook and Mochi removed from the shot (PixelLab inpaint).

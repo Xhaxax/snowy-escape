@@ -229,13 +229,36 @@
     W.draw(ctx, { clip: rects, density: 0.75, windScale: 0.6 });
   };
   // Interior darkness at night (lamps and fire then glow brighter on top).
-  W.interior = function (ctx) {
+  // After dark a room gets a cool dim wash. Give it the room's light sources ({x, y, r, k}) and the
+  // dark is cut away around them, so the fire and the lamps light their corner and the rest falls
+  // into shadow.
+  const dk = document.createElement('canvas'), dx = dk.getContext('2d');
+  W.interior = function (ctx, lights) {
     const n = W.night();
     if (n < 0.01) return;
     ctx.save();
     ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = `rgba(70,60,110,${0.6 * n})`;
-    ctx.fillRect(0, 0, SE.W, SE.H);
+    if (!lights || !lights.length) {
+      ctx.fillStyle = `rgba(70,60,110,${0.6 * n})`;
+      ctx.fillRect(0, 0, SE.W, SE.H);
+      ctx.restore();
+      return;
+    }
+    if (dk.width !== SE.W) { dk.width = SE.W; dk.height = SE.H; }
+    dx.globalCompositeOperation = 'source-over';
+    dx.clearRect(0, 0, SE.W, SE.H);
+    dx.fillStyle = `rgba(48,40,88,${0.84 * n})`;
+    dx.fillRect(0, 0, SE.W, SE.H);
+    dx.globalCompositeOperation = 'destination-out';
+    for (const l of lights) {
+      if (!(l.k > 0.01)) continue;
+      const g = dx.createRadialGradient(l.x, l.y, 0, l.x, l.y, l.r);
+      g.addColorStop(0, `rgba(0,0,0,${Math.min(1, l.k)})`);
+      g.addColorStop(0.5, `rgba(0,0,0,${Math.min(1, l.k) * 0.55})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      dx.fillStyle = g; dx.fillRect(l.x - l.r, l.y - l.r, l.r * 2, l.r * 2);
+    }
+    ctx.drawImage(dk, 0, 0);
     ctx.restore();
   };
   W.label = () => MODES[W.mode].label;

@@ -82,14 +82,29 @@
     draw(ctx, dt) {
       SE.drawImg('bg_kitchen', 0, 0);
       SE.weather.windows(ctx, WINDOWS);
-      SE.weather.interior(ctx);
       const flick = 0.8 + 0.15 * Math.sin(SE.time * 8) + 0.05 * Math.random();
       const heat = SE.save.stove, night = SE.weather.night();
-      if (heat < 0.12) { ctx.fillStyle = 'rgba(20,12,14,0.6)'; ctx.fillRect(374, 178, 50, 34); }
-      SE.glow(ctx, 398, 196, (20 + 30 * heat) * flick, '255,140,60', (0.08 + 0.22 * heat) * flick);
       // the lanterns are only lit after dusk; in daylight they stand there cold
       const lit = SE.clamp((night - 0.3) * 4, 0, 1);
+      // the oven fire is the room's main light: after dark everything away from it and the lanterns sinks into shadow
+      SE.weather.interior(ctx, [
+        { x: 398, y: 205, r: 70 + 120 * heat, k: heat > 0.12 ? (0.55 + 0.4 * heat) * flick : 0 },
+        { x: 463, y: 140, r: 85, k: 0.85 * lit * flick },
+        { x: 167, y: 186, r: 80, k: 0.85 * lit * flick },
+      ]);
+      if (heat < 0.12) { ctx.fillStyle = 'rgba(20,12,14,0.6)'; ctx.fillRect(374, 178, 50, 34); }
+      else {
+        // the flames behind the glass flicker and burn bright
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = (0.25 + 0.35 * heat) * flick * (0.7 + 0.3 * night);
+        const g = ctx.createRadialGradient(398, 202, 1, 398, 202, 26);
+        g.addColorStop(0, 'rgba(255,214,120,1)'); g.addColorStop(0.6, 'rgba(255,130,40,0.6)'); g.addColorStop(1, 'rgba(255,90,20,0)');
+        ctx.fillStyle = g; ctx.fillRect(374, 178, 50, 34); ctx.restore();
+      }
       if (lit < 1 && SE.img('props/kitchen_unlit')) { ctx.save(); ctx.globalAlpha = 1 - lit; SE.drawImg('props/kitchen_unlit', 0, 0); ctx.restore(); }
+      // warm light thrown out of the firebox: on the floor in front and up the stove pipe
+      SE.glow(ctx, 398, 200, (34 + 50 * heat) * flick, '255,140,60', (0.12 + 0.3 * heat) * flick);
+      if (heat > 0.12) SE.glow(ctx, 398, 250, (40 + 50 * heat) * flick, '255,150,70', (0.08 + 0.18 * heat) * flick);
       SE.glow(ctx, 463, 140, 30, '255,200,120', (0.14 + night * 0.12) * flick * lit);
       SE.glow(ctx, 167, 186, 30, '255,200,120', (0.12 + night * 0.12) * flick * lit);
       // steam from the pot on the stove

@@ -99,10 +99,10 @@
   // head: where his forehead is in this scene's sprite, so the headlamp sits on his beanie
   SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1, head = null) {
     const W = SE.weather, n = W.night();
-    const heavy = W.stormy() || W.mode === 'windy' || W.mode === 'snowy';
-    const fl = 0.9 + 0.1 * Math.sin(SE.time * 9) * Math.sin(SE.time * 3.7);
-    if (heavy && (n > 0.25 || W.stormy())) {
-      const hx = head ? head.x : x, hy = head ? head.y : y - 14 * scale, k = W.stormy() ? 1 : SE.clamp(n * 1.4, 0, 1);
+    // the headlamp only comes out in a real snowstorm; any other night he carries the oil lantern
+    const heavy = W.stormy();
+    if (heavy) {
+      const hx = head ? head.x : x, hy = head ? head.y : y - 14 * scale, k = 1;
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(hx, hy, hx + dir * 120 * scale, hy + 30 * scale);
       g.addColorStop(0, `rgba(235,240,255,${0.32 * k})`); g.addColorStop(1, 'rgba(235,240,255,0)');
@@ -118,14 +118,18 @@
     }
     if (n < 0.35) return;
     const k = SE.clamp((n - 0.35) * 2.5, 0, 1);
-    const sw = Math.sin(SE.time * 2.4) * 1.2; // the lantern swings a little as he walks
+    const calm = 0.96 + 0.04 * Math.sin(SE.time * 2.3) * Math.sin(SE.time * 1.3); // a steady, calm flame
+    const im = SE.img('props/lantern'), s = scale >= 0.9 ? 1 : 0.5;
+    const sw = s < 1 ? Math.sin(SE.time * 1.6) * 0.8 : 0; // carried on the map it sways a little; set down it stands still
     const lx = Math.round(x + sw), ly = Math.round(y);
-    SE.glow(ctx, lx, ly, 60 * scale * fl, '255,170,90', 0.24 * k);
-    SE.glow(ctx, lx, ly, 14 * scale * fl, '255,220,150', 0.55 * k);
-    // the lantern itself: a little brass frame with a flame
-    ctx.fillStyle = '#3a2a1e'; ctx.fillRect(lx - 1, ly - 3, 3, 1); ctx.fillRect(lx - 2, ly - 2, 1, 4); ctx.fillRect(lx + 2, ly - 2, 1, 4); ctx.fillRect(lx - 1, ly + 2, 3, 1);
-    ctx.fillStyle = '#ffd27a'; ctx.fillRect(lx - 1, ly - 2, 3, 4);
-    ctx.fillStyle = '#fff4d0'; ctx.fillRect(lx, ly - 1, 1, 2);
+    // the lantern itself (its flame sits at 10,18 in the sprite), then the soft light it throws
+    if (im) {
+      const w = Math.round(im.width * s), h = Math.round(im.height * s);
+      ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.5 + 0.5 * k;
+      ctx.drawImage(im, lx - Math.round(10 * s), ly - Math.round(18 * s), w, h); ctx.restore();
+    }
+    SE.glow(ctx, lx, ly, 64 * scale * calm, '255,176,96', 0.22 * k * calm);
+    SE.glow(ctx, lx, ly, 16 * scale * calm, '255,214,150', 0.4 * k * calm);
   };
 
   // Lit windows after dark: drawn AFTER the night tint, so the warm panes keep their full colour and
