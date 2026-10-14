@@ -174,3 +174,6 @@
 ### Soundtracks
 - Seven new synthesized songs in the same quiet lo-fi style: Cocoa Steam, Snow on the Sill (music box), Study Lamp (cabin), Pine Trail, Blue Hour (outdoors), Candlelight (chapel), next to Fireside, Valley Air and Vespers.
 - Each place has a playlist; a song plays ~4 minutes and the next takes over on a bar line, so long work/study sessions don't loop one tune. The sound panel shows "Now playing" and has a "Next song" button.
+
+### Font
+- Back to Pixelify Sans for all text, as before (the Tiny5 / Micro 5 small-text fonts are gone). The "fi" fix stays: a zero-width non-joiner keeps "fi"/"fl" from merging into the font's ligature glyph.

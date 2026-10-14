@@ -264,12 +264,9 @@ SE.FONT = '"Pixelify Sans", "Silkscreen", monospace';
 // The pixel font joins "fi"/"fl" into a ligature glyph that reads as "A" ("Arewood"): a zero-width
 // non-joiner between the letters keeps them apart.
 const noLig = (s) => String(s).replace(/f(?=[il])/g, 'f\u200C');
-// Small text uses true bitmap pixel fonts drawn at their native 10px (Tiny5, and Micro 5 for the
-// tiniest notes), where every letter stays distinct; big headings keep the rounder Pixelify Sans.
+// Every size uses the rounder Pixelify Sans (the font the game started with).
 SE.fontFor = function (size = 8, bold, family) {
-  if (family) return `${bold ? 'bold ' : ''}${size}px ${family}`;
-  if (size >= 12) return `${bold ? 'bold ' : ''}${size}px ${SE.FONT}`;
-  return size <= 6 ? '10px "Micro 5", monospace' : '10px "Tiny5", monospace';
+  return `${bold ? 'bold ' : ''}${size}px ${family || SE.FONT}`;
 };
 SE.text = function (str, x, y, opts = {}) {
   const ctx = SE.ctx;
