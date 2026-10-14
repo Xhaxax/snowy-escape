@@ -202,3 +202,4 @@
 - Long Walk: walks at the valley pace; no "Walk faster" button; a single trail still now and then between stretches of walking (never the same twice in a row), with a second, figure-free trail still.
 - Woodlot: the lantern on the woodshed lights up after dusk (a warm pool that also rim-lights him). Chop animation: detached, inconsistent wood chips removed from the frames.
 - Cocoa: one pour (no more pouring over and over), a cocoa powder sound for the spoons, a stirring sound, the chocolate plops into the milk, and no sip at the end.
+- Chapel prayer: he stays kneeling (watch mode no longer stands him up; only "Stand up" does), and every 20–40 s he lifts his eyes to the cross, rests there a few seconds and bows his head again (9 more PixelLab frames interpolated from the kneeling pose; a cross PixelLab drew into the air was erased).

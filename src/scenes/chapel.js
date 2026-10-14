@@ -110,8 +110,27 @@
   // held prayer pose, which breathes gently back and forth
   function prayAnim() { return SE.anims.trav_pray ? 'trav_pray' : null; }
   // trav_pray (96px PixelLab frames, like the woodlot chop): 0 standing bareheaded with the beanie in
-  // hand, 1-11 kneeling down, 11-17 the held prayer pose breathing; his feet sit at x 40 of the frame
+  // hand, 1-11 kneeling down, 11-17 the held prayer pose breathing, 18-26 looking up to the cross; his feet sit at x 40 of the frame
   const PRAY_HOLD = 11, PRAY_AX = 40;
+  // frames LOOK_FROM.. : still kneeling, he raises his eyes to the cross, rests there, bows again
+  const LOOK_FROM = 18, LOOK_PEAK = 4, LOOK_REST = 3.5;
+  function lookFrame(dt, a) {
+    const n = a.frames - LOOK_FROM;
+    if (n <= 0) return null;
+    if (s.look == null) {
+      s.lookIn = (s.lookIn == null ? SE.rand(8, 16) : s.lookIn) - dt;
+      if (s.lookIn > 0) return null;
+      s.look = 0; s.lookIn = null;
+    }
+    s.look += dt;
+    const fps = 4, up = LOOK_PEAK / fps;
+    let i;
+    if (s.look < up) i = Math.floor(s.look * fps);
+    else if (s.look < up + LOOK_REST) i = LOOK_PEAK;
+    else i = LOOK_PEAK + Math.floor((s.look - up - LOOK_REST) * fps);
+    if (i >= n) { s.look = null; s.lookIn = SE.rand(18, 40); return null; }
+    return LOOK_FROM + i;
+  }
   function holdFrom() { const a = SE.anims.trav_pray; return a ? Math.min(PRAY_HOLD, a.frames - 1) : 0; }
 
   function startPrayer() {
@@ -119,7 +138,7 @@
     // before kneeling he lights a candle if none is burning: a little light to pray by
     if (!s.votives.length) lightCandle(true);
     if (!SE.watching()) SE.moment('pray'); // kneeling at the altar, hands folded
-    s.mode = 'kneel'; s.k = 0; s.prayT = 0; s.prayed = false;
+    s.mode = 'kneel'; s.k = 0; s.prayT = 0; s.prayed = false; s.look = null; s.lookIn = null;
     s.verse = prayVerse(s.verse);
     s.verseT = 0;
   }
@@ -146,7 +165,11 @@
       if (Math.random() < 0.35) lightCandle(true);
       startPrayer();
       s.dirT = SE.rand(55, 85);
-    } else if (s.mode === 'pray') { standUp(); s.dirT = SE.rand(8, 14); } else s.dirT = 2;
+    } else if (s.mode === 'pray') {
+      // he stays kneeling: now and then another little candle, but he doesn't get up
+      if (Math.random() < 0.25) lightCandle(true);
+      s.dirT = SE.rand(60, 120);
+    } else s.dirT = 2;
   }
 
   SE.addScene('chapel', {
@@ -297,10 +320,12 @@
       frame = Math.min(hold, Math.floor(s.k));
       if (s.k >= hold) s.mode = 'pray';
     } else if (s.mode === 'pray') {
-      // slow breathing across the held frames
-      const n = a.frames - hold, cyc = n * 2 - 2 || 1;
+      // slow breathing across the held frames; every so often he lifts his head to the cross
+      const n = LOOK_FROM - hold, cyc = n * 2 - 2 || 1;
       let f = Math.floor(s.t * 2.4) % cyc; if (f >= n) f = cyc - f;
       frame = hold + f;
+      const lf = lookFrame(dt, a);
+      if (lf != null) frame = lf;
       advance(dt, 1);
     } else if (s.mode === 'rise') {
       s.k -= dt * fps * 1.2;
