@@ -301,7 +301,7 @@
     const ky = (SE.held('ArrowDown', 'KeyS') ? 1 : 0) - (SE.held('ArrowUp', 'KeyW') ? 1 : 0);
     if (!kx && !ky) return 0;
     const hurry = SE.held('ShiftLeft', 'ShiftRight');
-    const speed = (hurry ? 60 : 34) * (SE.save.snowDepth > 0.6 ? 0.85 : 1);
+    const speed = (hurry ? 44 : 24) * (SE.save.snowDepth > 0.6 ? 0.85 : 1);
     const n = Math.hypot(kx, ky), vx = (kx / n) * speed * dt, vy = (ky / n) * speed * dt;
     h.dir = dirOf(kx, ky);
     const ox = h.x, oy = h.y;
@@ -323,7 +323,7 @@
     let moved = 0;
     if (s.walking) {
       const w = s.walking;
-      let budget = 28 * (SE.save.snowDepth > 0.6 ? 0.85 : 1) * dt;
+      let budget = 21 * (SE.save.snowDepth > 0.6 ? 0.85 : 1) * dt;
       while (budget > 0 && w.path[w.i]) {
         const t = w.path[w.i];
         const dx = t[0] - h.x, dy = t[1] - h.y, d = Math.hypot(dx, dy);
@@ -338,10 +338,10 @@
     s.moved += moved;
     SE.save.distance += moved * 3;
     if (h.moving) {
-      h.anim += dt;
+      h.anim += dt * 0.78; // a slower, heavier stride through the snow
       s.stepT -= dt * (SE.held('ShiftLeft', 'ShiftRight') ? 1.8 : 1);
       if (s.stepT <= 0) {
-        s.stepT = 0.34;
+        s.stepT = 0.43;
         SE.audio.sfx('step', { deep: SE.save.snowDepth > 0.6 || SE.weather.stormy() });
         const side = (Math.floor(h.anim / 0.34) % 2) ? 1 : -1;
         s.prints.push({ x: h.x + (h.dir === 'n' || h.dir === 's' ? side * 2 : 0), y: h.y + (h.dir === 'e' || h.dir === 'w' ? side * 2 : 0), t: 0 });

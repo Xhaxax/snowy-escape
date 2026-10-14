@@ -177,3 +177,6 @@
 
 ### Font
 - Back to Pixelify Sans for all text, as before (the Tiny5 / Micro 5 small-text fonts are gone). The "fi" fix stays: a zero-width non-joiner keeps "fi"/"fl" from merging into the font's ligature glyph.
+
+### Slower walk
+- On the valley map he walks at 24 px/s (was 34), 44 with Shift (was 60), scripted walks 21 (was 28); the stride animation and footstep sounds slowed to match.
