@@ -146,7 +146,7 @@
   const BASE = {
     alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
     shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'day', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
-    leave: 'night', leave_door: 'night', leave_coat: 'day', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
+    leave: 'night', leave_out: 'day', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
   };
   SE.CUT_VARIANTS = {
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],

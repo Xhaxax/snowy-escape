@@ -8,8 +8,8 @@
   let s = null;
 
   SE.MOMENTS.leaveHome = [
-    { img: 'cut/leave_coat', dur: 4.4, text: 'Coat on, beanie on. Boots laced tight.', pan: 1, sounds: [[0.4, 'rustle'], [1.6, 'rustle'], [2.8, 'wood'], [3.4, 'wood']] },
-    { img: 'cut/leave_door', dur: 4.2, text: 'The door, the cold, the light — and Waffles is out first.', pan: -1, sounds: [[0.2, 'creak'], [0.9, 'gust'], [1.6, 'woof'], [2.6, 'step'], [3.1, 'step']] },
+    { black: 0.9, sounds: [[0.1, 'rustle'], [0.5, 'wood']] },
+    { img: 'cut/leave_out', dur: 5.0, text: 'Coat on, door open. Waffles is first out into the snow.', pan: -1, sounds: [[0.2, 'creak'], [0.8, 'gust'], [1.6, 'woof'], [2.4, 'step'], [3.0, 'step'], [3.6, 'step']] },
   ];
 
   function goOut() {
