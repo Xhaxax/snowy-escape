@@ -75,7 +75,7 @@
 
   // ------------------------------------------------------------ scene
   SE.addScene('kitchen', {
-    enter() { mode = 'idle'; kmochi = null; SE.audio.setMusic('cabin'); },
+    enter() { mode = 'idle'; kmochi = null; SE.audio.setMusic('cabin'); SE.audio.woodSteps(3); },
     update(dt) {
       SE.audio.setAmbience({ fire: SE.save.stove * 0.6, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.6 : 0, muffled: true });
     },

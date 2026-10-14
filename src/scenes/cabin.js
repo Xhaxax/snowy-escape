@@ -39,8 +39,8 @@
     mode = 'busy';
     const [text, ref] = SE.pick(SE.VERSES || [['Be still, and know that I am God.', 'Psalm 46:10']]);
     SE.MOMENTS.bible = [
-      { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.4, 'rustle'], [1.8, 'scrape'], [2.6, 'scrape']] },
-      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft']] },
+      { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.3, 'page'], [1.4, 'page'], [2.2, 'scribble']] },
+      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft'], [2.4, 'page']] },
     ];
     SE.moment('bible', { force: true, then: () => {
       mode = 'room';
@@ -164,6 +164,7 @@
       mode = p.mode || 'room';
       mochi = SE.Mochi(CAT_SURF, CAT_LINKS);
       SE.audio.setMusic('cabin');
+      SE.audio.woodSteps(p.arrived || p.from === 'yard' || p.inDoor ? 2 : 3);
       if (p.arrived) SE.toast('Home. Mochi was waiting by the door.', '#ffe6b8');
       // coming in from outside: the front door is still swinging shut behind you
       if (p.arrived || p.from === 'yard' || p.inDoor) { doorT = 1.5; doorOut = false; gust.length = 0; setTimeout(() => SE.audio.sfx('latch'), 1100); }
@@ -191,7 +192,6 @@
       if (fire < 0.3) { ctx.fillStyle = `rgba(20,10,10,${0.5 * (1 - fire / 0.3)})`; ctx.fillRect(80, 170, 46, 44); }
       SE.glow(ctx, 102, 196, (50 + 50 * fl) * flick, '255,140,60', (0.12 + 0.22 * fl + night * 0.08) * flick);
       SE.glow(ctx, 102, 200, 14 + 16 * fl, '255,210,120', 0.32 * fl * flick);
-      SE.glow(ctx, 118, 96, 30, '255,200,120', 0.1 + night * 0.12);
       SE.glow(ctx, 181, 136, 34, '255,200,120', 0.12 + night * 0.14);
       if (fire > 0.1) SE.drawEmbers(ctx, 86, 196, 30, dt * fl);
       if (mode === 'room' && !SE.watching() && hotspot(POS.fire, fire < 0.35 ? `Add a log (${SE.save.wood} left) — fire is low` : `Add a log (${SE.save.wood} left)`)) addLog(false);

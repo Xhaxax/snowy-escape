@@ -38,7 +38,7 @@
   }
 
   SE.addScene('bedroom', {
-    enter() { mochi = SE.Mochi(BED_SURF, BED_LINKS); busy = false; SE.audio.setMusic('cabin'); },
+    enter() { mochi = SE.Mochi(BED_SURF, BED_LINKS); busy = false; SE.audio.setMusic('cabin'); SE.audio.woodSteps(3); },
     update() { SE.audio.setAmbience({ fire: 0.15, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.5 : 0, muffled: true }); },
     draw(ctx, dt) {
       SE.drawImg('bg_bedroom', 0, 0);

@@ -115,7 +115,7 @@
       { img: 'cut/camera', dur: 2.6, text: '', pan: 1, sounds: [[0.4, 'rustle'], [1.7, 'camera']] },
     ],
     sketch: [
-      { img: 'cut/sketch', dur: 3.4, text: 'A few quick lines while it holds still.', pan: -1, sounds: [[0.4, 'scrape'], [1.2, 'scrape'], [2.0, 'scrape']] },
+      { img: 'cut/sketch', dur: 4.2, text: 'A few quick lines while it holds still.', pan: -1, sounds: [[0.3, 'page'], [0.8, 'scribble'], [2.6, 'scribble']] },
     ],
   };
   // petting: two of these stills each time, never the same pair in a row

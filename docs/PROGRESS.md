@@ -134,3 +134,5 @@
 - Sketch: one sitting per trip (on walks too), finished after hare 3, bird 3, deer 4, fox 4, elk 5, owl 6, bear 7 sittings (SE.sketchTrips). The page draws itself in from left to right (SE.drawSketchPage).
 - Notebook: a field-guide spread per animal (??? until seen, hint where/when to find it; sketch progress; photo grid by light/weather; the 3 trail prints). The first page's grid jumps to each animal.
 - New ElevenLabs sounds: sniff, hop, growl, huff, hoot, chirp, yip, bugle, wings, pounce, scribble, page. Encounter reveals use each animal's call and last longer (5.2 s).
+- Living room: the mantel lamp (the twin of the bookshelf lamp) is painted out (PixelLab inpaint) and its glow removed.
+- Sound pass 1: new ElevenLabs footsteps (deep, soft, low-passed crunch, played quieter), wooden-floor steps (SE.audio.woodSteps) when walking between cabin rooms and into the chapel, a real sip, page turns and pencil scribbles for the notebook, sketches and Bible reading. Recorded 20 s loops amb_fire (crackling fireplace) and amb_wind (soft wind in the pines, no more rain-like hiss) replace the synthesized fire and calm wind; the synth wind only adds to storms.

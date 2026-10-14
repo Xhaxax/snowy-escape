@@ -78,6 +78,7 @@
     enter(p) {
       SE.save.location = 'chapel';
       SE.persist();
+      SE.audio.woodSteps(4);
       s = {
         t: 0, mode: 'stand', k: 0, prayT: 0, prayed: false, verse: null, verseT: 0, reading: null,
         votives: [], bell: 0, dirT: SE.rand(3, 6), motes: [],

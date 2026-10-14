@@ -21,9 +21,9 @@
   SE.MOMENTS.pocket = [{ img: 'cut/pocket', dur: 2.0, text: '', pan: 1, sounds: [[0.2, 'rustle'], [1.1, 'rustle']] }];
   SE.openNotebook = function () {
     if (NB.open || SE.momentPlaying()) return;
-    SE.moment('pocket', { force: true, then: () => { NB.open = true; NB.photo = null; SE.modal = 'notebook'; SE.audio.sfx('rustle'); } });
+    SE.moment('pocket', { force: true, then: () => { NB.open = true; NB.photo = null; SE.modal = 'notebook'; SE.audio.sfx('page'); } });
   };
-  function close() { NB.open = false; NB.photo = null; if (SE.modal === 'notebook') SE.modal = null; SE.audio.sfx('rustle'); }
+  function close() { NB.open = false; NB.photo = null; if (SE.modal === 'notebook') SE.modal = null; SE.audio.sfx('page'); }
   function turn(d) {
     const n = SE.clamp(NB.spread + d, 0, SPREADS.length - 1);
     if (n !== NB.spread) { NB.spread = n; NB.turn = 1; SE.audio.sfx('page'); }

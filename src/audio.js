@@ -263,7 +263,11 @@
     if (!ctx) return;
     if (name === 'step') {
       const steps = Object.keys(files).filter((k) => k.startsWith('sfx_step'));
-      if (steps.length) return playFile(SE.pick(steps), sfxBus, opts && opts.deep ? 1 : 0.85, 0.9 + Math.random() * 0.2);
+      if (steps.length) return playFile(SE.pick(steps), sfxBus, opts && opts.deep ? 0.7 : 0.55, 0.92 + Math.random() * 0.14);
+    } else if (name === 'wood') {
+      const steps = Object.keys(files).filter((k) => k.startsWith('sfx_wood'));
+      if (steps.length) return playFile(SE.pick(steps), sfxBus, 0.8, 0.94 + Math.random() * 0.12);
+      return SFX.click(ctx.currentTime);
     } else {
       const f = files['sfx_' + name] ? 'sfx_' + name : FILE_FOR[name];
       if (f && files[f]) return playFile(f, sfxBus, 1, 0.97 + Math.random() * 0.06);
@@ -402,6 +406,14 @@
     src.start(0, Math.random() * 2);
     return { src, f, g };
   }
+  // a recorded loop (assets/audio/amb_*.mp3) on the ambience bus, faded by its own gain
+  function loopFile(name) {
+    const src = ctx.createBufferSource(); src.buffer = files[name]; src.loop = true;
+    const g = ctx.createGain(); g.gain.value = 0;
+    src.connect(g).connect(ambBus);
+    src.start(0, Math.random() * Math.max(0.1, files[name].duration - 1));
+    return { src, g };
+  }
   function ensureLayers() {
     if (amb.wind) return;
     amb.wind = loopNoise(noiseBuf, 'bandpass', 500, 0.8);
@@ -417,13 +429,18 @@
     const storm = s.storm || 0;
     const gust = 0.6 + 0.4 * Math.sin(t * 0.37) * Math.sin(t * 0.13 + 1) + storm * 0.3 * Math.sin(t * 0.9);
     const windLevel = (s.wind || 0) * gust * (s.muffled ? 0.35 : 1);
-    amb.wind.g.gain.setTargetAtTime(windLevel * 0.35, t, 0.4);
+    // recorded wind and fire, once they have loaded (the synth stays for storms and as a fallback)
+    if (files.amb_wind && !amb.windFile) amb.windFile = loopFile('amb_wind');
+    if (files.amb_fire && !amb.fireFile) amb.fireFile = loopFile('amb_fire');
+    if (amb.windFile) amb.windFile.g.gain.setTargetAtTime(windLevel * 0.9, t, 0.6);
+    amb.wind.g.gain.setTargetAtTime(windLevel * 0.35 * (amb.windFile ? storm * 0.8 : 1), t, 0.4);
     amb.wind.f.frequency.setTargetAtTime((s.muffled ? 260 : 380) + gust * 380 + storm * 300, t, 0.6);
     amb.windHi.g.gain.setTargetAtTime(s.muffled ? 0 : storm * gust * 0.05 + (s.wind || 0) * 0.008, t, 0.5);
     amb.windHi.f.frequency.setTargetAtTime(1100 + gust * 900, t, 0.8);
     amb.rumble.g.gain.setTargetAtTime((storm * 0.25 + (s.wind || 0) * 0.05) * (s.muffled ? 0.5 : 1), t, 0.6);
-    amb.fire.g.gain.setTargetAtTime((s.fire || 0) * 0.25, t, 0.4);
-    if (s.fire && Math.random() < 0.35 * s.fire) {
+    amb.fire.g.gain.setTargetAtTime(amb.fireFile ? 0 : (s.fire || 0) * 0.25, t, 0.4);
+    if (amb.fireFile) amb.fireFile.g.gain.setTargetAtTime((s.fire || 0) * 0.85, t, 0.5);
+    if (!amb.fireFile && s.fire && Math.random() < 0.35 * s.fire) {
       const n = 1 + Math.floor(Math.random() * 3);
       for (let i = 0; i < n; i++) noiseBurst(t + Math.random() * 0.1, 0.004 + Math.random() * 0.01, { type: 'highpass', freq: 1500 + Math.random() * 3000, gain: (0.05 + Math.random() * 0.15) * s.fire, bus: ambBus });
     }
@@ -443,6 +460,8 @@
       noiseBurst(t + 1.6, 2.4, { type: 'bandpass', freq: f0 * 2.2, freqEnd: f0 * 0.85, q: 16, gain: 0.42 * k, attack: 0.05, bus: ambBus, send: 0.5 });
     }
   }
+  // a few heavy steps across the floorboards (walking between rooms, into the chapel)
+  A.woodSteps = function (n = 3) { for (let i = 0; i < n; i++) setTimeout(() => A.sfx('wood'), 60 + i * 420); };
   A.setAmbience = function (state) {
     A._pendingAmb = state;
     if (!ctx) return;

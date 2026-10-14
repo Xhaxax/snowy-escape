@@ -14,7 +14,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'assets', 'audio')
 API = 'https://api.elevenlabs.io/v1/sound-generation'
 
-SNOW = 'single footstep of a heavy winter boot in deep, dry, very cold powder snow, loud crisp crunch and squeaky scrunch, close microphone, no music'
+SNOW = 'one single slow footstep of a heavy winter boot sinking into deep soft fresh snow, a soft deep satisfying crunch, warm and muffled, low pitched, gentle, no squeak, no hiss, no music'
+WOOD = 'one single heavy footstep of a winter boot on old wooden cabin floorboards, a deep hollow knock with a soft creak, indoors, no music'
 SOUNDS = {
     # walking: several takes so steps never repeat
     'sfx_step1': (SNOW, 0.6), 'sfx_step2': (SNOW + ', slightly heavier', 0.6), 'sfx_step3': (SNOW + ', lighter and faster', 0.5),
@@ -42,6 +43,12 @@ SOUNDS = {
     'sfx_woof': ('a big friendly Bernese mountain dog giving one happy bark', 0.7),
     'sfx_camera': ('vintage film camera shutter click and film advance lever', 0.8),
     'sfx_pop': ('soft wooden ui click, cozy', 0.5),
+    # inside: boots on the floorboards of the cabin and the chapel
+    'sfx_wood1': (WOOD, 0.6), 'sfx_wood2': (WOOD + ', a little louder creak', 0.6), 'sfx_wood3': (WOOD + ', softer', 0.5), 'sfx_wood4': (WOOD + ', a squeaky board', 0.7),
+    'sfx_sip': ('a man taking a small slow sip of hot chocolate from a ceramic mug, a soft slurp and a contented exhale, close', 1.4),
+    # long loops for the ambience (they replace the synthesized wind and fire)
+    'amb_fire': ('a cozy wood fire crackling and popping in a stone fireplace, steady warm crackles and soft hiss of burning logs, close, continuous, no music, no voices', 20.0),
+    'amb_wind': ('gentle cold winter wind blowing softly through snowy pine trees outdoors, calm low whoosh, continuous, no rain, no birds, no music', 20.0),
     # Whispering Pines: the animals
     'sfx_sniff': ('a deer sniffing the cold air, short quick nasal sniffs, quiet snowy forest', 1.4),
     'sfx_hop': ('a snowshoe hare hopping through soft powder snow, three soft quick thumps', 1.2),
