@@ -42,6 +42,20 @@ SOUNDS = {
     'sfx_woof': ('a big friendly Bernese mountain dog giving one happy bark', 0.7),
     'sfx_camera': ('vintage film camera shutter click and film advance lever', 0.8),
     'sfx_pop': ('soft wooden ui click, cozy', 0.5),
+    # Whispering Pines: the animals
+    'sfx_sniff': ('a deer sniffing the cold air, short quick nasal sniffs, quiet snowy forest', 1.4),
+    'sfx_hop': ('a snowshoe hare hopping through soft powder snow, three soft quick thumps', 1.2),
+    'sfx_growl': ('a grizzly bear giving a low deep rumbling growl, distant, snowy forest', 2.0),
+    'sfx_huff': ('a bear huffing and blowing air through its nose, two sharp huffs', 1.2),
+    'sfx_hoot': ('a great grey owl hooting softly at night, deep slow hoo hoo hoo, quiet winter forest', 2.4),
+    'sfx_chirp': ('a northern cardinal bird chirping, bright short metallic chip notes, winter morning', 1.6),
+    'sfx_yip': ('a red fox giving two short high yips in a snowy forest, distant', 1.2),
+    'sfx_bugle': ('a bull elk bugling, a long high whistling call echoing through a cold valley', 3.0),
+    'sfx_wings': ('large owl wings flapping silently a few times, soft whoosh of feathers', 1.2),
+    'sfx_pounce': ('an animal pouncing head first into deep powder snow, soft heavy whumpf', 0.8),
+    # the notebook
+    'sfx_scribble': ('a pencil sketching quickly on paper in a notebook, soft scratchy strokes', 2.0),
+    'sfx_page': ('turning a page of a small paper notebook, crisp paper rustle', 0.7),
 }
 
 

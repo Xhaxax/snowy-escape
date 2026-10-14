@@ -1,283 +1,235 @@
-// Whispering Pines: lie low with Waffles and watch the wildlife — deer and a big elk grazing, a fox
-// sniffing and pouncing in the snow, a snowshoe hare, cardinals that flit up into the trees, and a
-// snowy owl at night. Sketch them for the journal.
+// Whispering Pines, told in stills like an encounter but longer: you and Waffles settle low in the
+// snow and wait, and if you are lucky one animal comes by and you watch it for a while (three
+// pictures of what it does: a fox listening and pouncing, an owl dropping onto a hare, a bear on the
+// trail of a deer...). Who comes depends on the hour and the weather: the owl only at night, the
+// cardinal never in heavy snow or wind, the bear stays in its den in a storm. Each trip you may take
+// one photo (a beat you have not got yet in this light and weather, if there is one) and add a few
+// lines to that animal's sketch, which takes several calm trips to finish.
 'use strict';
 
 (function () {
-  // each species: its animations and how it moves. `acts` are the things it does while it stays.
-  const SPECIES = {
-    deer: { walk: 'deer_walk', acts: ['deer_graze'], speed: 14, weight: 4, name: 'deer' },
-    elk: { walk: 'elk_walk', acts: ['elk_graze'], speed: 10, weight: 1.4, name: 'elk' },
-    fox: { walk: 'fox_walk', acts: ['fox_sniff', 'fox_pounce', 'fox_sniff'], speed: 26, weight: 2, name: 'fox' },
-    hare: { walk: 'hare_hop', acts: ['hare_sniff'], speed: 22, weight: 2.4, name: 'hare', hops: true },
+  // three beats per animal: the still, what is told over it, and the sounds that carry it
+  const PINES = {
+    fox: { name: 'Red fox', trips: 4, beats: [
+      ['Two red foxes trot between the pines, noses on a fresh trail.', [[0.4, 'step'], [2.2, 'sniff'], [3.8, 'sniff']]],
+      ['It stops. Head tilted. Something is moving under the snow.', [[1.0, 'rustle'], [3.2, 'yip']]],
+      ['Up — and head first into the snow. Mousing.', [[0.3, 'pounce'], [1.4, 'rustle'], [3.6, 'yip']]],
+    ] },
+    hare: { name: 'Snowshoe hare', trips: 3, beats: [
+      ['A snowshoe hare nibbling a willow twig. Almost invisible.', [[0.6, 'hop'], [2.4, 'rustle']]],
+      ['A shadow glides over the snow. The hare goes flat and still.', [[0.3, 'wings'], [2.6, 'hoot']]],
+      ['Then it bolts — big bounds, a spray of powder, gone.', [[0.2, 'hop'], [0.8, 'hop'], [1.5, 'hop'], [2.6, 'rustle']]],
+    ] },
+    owl: { name: 'Great grey owl', trips: 6, night: true, beats: [
+      ['Moonlight. A great grey owl, staring down at the snow.', [[0.8, 'hoot'], [3.8, 'hoot']]],
+      ['It drops without a sound, wings wide, talons first.', [[0.3, 'wings'], [2.0, 'pounce']]],
+      ['Back on its branch, fluffed up round against the cold.', [[1.2, 'wings'], [3.4, 'hoot']]],
+    ] },
+    bird: { name: 'Cardinal', trips: 3, beats: [
+      ['A flash of red: a cardinal among the rowan berries.', [[0.4, 'chirp'], [2.6, 'chirp']]],
+      ['Two of them now, puffed up side by side on a twig.', [[0.8, 'chirp'], [2.2, 'chirp'], [3.6, 'chirp']]],
+      ['Snow tumbles off the branch as they fly.', [[0.3, 'wings'], [1.0, 'chirp'], [2.4, 'rustle']]],
+    ] },
+    deer: { name: 'Deer', trips: 4, beats: [
+      ['A deer steps out to browse the young trees.', [[0.4, 'step'], [1.6, 'twig'], [3.4, 'rustle']]],
+      ['Head up. Ears forward. Breath steaming. It has smelled something.', [[0.6, 'sniff'], [2.0, 'sniff'], [3.6, 'twig']]],
+      ['And it bounds away, white tail up like a flag.', [[0.2, 'step'], [0.7, 'stomp'], [1.3, 'step'], [2.4, 'rustle']]],
+    ] },
+    elk: { name: 'Elk', trips: 5, beats: [
+      ['A bull elk lifts his head and bugles across the valley.', [[0.5, 'bugle'], [3.6, 'gust']]],
+      ['He paws the snow down to the grass beneath.', [[0.4, 'stomp'], [1.3, 'stomp'], [2.4, 'stomp'], [3.6, 'sniff']]],
+      ['The herd follows him, one by one, along the edge of the trees.', [[0.4, 'step'], [1.2, 'step'], [2.0, 'step'], [2.8, 'bugle']]],
+    ] },
+    bear: { name: 'Grizzly bear', trips: 7, bear: true, beats: [
+      ['A grizzly, nose to the ground, on a deer’s fresh trail.', [[0.5, 'sniff'], [2.0, 'huff'], [3.6, 'sniff']]],
+      ['It crouches low behind the bushes. Far off, a deer grazes, unaware.', [[1.0, 'growl'], [3.4, 'twig']]],
+      ['The deer is gone. The bear gives up and shuffles off into the dark pines.', [[0.6, 'huff'], [1.6, 'stomp'], [2.8, 'stomp']]],
+    ] },
   };
-  const LABELS = { deer: 'a doe in the pines', elk: 'a mighty elk', fox: 'a curious fox', hare: 'a snowshoe hare', owl: 'a snowy owl at night', bird: 'a little cardinal' };
-  const OWL = { x: 404, y: 62 };
-  // branches the cardinals like to land on
-  const PERCHES = [[58, 108], [112, 84], [86, 148], [392, 96], [436, 132], [368, 150]];
-  let s = null;
-  const photo = document.createElement('canvas');
+  SE.PINES = PINES;
+  const BEAT_DUR = 5.4;
+  // which light and weather a photo is taken in (a separate slot in the album for each)
+  const CONDS = { owl: ['night', 'night_snow'], bird: ['day', 'snow'], bear: ['day', 'snow', 'storm'] };
+  const condsOf = (k) => CONDS[k] || ['day', 'snow', 'storm', 'night'];
+  const COND_LABEL = { day: 'sun', snow: 'snowfall', storm: 'storm', night: 'night', night_snow: 'snowy night' };
+  SE.pinesConds = condsOf;
+  SE.PINES_COND_LABEL = COND_LABEL;
+  function condNow(kind) {
+    const W = SE.weather;
+    if (kind === 'owl') return W.mode === 'sunny' ? 'night' : 'night_snow';
+    const c = SE.stillWanted('cut/pines_x');
+    return condsOf(kind).includes(c) ? c : condsOf(kind)[0];
+  }
+  // the light a slot's photo is drawn in
+  SE.pinesLight = (cond) => (cond === 'night_snow' ? 'night' : cond);
 
-  const has = (n) => !!SE.anims[n];
-  function pickSpecies() {
-    const opts = Object.entries(SPECIES).filter(([k]) => !(k === 'elk' && s.animals.some((a) => a.kind === 'elk')));
-    const total = opts.reduce((t, [, v]) => t + v.weight, 0);
-    let r = Math.random() * total;
-    for (const [k, v] of opts) { r -= v.weight; if (r <= 0) return k; }
-    return 'deer';
+  // who might come by now
+  function pickAnimal() {
+    const W = SE.weather, night = W.night() > 0.6, storm = W.stormy(), heavy = storm || W.mode === 'windy' || W.mode === 'snowy';
+    const pool = night
+      ? [['owl', 5], ['fox', 2], ['hare', 2], ['deer', 0.8]]
+      : [['deer', 4], ['hare', 3], ['fox', 3], ['bird', heavy ? 0 : 3], ['elk', 1.5], ['bear', storm ? 0 : 0.9]];
+    // some trips nobody comes at all (more often in a storm): the animals are rare
+    const nobody = storm ? 0.4 : heavy ? 0.22 : 0.14;
+    if (Math.random() < nobody) return null;
+    let r = Math.random() * pool.reduce((t, p) => t + p[1], 0);
+    for (const [k, w] of pool) { r -= w; if (r <= 0) return k; }
+    return pool[0][0];
   }
-  function spawn(kind) {
-    kind = kind || pickSpecies();
-    const fromLeft = Math.random() < 0.5;
-    const w = SE.animSize(SPECIES[kind].walk).w || 40;
-    s.animals.push({
-      kind, x: fromLeft ? -w - 4 : SE.W + 4, y: kind === 'elk' ? SE.rand(206, 214) : SE.rand(214, 238), dir: fromLeft ? 1 : -1,
-      state: 'walk', t: 0, target: SE.rand(110, 350), stay: SE.rand(35, 75), age: 0, hopT: 0, act: null, actI: 0,
-    });
+
+  let s = null;
+  function build(kind) {
+    const P = PINES[kind];
+    SE.MOMENTS.pines_watch = [
+      { black: 3.2, text: SE.pick(['You wait. Waffles’ ears twitch…', 'Snow ticks off the branches. Waffles goes very still…', 'Breath held. Something is coming through the trees…']), sounds: [[0.6, 'twig'], [1.9, 'rustle']] },
+      ...P.beats.map(([text, sounds], i) => ({ img: `cut/pines_${kind}_${i + 1}`, dur: BEAT_DUR, text, pan: i % 2 ? -1 : 1, sounds })),
+    ];
   }
-  function newBird(i) {
-    return { x: SE.rand(150, 330), y: SE.rand(226, 248), state: 'ground', t: Math.random() * 5, hop: 0, flip: Math.random() < 0.5, from: null, to: null, rest: SE.rand(8, 20), i };
+  SE.MOMENTS.pines_nobody = [
+    { black: 3.4, text: 'You wait a long while. Only the wind in the pines today.', sounds: [[0.8, 'gust'], [2.6, 'twig']] },
+  ];
+  SE.MOMENTS.pines_more = [
+    { black: 3.0, text: 'A little longer, then. Waffles sighs into the snow.', sounds: [[0.6, 'rustle'], [2.0, 'twig']] },
+  ];
+
+  function arrive(again) {
+    const kind = pickAnimal();
+    s.kind = kind;
+    if (!kind) { s.state = 'busy'; SE.moment(again ? 'pines_more' : 'pines_nobody', { force: true, then: () => { s.state = 'empty'; s.waited = (s.waited || 0) + 1; } }); return; }
+    build(kind);
+    s.state = 'busy';
+    const seen = SE.save.pinesSeen || (SE.save.pinesSeen = {});
+    seen[kind] = (seen[kind] || 0) + 1;
+    SE.persist();
+    SE.moment('pines_watch', { force: true, then: () => {
+      if (seen[kind] === 1) SE.celebrate('New in your field guide!', `${PINES[kind].name} · see the notebook`, { y: 2 });
+      // a bear may notice you once it gives up on the deer
+      if (PINES[kind].bear && Math.random() < 0.3) { s.state = 'busy'; SE.moment('bear_angry', { force: true, then: () => { s.angry = true; s.state = 'meet'; } }); }
+      else s.state = 'meet';
+    } });
   }
 
   SE.addScene('forest', {
-    enter(p) {
+    enter() {
       SE.save.location = 'forest';
       SE.save.sketches = SE.save.sketches || {};
+      SE.save.pinesAlbum = SE.save.pinesAlbum || {};
       SE.persist();
-      s = { t: 0, animals: [], spawnT: 1.5, sketch: false, flash: 0, polaroid: null, motes: [], birds: [0, 1, 2].map(newBird), tip: SE.save.deerPhotos === 0 };
+      s = { t: 0, state: 'busy', kind: null, photoTaken: false, sketched: false, photo: null, sketch: null, flash: 0, angry: false };
       SE.audio.setMusic('outdoors');
-      if (p.arrived) SE.toast('Shh… Waffles lies low in the snow with you.', '#cfe6ff');
+      arrive(false);
     },
-    update(dt) {
+    update() {
       SE.weather.stormCheck();
-      SE.audio.setAmbience({ wind: 0.2 + SE.weather.wind / 100, birds: 1 - SE.weather.night(), storm: SE.weather.stormy() ? 0.8 : 0 });
+      SE.audio.setAmbience({ wind: 0.25 + SE.weather.wind / 90, birds: 0.5 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 0.7 : 0 });
     },
     draw(ctx, dt) {
       s.t += dt;
-      SE.drawForest(ctx, [[0, 0, 175, 200], [255, 0, 225, 195]]);
-      // drifting light motes in the sun rays
-      if (SE.weather.night() < 0.5 && Math.random() < dt * 6) s.motes.push({ x: SE.rand(150, 330), y: SE.rand(10, 160), t: 0, life: SE.rand(3, 6) });
-      for (let i = s.motes.length - 1; i >= 0; i--) {
-        const m = s.motes[i]; m.t += dt;
-        if (m.t > m.life) { s.motes.splice(i, 1); continue; }
-        m.x += Math.sin(m.t + i) * 3 * dt; m.y += 4 * dt;
-        ctx.fillStyle = `rgba(255,246,210,${0.6 * Math.sin((m.t / m.life) * Math.PI)})`;
-        ctx.fillRect(Math.round(m.x), Math.round(m.y), 1, 1);
-      }
-
-      // the owl comes out at dusk and night: blinks, turns its head, ruffles
-      const owlA = SE.clamp((SE.weather.night() - 0.3) * 2, 0, 1);
-      if (owlA > 0) {
-        ctx.save(); ctx.globalAlpha = owlA;
-        if (has('owl_idle')) SE.drawAnim('owl_idle', OWL.x, OWL.y, s.t * 0.8, { pingpong: true });
-        else SE.drawImg('owl', OWL.x, OWL.y);
-        ctx.restore();
-      }
-
-      // wildlife comes and goes
-      s.spawnT -= dt;
-      const maxAnimals = SE.weather.night() > 0.6 ? 1 : 3;
-      if (s.spawnT <= 0 && s.animals.length < maxAnimals && !SE.weather.stormy()) { spawn(); s.spawnT = SE.rand(10, 24) * (1 + SE.weather.night()); }
-      for (let i = s.animals.length - 1; i >= 0; i--) if (updateAnimal(s.animals[i], dt)) s.animals.splice(i, 1);
-      const scene = s.animals.map((a) => ({ y: a.y, draw: () => drawAnimal(ctx, a) }));
-      if (SE.weather.night() < 0.55) for (const b of s.birds) { updateBird(b, dt); scene.push({ y: b.state === 'ground' ? b.y : 0, draw: () => drawBird(b) }); }
-      scene.sort((a, b) => a.y - b.y).forEach((o) => o.draw());
-
-      SE.weather.tint(ctx, 0.9 + 0.1 * SE.weather.night());
-      SE.moonlight(ctx);
-      if (SE.forestDim() < 0.5) SE.weather.sunshine(ctx, 190);
-      SE.weather.draw(ctx, { density: 0.8 });
-
-      // Waffles lying low in the snow in the foreground, watching too
-      SE.drawDogRest(10 + SE.weather.shiver(1), SE.H + 4, { seed: 3 });
-
-      sketchLogic(ctx, dt);
-      if (s.flash > 0) {
-        s.flash -= dt * 3;
-        ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`;
-        ctx.fillRect(0, 0, SE.W, SE.H);
-      }
-      if (s.polaroid) drawPolaroid(ctx, dt);
-
-      const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
-      if (!SE.watching() && SE.button(SE.W - 96, SE.H - 24, 90, 18, s.sketch ? 'Put it away' : 'Sketchbook', { alpha: s.sketch ? 1 : a, active: s.sketch, icon: 'cam' })) s.sketch = !s.sketch;
-      if (s.tip && s.t < 14 && !SE.watching()) SE.text(s.animals.length ? 'Open the sketchbook and click an animal while it holds still' : 'Wait quietly… the animals will come', 8, SE.H - 40, { size: 7, color: '#ffe6b8', alpha: Math.min(1, 14 - s.t) * a });
-      const total = Object.values(SE.save.sketches || {}).reduce((x, y) => x + y, 0);
-      SE.hud.draw(ctx, { title: 'Whispering Pines', subtitle: `wildlife sketched: ${total}`, map: true });
+      SE.drawStill(ctx, s.angry ? 'cut/see_bear_angry' : s.kind ? `cut/pines_${s.kind}_3` : 'cut/forest');
+      if (s.flash > 0) { s.flash -= dt * 3; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
+      if (s.photo) drawPhoto(ctx, dt);
+      else if (s.sketch) drawSketch(ctx, dt);
+      else drawChoices();
+      SE.hud.draw(ctx, { watch: false, title: 'Whispering Pines', subtitle: s.kind ? PINES[s.kind].name : 'waiting quietly' });
     },
   });
 
-  // ------------------------------------------------------------ animals: walk in, do their thing, look up, wander off
-  function updateAnimal(a, dt) {
-    const sp = SPECIES[a.kind];
-    a.t += dt; a.age += dt;
-    if (a.state === 'walk') {
-      let move = sp.speed;
-      if (sp.hops) { a.hopT += dt; move = (a.hopT % 1.2) < 0.55 ? sp.speed * 1.8 : 0; } // hop, pause, hop
-      a.x += a.dir * move * dt;
-      if (a.leaving) { if (a.x < -110 || a.x > SE.W + 20) return true; }
-      else if ((a.dir > 0 && a.x >= a.target) || (a.dir < 0 && a.x <= a.target)) startAct(a);
-    } else if (a.state === 'act') {
-      const n = has(a.act) ? SE.anims[a.act].frames : 8;
-      if (a.t > Math.max(a.dur, n / 6)) { a.state = 'look'; a.t = 0; a.dur = SE.rand(2.5, 4.5); }
-    } else if (a.state === 'look') {
-      if (a.t > a.dur) {
-        a.t = 0;
-        if (a.age > a.stay) { a.state = 'walk'; a.leaving = true; a.dir = a.x > SE.W / 2 ? 1 : -1; }
-        else if (Math.random() < 0.35) { a.state = 'walk'; a.target = SE.clamp(a.x + SE.rand(-90, 90), 90, 370); a.dir = a.target > a.x ? 1 : -1; }
-        else startAct(a);
-      }
+  function goBack() { SE.go('map', { resume: true }); }
+  function drawChoices() {
+    if (SE.momentPlaying() || s.state === 'busy') return;
+    const by = SE.H - 24, items = [];
+    if (s.state === 'empty') {
+      if ((s.waited || 0) < 2) items.push(['Wait a little longer', 108, () => arrive(true), null]);
+      items.push(['Head back', 66, goBack, null]);
+    } else if (s.angry) {
+      items.push(['Back away slowly', 104, () => { s.state = 'busy'; SE.moment('bear_retreat', { force: true, then: () => { SE.save.bears = (SE.save.bears || 0) + 1; SE.persist(); goBack(); } }); }, null]);
+    } else {
+      if (!s.photoTaken) items.push(['Take a photo', 84, takePhoto, 'cam']);
+      if (!s.sketched) items.push(['Sketch it', 62, sketchIt, 'book']);
+      items.push(['Head back', 66, goBack, null]);
     }
-    return false;
-  }
-  function startAct(a) {
-    const sp = SPECIES[a.kind];
-    a.act = sp.acts[a.actI++ % sp.acts.length];
-    a.state = 'act'; a.t = 0; a.dur = SE.rand(3, 6);
-    if (a.act === 'fox_pounce') { a.dur = 1.6; scareBirds(a.x); }
-  }
-  function animalBox(a) {
-    const sp = SPECIES[a.kind];
-    const sz0 = SE.animSize(a.state === 'walk' ? sp.walk : a.act || sp.walk);
-    const sz = sz0.w ? sz0 : { w: 30, h: 24 };
-    return { x: a.x, y: a.y - sz.h, w: sz.w, h: sz.h };
-  }
-  function drawAnimal(ctx, a) {
-    const sp = SPECIES[a.kind];
-    const anim = a.state === 'walk' ? sp.walk : (has(a.act) ? a.act : sp.walk);
-    if (!has(anim)) { SE.drawActorFallback(ctx, a.x, a.y - 24, '#9a6a44', true); return; }
-    const sz = SE.animSize(anim), n = SE.anims[anim].frames;
-    ctx.fillStyle = 'rgba(80,100,150,0.25)';
-    ctx.fillRect(Math.round(a.x + 4), Math.round(a.y - 2), Math.round(sz.w - 8), 2);
-    let frame;
-    if (a.state === 'walk') frame = sp.hops ? ((a.hopT % 1.2) < 0.55 ? Math.floor(((a.hopT % 1.2) / 0.55) * n) % n : 0) : Math.floor(a.t * 9) % n;
-    else if (a.state === 'look') frame = 0; // head up, alert
-    else if (a.act === 'fox_pounce') frame = Math.min(n - 1, Math.floor(a.t * 6));
-    else {
-      // grazing / sniffing: play through, then linger on the head-down frames
-      const f = Math.floor(a.t * 3);
-      frame = f < n - 2 ? f : n - 3 + (Math.floor(a.t * 2.5) % 2);
-    }
-    SE.drawAnim(anim, a.x, a.y - sz.h, 0, { frame, flip: a.dir < 0 });
-    if (stillFor(a) && s.sketch) {
-      const b = animalBox(a);
-      SE.text('holding still!', b.x + b.w / 2, b.y - 9, { align: 'center', size: 6, color: '#ffd166' });
-    }
-  }
-  const stillFor = (a) => a.state === 'look' || (a.state === 'act' && a.act !== 'fox_pounce' && a.kind !== 'deer' && a.kind !== 'elk');
-
-  // ------------------------------------------------------------ cardinals: peck & hop, flit up into the trees, come back down
-  function scareBirds(x) {
-    for (const b of s.birds) if (b.state === 'ground' && Math.abs(b.x - x) < 120) flyTo(b, SE.pick(PERCHES));
-  }
-  function flyTo(b, [x, y]) {
-    b.state = 'fly'; b.t = 0; b.from = [b.x, b.y]; b.to = [x, y]; b.flip = x < b.x; b.dur = Math.max(1.2, Math.hypot(x - b.x, y - b.y) / 90);
-  }
-  function updateBird(b, dt) {
-    b.t += dt;
-    if (b.state === 'ground') {
-      if (b.hop <= 0 && Math.random() < dt * 0.4) { b.hop = 0.35; b.x = SE.clamp(b.x + (b.flip ? -1 : 1) * SE.rand(3, 8), 120, 360); if (Math.random() < 0.3) b.flip = !b.flip; }
-      b.hop -= dt;
-      for (const a of s.animals) if (a.state === 'walk' && Math.abs(a.x + 20 - b.x) < 40) flyTo(b, SE.pick(PERCHES));
-      if (b.t > b.rest) flyTo(b, SE.pick(PERCHES));
-    } else if (b.state === 'fly') {
-      const k = Math.min(1, b.t / b.dur), arc = Math.sin(k * Math.PI) * -30;
-      b.x = SE.lerp(b.from[0], b.to[0], k); b.y = SE.lerp(b.from[1], b.to[1], k) + arc;
-      if (k >= 1) { b.state = b.to[1] > 200 ? 'ground' : 'perch'; b.t = 0; b.rest = SE.rand(8, 22); }
-    } else if (b.state === 'perch' && b.t > b.rest) {
-      flyTo(b, [SE.rand(150, 330), SE.rand(226, 248)]);
-    }
-  }
-  function drawBird(b) {
-    if (b.state === 'fly' && has('bird_fly')) { SE.drawAnim('bird_fly', b.x - 10, b.y - 14, b.t * 1.4, { flip: b.flip }); return; }
-    if (has('bird_peck')) {
-      const pecking = b.state === 'ground' && b.hop <= 0;
-      const lift = b.hop > 0 ? Math.sin((b.hop / 0.35) * Math.PI) * 3 : 0;
-      SE.drawAnim('bird_peck', b.x - 10, b.y - 18 - lift, pecking ? b.t * 1.1 : 0, { flip: b.flip, frame: pecking ? undefined : 0 });
-      return;
-    }
-    if (SE.img('bird')) SE.drawImg('bird', b.x - 10, b.y - 18, { flip: b.flip });
+    let x = SE.W - 6 - items.reduce((t, i) => t + i[1] + 4, 0);
+    for (const [label, w, cb, icon] of items) { if (SE.button(x, by, w, 18, label, { icon })) cb(); x += w + 4; }
   }
 
-  // ------------------------------------------------------------ sketching
-  function sketchLogic(ctx, dt) {
-    // watch mode: the traveler sketches by himself when an animal holds still
-    if (SE.watching()) {
-      s.autoCd = (s.autoCd == null ? 3 : s.autoCd) - dt;
-      if (!s.aim && s.autoCd <= 0) { const a = s.animals.find((x) => stillFor(x) && x.t < (x.dur || 3) - 1.2); if (a) s.aim = { a, t: 0 }; }
-      if (!s.aim && s.autoCd <= 0 && SE.weather.night() > 0.6 && Math.random() < dt * 0.1) s.aim = { owl: true, t: 0 };
-      if (s.aim) {
-        const b = s.aim.owl ? { x: OWL.x, y: OWL.y, w: 32, h: 32 } : animalBox(s.aim.a);
-        s.aim.t += dt;
-        const ax = b.x + b.w / 2, ay = b.y + b.h / 2;
-        if (s.aim.t > 1) {
-          if (s.aim.owl) takeSketch(ax, ay, 64, 48, 'owl');
-          else if (stillFor(s.aim.a) && s.animals.includes(s.aim.a)) takeSketch(ax, ay, 64, 48, s.aim.a.kind);
-          s.aim = null; s.autoCd = SE.rand(10, 22);
-        } else {
-          ctx.strokeStyle = `rgba(255,247,234,${Math.min(1, s.aim.t * 3)})`; ctx.lineWidth = 1;
-          ctx.strokeRect(Math.round(ax - 32) + 0.5, Math.round(ay - 24) + 0.5, 64, 48);
-        }
-      }
-      return;
-    }
-    if (!s.sketch || SE.modal) return;
-    const mx = SE.mouse.x, my = SE.mouse.y, fw = 64, fh = 48;
-    if (SE.mouse.released && my < SE.H - 30 && my > 30) {
-      SE.mouse.released = false;
-      const hit = s.animals.find((a) => SE.inRect(mx, my, animalBox(a)));
-      const owlHit = SE.weather.night() > 0.5 && SE.inRect(mx, my, { x: OWL.x, y: OWL.y, w: 32, h: 32 });
-      const bird = s.birds.find((b) => SE.weather.night() < 0.55 && b.state !== 'fly' && Math.hypot(b.x - mx, b.y - 10 - my) < 12);
-      if (owlHit) takeSketch(mx, my, fw, fh, 'owl');
-      else if (bird) takeSketch(mx, my, fw, fh, 'bird');
-      else if (!hit) SE.toast('Only snow and trees in that frame.', '#cfe6ff');
-      else if (!stillFor(hit)) SE.toast(`The ${SPECIES[hit.kind].name} is busy — wait until it holds still.`, '#cfe6ff');
-      else takeSketch(mx, my, fw, fh, hit.kind);
-    }
-    ctx.strokeStyle = 'rgba(255,247,234,0.9)'; ctx.lineWidth = 1;
-    ctx.strokeRect(Math.round(mx - fw / 2) + 0.5, Math.round(my - fh / 2) + 0.5, fw, fh);
-    ctx.fillStyle = 'rgba(255,247,234,0.9)';
-    ctx.fillRect(Math.round(mx) - 2, Math.round(my), 5, 1); ctx.fillRect(Math.round(mx), Math.round(my) - 2, 1, 5);
-    SE.cursor = 'none';
+  // ------------------------------------------------------------ the camera: one print per trip
+  function takePhoto() {
+    s.state = 'busy'; s.photoTaken = true;
+    SE.moment('photo', { force: true, then: () => {
+      const kind = s.kind, cond = condNow(kind);
+      const album = SE.save.pinesAlbum[kind] || (SE.save.pinesAlbum[kind] = []);
+      const open = [1, 2, 3].filter((b) => !album.includes(`${b}_${cond}`));
+      const beat = open.length ? SE.pick(open) : SE.pick([1, 2, 3]);
+      const key = `${beat}_${cond}`, isNew = !album.includes(key);
+      if (isNew) album.push(key);
+      SE.persist();
+      s.flash = 1;
+      s.photo = { beat, cond, isNew, t: 0, of: condsOf(kind).length * 3 };
+      s.state = 'meet';
+    } });
   }
-
-  function takeSketch(mx, my, fw, fh, kind) {
-    SE.audio.sfx('camera');
-    s.flash = 0.9;
-    // capture what is on screen right now as a polaroid
-    photo.width = fw * 2; photo.height = fh * 2;
-    const p = photo.getContext('2d');
-    p.imageSmoothingEnabled = false;
-    const sc = SE.scale;
-    p.drawImage(SE.canvas, (mx - fw / 2) * sc, (my - fh / 2) * sc, fw * sc, fh * sc, 0, 0, fw * 2, fh * 2);
-    p.globalCompositeOperation = 'color';
-    p.fillStyle = 'rgba(180,150,120,0.35)';
-    p.fillRect(0, 0, photo.width, photo.height);
-    s.polaroid = { t: 0, label: LABELS[kind] || kind };
-    const first = !SE.save.sketches[kind];
-    SE.save.sketches[kind] = (SE.save.sketches[kind] || 0) + 1;
-    if (kind === 'deer') SE.save.deerPhotos++;
-    SE.save.photos.push({ kind, t: Date.now() });
-    if (SE.save.photos.length > 30) SE.save.photos.shift();
-    SE.persist();
-    setTimeout(() => {
-      if (SE.sceneName === 'forest') SE.celebrate(first ? 'New animal sketched!' : 'Lovely sketch!', `${LABELS[kind]} for the journal. ${SE.pick(SE.PROPS)}`, { y: 190 });
-    }, 350);
-  }
-  function drawPolaroid(ctx, dt) {
-    const p = s.polaroid;
+  function drawPhoto(ctx, dt) {
+    const p = s.photo;
     p.t += dt;
-    const life = 4.5;
-    const slide = Math.min(1, p.t * 3) - Math.max(0, (p.t - life + 0.4) * 3);
-    const x = SE.W - 150 + (1 - slide) * 160, y = 50;
-    ctx.save();
-    ctx.translate(x + 70, y + 60);
-    ctx.rotate(-0.05);
-    ctx.fillStyle = 'rgba(20,14,30,0.4)'; ctx.fillRect(-66, -54, 136, 120);
-    ctx.fillStyle = '#fbf6ec'; ctx.fillRect(-68, -56, 136, 120);
-    ctx.drawImage(photo, -62, -50, 124, 92);
+    const img = SE.img(SE.stillFor(`cut/pines_${s.kind}_${p.beat}`, SE.pinesLight(p.cond)));
+    const w = 240, h = 136, x = SE.W / 2 - w / 2 - 6, y = 30, pop = Math.min(1, p.t * 4);
+    ctx.save(); ctx.globalAlpha = pop;
+    ctx.fillStyle = 'rgba(20,14,30,0.5)'; ctx.fillRect(x + 4, y + 6, w + 16, h + 40);
+    ctx.fillStyle = '#fbf6ec'; ctx.fillRect(x - 2, y, w + 16, h + 36);
+    if (img) { ctx.imageSmoothingEnabled = false; ctx.drawImage(img, x + 6, y + 6, w, h); }
     ctx.restore();
-    SE.text(p.label, x + 70, y + 108, { align: 'center', size: 7, color: '#5a4a5a', shadow: false });
-    if (p.t > life) s.polaroid = null;
+    SE.text(`${PINES[s.kind].name} · ${COND_LABEL[p.cond]}`, SE.W / 2, y + h + 14, { align: 'center', size: 8, color: '#3a2a2a', shadow: false, alpha: pop });
+    if (p.t > 0.4 && !p.cheered) {
+      p.cheered = true;
+      const n = SE.save.pinesAlbum[s.kind].length;
+      if (p.isNew) SE.celebrate('New photo!', `${PINES[s.kind].name} · ${n}/${p.of} in your album`, { y: 2 });
+      else SE.toast('You already have this one in your album. Lovely anyway.', '#cfe6ff');
+    }
+    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, 'Into the album', { icon: 'heart' }) || (p.t > 0.6 && SE.key('Space'))) s.photo = null;
+  }
+
+  // ------------------------------------------------------------ the sketch: a few more lines each trip
+  SE.sketchTrips = (kind) => (PINES[kind] ? PINES[kind].trips : 4);
+  SE.sketchDone = (kind) => ((SE.save.sketches || {})[kind] || 0) >= SE.sketchTrips(kind);
+  function sketchIt() {
+    s.state = 'busy'; s.sketched = true;
+    SE.moment('sketch', { force: true, then: () => {
+      const sk = SE.save.sketches;
+      const before = sk[s.kind] || 0, N = SE.sketchTrips(s.kind);
+      sk[s.kind] = Math.min(N, before + 1);
+      SE.persist();
+      s.sketch = { t: 0, from: before / N, to: sk[s.kind] / N, done: sk[s.kind] >= N && before < N };
+      SE.audio.sfx('scribble');
+      s.state = 'meet';
+    } });
+  }
+  // The sketch on its page: the animal in pencil, drawn in from left to right as far as you got.
+  SE.drawSketchPage = function (ctx, kind, x, y, w, h, frac) {
+    const img = SE.img(`cut/pines_${kind}_1`) || SE.img(`cut/see_${kind}`);
+    if (!img) return;
+    const cw = Math.round(w * frac);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, cw, h); ctx.clip();
+    ctx.filter = 'grayscale(1) sepia(0.55) contrast(1.25) brightness(1.12)';
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+    if (frac < 1) { // the unfinished edge: faint guide lines
+      ctx.fillStyle = 'rgba(90,70,60,0.35)';
+      for (let i = 0; i < h; i += 3) ctx.fillRect(x + cw, y + i, 1 + ((i * 7) % 5), 1);
+    }
+  };
+  function drawSketch(ctx, dt) {
+    const k = s.sketch;
+    k.t += dt;
+    const w = 240, h = 160, x = SE.W / 2 - w / 2, y = 30;
+    ctx.fillStyle = 'rgba(20,14,30,0.5)'; ctx.fillRect(x + 4, y + 5, w, h);
+    ctx.fillStyle = '#f4ead2'; ctx.fillRect(x, y, w, h);
+    const frac = k.from + (k.to - k.from) * Math.min(1, k.t / 2.2);
+    SE.drawSketchPage(ctx, s.kind, x + 12, y + 10, w - 24, Math.round((w - 24) * 136 / 240), frac);
+    const n = SE.save.sketches[s.kind], N = SE.sketchTrips(s.kind);
+    SE.text(n >= N ? `${PINES[s.kind].name} — finished!` : `${PINES[s.kind].name} — sketch ${n}/${N}. Come back to finish it.`, x + w / 2, y + h - 18, { align: 'center', size: 7, color: '#4a3a32', shadow: false });
+    if (k.done && k.t > 2.3 && !k.cheered) { k.cheered = true; SE.celebrate('Sketch complete!', `${PINES[s.kind].name} · in your field guide`, { y: 2 }); }
+    if (k.t > 1.2 && SE.button(SE.W / 2 - 40, SE.H - 24, 80, 18, 'Close notebook')) { s.sketch = null; SE.audio.sfx('page'); }
   }
 })();

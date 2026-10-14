@@ -66,15 +66,17 @@
       SE.hud.draw(ctx, { watch: false, title: 'A wild encounter', subtitle: s.A.bear ? `${s.A.name} · ${s.mood === 'calm' ? 'calm' : 'agitated!'}` : s.A.name });
     },
   });
+  // each animal's own sound in its reveal
+  const CALL = { deer: 'sniff', elk: 'bugle', fox: 'yip', hare: 'hop', owl: 'hoot', bird: 'chirp', bear: 'growl' };
   // the moments that tell it: listen, then see (built from the stills for each animal)
   for (const kind of Object.keys(ANIMALS)) {
     SE.MOMENTS[`see_${kind}`] = [
       { black: 2.6, text: 'Something in the woods got Waffles’ attention…', sounds: [[0.3, 'twig'], [1.4, 'rustle'], [2.2, 'twig']] },
-      { img: `cut/see_${kind}`, dur: 3.6, text: REVEAL[kind], pan: 1, sounds: [[0.2, kind === 'bear' ? 'stomp' : kind === 'owl' || kind === 'bird' ? 'rustle' : 'step']] },
+      { img: `cut/see_${kind}`, dur: 5.2, text: REVEAL[kind], pan: 1, sounds: [[0.2, kind === 'bear' ? 'stomp' : kind === 'owl' || kind === 'bird' ? 'rustle' : 'step'], [1.1, CALL[kind]], [2.6, CALL[kind]]] },
     ];
   }
   SE.MOMENTS.bear_angry = [
-    { img: 'cut/see_bear_angry', dur: 3.4, text: 'He lowers his head and huffs, slapping the snow. Back away slowly.', pan: -1, sounds: [[0.2, 'woof'], [1.0, 'stomp'], [2.2, 'stomp']] },
+    { img: 'cut/see_bear_angry', dur: 4.2, text: 'He lowers his head and huffs, slapping the snow. Back away slowly.', pan: -1, sounds: [[0.2, 'huff'], [0.9, 'growl'], [1.6, 'stomp'], [2.6, 'huff'], [3.0, 'stomp']] },
   ];
   SE.MOMENTS.bear_retreat = [
     { img: 'cut/retreat', dur: 3.8, text: 'Step by step. Never turn your back. Waffles stays close.', pan: 1, sounds: [[0.4, 'step'], [1.4, 'step'], [2.4, 'step']] },
@@ -116,7 +118,7 @@
       ? [['Back away slowly', 104, retreat, null]]
       : [
         ['Take a photo', 84, takePhoto, 'cam'],
-        [A.bear ? 'Note it down' : 'Sketch it', 76, sketchIt, 'book'],
+        ['Sketch it', 76, sketchIt, 'book'],
         [A.bear ? 'Back away' : 'Let it be', 66, () => (A.bear ? retreat() : leave()), null],
       ];
     let x = SE.W - 6 - items.reduce((t, i) => t + i[1] + 4, 0);
@@ -166,32 +168,26 @@
       else leave();
     }
   }
+  // a sketch on a walk counts like one in the pines: a few more lines on the same page
   function startSketch() {
-    s.sketch = { t: 0 };
-    SE.save.sketches = SE.save.sketches || {};
-    SE.save.sketches[s.kind] = (SE.save.sketches[s.kind] || 0) + 1;
+    const sk = SE.save.sketches || (SE.save.sketches = {});
+    const N = SE.sketchTrips(s.kind), before = Math.min(N, sk[s.kind] || 0);
+    sk[s.kind] = Math.min(N, before + 1);
     SE.persist();
+    s.sketch = { t: 0, from: before / N, to: sk[s.kind] / N, done: sk[s.kind] >= N && before < N };
+    SE.audio.sfx('scribble');
   }
   function drawSketch(ctx, dt) {
     const k = s.sketch;
     k.t += dt;
-    const w = 220, h = 150, x = SE.W / 2 - w / 2, y = 36;
+    const w = 240, h = 160, x = SE.W / 2 - w / 2, y = 30;
     ctx.fillStyle = 'rgba(20,14,30,0.5)'; ctx.fillRect(x + 4, y + 5, w, h);
     ctx.fillStyle = '#f4ead2'; ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = 'rgba(120,150,190,0.35)';
-    for (let ly = y + 18; ly < y + h - 6; ly += 10) ctx.fillRect(x + 8, ly, w - 16, 1);
-    ctx.fillStyle = '#c96b5b'; ctx.fillRect(x + 22, y, 1, h);
-    // the animal, drawn in pencil: its sprite as a soft grey silhouette that fills in as you sketch
-    const anim = s.A.act || s.A.walk;
-    if (has(anim)) {
-      const sz = SE.animSize(anim);
-      const sc = Math.min(2, Math.floor(120 / Math.max(sz.w, sz.h)) || 1);
-      ctx.save(); ctx.globalAlpha = Math.min(1, k.t / 1.5) * 0.75; ctx.filter = 'grayscale(1) sepia(0.6) contrast(1.3)';
-      SE.drawAnim(anim, x + w / 2 - (sz.w * sc) / 2, y + h / 2 - (sz.h * sc) / 2 - 6, 0, { frame: 0, scale: sc, alpha: Math.min(1, k.t / 1.5) * 0.75 });
-      ctx.restore();
-    }
-    SE.text(s.A.note, x + w / 2, y + h - 18, { align: 'center', size: 7, color: '#4a3a32', shadow: false });
-    if (k.t > 1.5 && SE.button(SE.W / 2 - 40, SE.H - 24, 80, 18, 'Close notebook') ) { s.sketch = null; if (s.A.bear) s.state = 'meet'; else leave(); }
+    SE.drawSketchPage(ctx, s.kind, x + 12, y + 10, w - 24, Math.round((w - 24) * 136 / 240), k.from + (k.to - k.from) * Math.min(1, k.t / 2.2));
+    const n = SE.save.sketches[s.kind], N = SE.sketchTrips(s.kind);
+    SE.text(n >= N ? `${s.A.name} — finished!` : `${s.A.name} — sketch ${n}/${N}`, x + w / 2, y + h - 18, { align: 'center', size: 7, color: '#4a3a32', shadow: false });
+    if (k.done && k.t > 2.3 && !k.cheered) { k.cheered = true; SE.celebrate('Sketch complete!', `${s.A.name} · in your field guide`, { y: 2 }); }
+    if (k.t > 1.5 && SE.button(SE.W / 2 - 40, SE.H - 24, 80, 18, 'Close notebook')) { s.sketch = null; SE.audio.sfx('page'); if (s.A.bear) s.state = 'meet'; else leave(); }
   }
   function banner(text, color) {
     const w = SE.measure(text, 8) + 16;

@@ -19,6 +19,8 @@
     // each cutscene still in its other weathers and times of day (src/moments.js)
     .concat(...Object.entries(SE.CUT_VARIANTS || {}).map(([n, vs]) => vs.map((v) => `cut/${n}_${v}`)))
     .concat([0, 1, 2, 3, 4, 5, 6, 7].map((i) => `cloud/c${i}`), [0, 1, 2, 3, 4, 5].map((i) => `cloud/w${i}`))
+    // Whispering Pines: three stills per animal
+    .concat(...['fox', 'hare', 'owl', 'bird', 'deer', 'elk', 'bear'].map((k) => [1, 2, 3].map((i) => `cut/pines_${k}_${i}`)))
     // three camera-only photos per animal (wildlife encounters)
     .concat(...['deer', 'elk', 'fox', 'hare', 'owl', 'bird', 'bear'].map((k) => [0, 1, 2].map((i) => `photo/${k}_${i}`)));
   for (const [name, a] of Object.entries(M.anims)) SE.defAnim(name, name, a.frames, a.fps);

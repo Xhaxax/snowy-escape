@@ -126,3 +126,11 @@
 - Headphones are parked (SE.HEADPHONES = false): drawn on top of the beanie they never sat on his ears in any scene. The "music" put-them-on cutscene is skipped too. Future feature: paint headphones into his sprites/stills (PixelLab edit of each pose) and switch the flag back on.
 - Bible reading still (cut/bible_read): his beard was painted grey; recoloured to his brown beard (pixel recolour, no new generation). The other stills were checked and already show a brown beard.
 - Couch sip: two frames where his eye was missing got his closed eye painted back in.
+
+## Round: Whispering Pines as cutscene trips
+- src/scenes/forest.js is now all stills: arrive (cut/forest), a waiting beat in the dark, then ONE animal per trip in three stills (cut/pines_<animal>_1..3, PixelLab pixflux img2img from each see_* still, 5.4 s each with its own sounds). Fox tracking/listening/mousing pounce, hare nibbling/owl shadow/sprint, owl staring/swooping/fluffed (night only), cardinals berries/pair/fly-off (never in heavy snow or wind), deer browse/alert/bound, elk bugle/paw/herd, bear on a deer's trail/stalking/gives up (never in a storm, may turn agitated → back away).
+- Some trips nobody comes (14 %, more in snow, 40 % in a storm): "Wait a little longer" twice, or head back.
+- One photo per trip: a beat you don't have yet in the current light/weather → pinesAlbum[kind] = ['<beat>_<cond>']. Slots: 3 beats × day/snow/storm/night (owl: night, snowy night; bird: day, snow; bear: day, snow, storm) = 69 photos.
+- Sketch: one sitting per trip (on walks too), finished after hare 3, bird 3, deer 4, fox 4, elk 5, owl 6, bear 7 sittings (SE.sketchTrips). The page draws itself in from left to right (SE.drawSketchPage).
+- Notebook: a field-guide spread per animal (??? until seen, hint where/when to find it; sketch progress; photo grid by light/weather; the 3 trail prints). The first page's grid jumps to each animal.
+- New ElevenLabs sounds: sniff, hop, growl, huff, hoot, chirp, yip, bugle, wings, pounce, scribble, page. Encounter reveals use each animal's call and last longer (5.2 s).

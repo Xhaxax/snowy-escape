@@ -187,11 +187,11 @@
     x.putImageData(d, 0, 0);
     return c;
   }
-  function stillFor(img) {
+  function stillFor(img, force) {
     const name = img.replace(/^cut\//, '');
-    const base = BASE[name] || (SE.stillIndoor(img) ? 'day' : 'snow');
+    const base = BASE[name] || (/^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
     if (base === 'any') return img;
-    const want = wanted(img);
+    const want = force || wanted(img);
     if (want === base) return img;
     const key = `${img}_${want}`;
     if (SE.img(key)) return key;
@@ -202,6 +202,7 @@
   }
 
   SE.stillFor = stillFor;
+  SE.stillWanted = wanted;
   // A still as the whole screen (an encounter waits on its picture while you choose): the right light
   // and weather, whole-pixel scale, letterbox bars, and the live snowfall outdoors.
   SE.drawStill = function (ctx, name) {
