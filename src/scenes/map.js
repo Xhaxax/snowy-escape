@@ -198,11 +198,17 @@
       SE.drawWindowGlow(ctx, CABIN_LIGHTS);
       SE.drawWindowGlow(ctx, CHAPEL_LIGHTS);
       ctx.restore();
+      // boot and paw prints in the snow: fresh snow fills them in, fast in heavy snowfall
+      const W = SE.weather, life = W.mode === 'sunny' ? 30 : W.stormy() ? 4 : W.mode === 'snowy' || W.mode === 'windy' ? 7 : 13;
       for (let k = s.prints.length - 1; k >= 0; k--) {
         const p = s.prints[k]; p.t += dt;
-        if (p.t > 40) { s.prints.splice(k, 1); continue; }
-        ctx.fillStyle = `rgba(110,118,165,${0.5 * (1 - p.t / 40)})`;
-        ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+        const f = p.t / life;
+        if (f > 1) { s.prints.splice(k, 1); continue; }
+        const a = 0.55 * (1 - f) * (1 - W.night() * 0.4), x = Math.round(p.x), y = Math.round(p.y);
+        if (p.paw) { ctx.fillStyle = `rgba(96,104,150,${a})`; ctx.fillRect(x, y, 1, 1); ctx.fillRect(x + 1, y - 1, 1, 1); continue; }
+        // a boot: a dark dent with a lighter rim of pushed-up snow on the low side
+        ctx.fillStyle = `rgba(92,100,150,${a})`; ctx.fillRect(x - 1, y - 1, 2, 3);
+        ctx.fillStyle = `rgba(255,255,255,${a * 0.6})`; ctx.fillRect(x - 1, y + 2, 2, 1);
       }
       // y-sorted: trees near the paths + the two walkers
       const view = (o) => o.x > cx - 40 && o.x < cx + SE.W + 40 && o.y > cy - 10 && o.y < cy + SE.H + 60;
@@ -307,7 +313,7 @@
         s.stepT = 0.34;
         SE.audio.sfx('step', { deep: SE.save.snowDepth > 0.6 || SE.weather.stormy() });
         const side = (Math.floor(h.anim / 0.34) % 2) ? 1 : -1;
-        s.prints.push({ x: h.x + (h.dir === 'n' || h.dir === 's' ? side : 0), y: h.y + (h.dir === 'e' || h.dir === 'w' ? side : 0), t: 0 });
+        s.prints.push({ x: h.x + (h.dir === 'n' || h.dir === 's' ? side * 2 : 0), y: h.y + (h.dir === 'e' || h.dir === 'w' ? side * 2 : 0), t: 0 });
       }
     }
     // Waffles trots along behind, sniffing the path
@@ -319,7 +325,7 @@
     if (d.moving) {
       d.x += ddx * Math.min(1, dt * 5); d.y += ddy * Math.min(1, dt * 5);
       d.dir = dirOf(ddx, ddy); d.anim += dt;
-      if (Math.random() < dt * 2.5) s.prints.push({ x: d.x, y: d.y, t: 0 });
+      if (Math.random() < dt * 3) s.prints.push({ x: d.x, y: d.y, t: 0, paw: true });
     }
   }
   // Out on the trails an animal can turn up out of nowhere. Waffles notices first.
@@ -351,7 +357,9 @@
     const buried = id === 'cabin' && SE.save.snowDepth >= 0.6;
     const to = [buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40, inDoor: true }];
     // arriving somewhere special plays a little still-frame moment first (sound carries it)
-    if (SE.MOMENTS && SE.MOMENTS[id]) SE.moment(id, { go: to });
+    const mid = id === 'lake' && SE.lakeMoment ? SE.lakeMoment() : id;
+    if (SE.MOMENTS && SE.MOMENTS[mid]) SE.moment(mid, { go: to, force: mid !== id });
+    else if (mid !== id) SE.go(...to);
     else SE.go(...to);
   }
   function drawWalker(ctx, who, a) {

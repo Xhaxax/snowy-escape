@@ -70,6 +70,15 @@
     const sv = SE.save;
     if (sv.wood <= 0) { SE.toast('No firewood left — chop some out in the yard.', '#cfe6ff'); return false; }
     if (sv.fire > 0.92) { SE.toast('The fire is already roaring happily.'); return false; }
+    // a cold hearth has to be laid and lit again: a little cutscene of his hands at the grate
+    if (sv.fire < 0.08 && !auto && SE.img('cut/fire_lay')) {
+      sv.wood--; SE.persist(); mode = 'busy';
+      SE.moment('fireStart', { force: true, then: () => {
+        mode = 'room'; sv.fire = 0.55; SE.persist();
+        SE.celebrate('The fire is going again!', `Warm in a minute. ${SE.pick(SE.PROPS)}`);
+      } });
+      return true;
+    }
     sv.wood--; sv.fire = Math.min(1, sv.fire + 0.45); SE.persist();
     SE.audio.sfx('whoosh'); SE.audio.sfx('chop');
     for (let i = 0; i < 14; i++) SE.spawnFloater(SE.rand(86, 120), SE.rand(180, 200), 'spark', '#ffb36b');
@@ -175,11 +184,17 @@
       SE.audio.setAmbience({ fire: 0.2 + SE.save.fire * 0.8, wind: 0.3 + SE.weather.wind / 80, storm: SE.weather.stormy() ? 0.6 : 0, muffled: true });
     },
     draw(ctx, dt) {
-      if (SE.watching()) direct(dt); else dir.t = dir.dur = 0;
+      // just watching: he settles on the couch and stays there (no errands of his own)
+      if (SE.watching() && mode === 'room' && !SE.momentPlaying()) sitDown(true);
       SE.drawImg('bg_living', 0, 0);
       if (mode === 'couch') drawCouchArt(ctx);
       SE.weather.windows(ctx, WINDOWS);
       drawDoor(ctx, dt);
+      // Waffles and Mochi are part of the room: drawn before the night falls over it, so after dark
+      // they sink into the dusk like the furniture and only the firelight picks them out
+      const dogR = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
+      let catR = null;
+      if (mode !== 'couch' && mochi) { mochi.update(dt); catR = mochi.draw(); }
       SE.weather.interior(ctx);
       drawGust(ctx, dt);
       if (mode === 'room' && !SE.watching() && hotspot(BIBLE, 'Read the Bible')) readBible();
@@ -198,14 +213,11 @@
 
       // the dog dozing on the rug by the fire
       // Waffles naps on the rug by the fire, lifting his head now and then
-      const r = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
-      if (r && mode === 'room' && !SE.watching() && hotspot(r, 'Pet Waffles')) startPet('dog');
+      if (dogR && mode === 'room' && !SE.watching() && hotspot(dogR, 'Pet Waffles')) startPet('dog');
       if (mode === 'couch') drawCouch(ctx, dt);
-      else if (mochi) {
-        mochi.update(dt);
-        const r = mochi.draw();
-        if (r && mode === 'room' && !SE.watching() && hotspot(r, 'Pet Mochi')) startPet('cat');
-      }
+      else if (catR && mode === 'room' && !SE.watching() && hotspot(catR, 'Pet Mochi')) startPet('cat');
+      // a warm rim of firelight along Waffles' back when the room is dark
+      if (dogR && night > 0.3) SE.glow(ctx, dogR.x + 8, dogR.y + 8, 26, '255,150,70', 0.18 * night * fl * flick);
 
       // warm vignette
       const v = ctx.createRadialGradient(SE.W / 2, SE.H / 2, 120, SE.W / 2, SE.H / 2, 300);

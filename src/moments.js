@@ -14,7 +14,17 @@
     ],
     lake: [
       { black: 0.7, sounds: [[0.1, 'icecrack']] },
-      { img: 'cut/lake', dur: 3.8, text: 'A fresh hole in the ice.', pan: -1, sounds: [[0.15, 'auger'], [1.9, 'auger'], [3.2, 'splash']] },
+      { img: 'cut/lake', dur: 4.6, text: 'Overnight the old hole froze solid. A fresh one, then.', pan: -1, sounds: [[0.15, 'auger'], [1.9, 'auger'], [3.2, 'auger'], [4.0, 'splash']] },
+    ],
+    fireStart: [
+      { black: 0.8, text: 'Cold ashes. Time to start again.', sounds: [[0.2, 'wood']] },
+      { img: 'cut/fire_lay', dur: 4.6, text: 'Kindling first, then two split logs across the grate.', pan: 1, sounds: [[0.4, 'chop'], [1.4, 'rustle'], [2.4, 'chop'], [3.4, 'twig']] },
+      { img: 'cut/fire_light', dur: 5.0, text: 'A match, a breath, and the first little flames catch.', pan: -1, sounds: [[0.3, 'match'], [1.6, 'whoosh'], [2.4, 'twig'], [3.4, 'twig']] },
+    ],
+    // within a few hours a fishing hole only grows a thin skin of new ice: a few taps break it
+    lake_skim: [
+      { black: 0.6, sounds: [[0.1, 'step']] },
+      { img: 'cut/lake', dur: 3.4, text: 'A thin skin of new ice over your hole. A few taps and it is open.', pan: 1, sounds: [[0.4, 'icecrack'], [1.2, 'chop'], [1.9, 'chop'], [2.6, 'splash']] },
     ],
     chapel: [
       { black: 0.7, sounds: [[0.05, 'stomp']] },
@@ -66,8 +76,8 @@
       { img: 'cut/shovel3', dur: 3.6, text: 'Clear, all the way to the door.', pan: -1, sounds: [[0.4, 'step'], [0.8, 'step'], [1.6, 'soft']] },
     ],
     porchRest: [
-      { img: 'cut/porch', dur: 3.6, text: 'A blanket, a mug, the slow creak of the chair.', pan: 1, sounds: [[0.3, 'creak'], [1.6, 'creak']] },
-      { img: 'cut/porch2', dur: 4.2, text: 'Warm hands, cold nose. The snow keeps falling.', pan: -1, sounds: [[0.6, 'sip'], [2.2, 'creak'], [3.2, 'purr']] },
+      { img: 'cut/porch', dur: 5.2, text: 'A blanket, a mug, the slow creak of the chair.', pan: 1, sounds: [[0.3, 'creak'], [1.6, 'creak'], [3.2, 'creak']] },
+      { img: 'cut/porch2', dur: 5.6, text: 'Warm hands, cold nose. The snow keeps falling.', pan: -1, sounds: [[0.6, 'sip'], [2.2, 'creak'], [3.2, 'purr']] },
     ],
     climb: [
       { black: 0.6, sounds: [[0.05, 'gust']] },
@@ -146,7 +156,7 @@
   };
   // Stills that happen indoors only change between day and night (lamplight stays warm either way);
   // everything else is outdoors and also gets the live snowfall of the current weather on top.
-  const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake)|kitchen_)/;
+  const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake|fire_)|kitchen_)/;
   SE.stillIndoor = (img) => INDOOR.test(img);
   function wanted(img) {
     const W = SE.weather;
@@ -189,7 +199,7 @@
   }
   function stillFor(img, force) {
     const name = img.replace(/^cut\//, '');
-    const base = BASE[name] || (/^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
+    const base = BASE[name] || (/^porch_rock/.test(name) ? 'day' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
     if (base === 'any') return img;
     const want = force || wanted(img);
     if (want === base) return img;
@@ -304,4 +314,18 @@
       if (m.i >= m.beats.length) finish();
     }
   });
+})();
+
+// The fishing hole freezes over again like a real one: in hard frost a thin skin forms within an
+// hour or two (break it with a few taps), and overnight it freezes solid (drill a new hole).
+(function () {
+  const hoursSince = (h) => (SE.save.day - h.day) * 24 + (SE.weather.hour() - h.hour);
+  SE.lakeMoment = function () {
+    const h = SE.save.hole, now = { day: SE.save.day, hour: SE.weather.hour() };
+    let id = 'lake';
+    if (h && SE.save.day === h.day && hoursSince(h) < 1.5) id = null;   // still open: straight onto the ice
+    else if (h && hoursSince(h) < 10) id = 'lake_skim';
+    SE.save.hole = now; SE.persist();
+    return id || 'lake_open';
+  };
 })();

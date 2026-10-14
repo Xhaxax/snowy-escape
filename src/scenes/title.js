@@ -13,7 +13,11 @@
   // Chimney smoke: PixelLab smoke puffs that rise, drift off with the wind, swell a little and fade.
   // Pixel puffs are drawn at 1x (no blurry scaling); `scale` only slows and thins them for far views.
   SE.drawChimneySmoke = function (ctx, cx, cy, dt, scale = 1) {
-    if (Math.random() < dt * (scale < 1 ? 1.1 : 1.6)) smoke.push({ x: cx + SE.rand(-2, 2), y: cy, t: 0, life: SE.rand(4.5, 6.5), i: Math.floor(Math.random() * 5), flip: Math.random() < 0.5, s: scale });
+    // no fire inside, no smoke: and the first time you notice, a little nudge to bring logs in
+    const out = SE.save.fire < 0.06;
+    if (out && SE.sceneName !== 'title' && !SE._fireHinted) { SE._fireHinted = true; SE.toast('No smoke from the chimney — the fire has gone out. Bring some logs inside.', '#cfe6ff'); }
+    if (!out) SE._fireHinted = false;
+    if (!out && Math.random() < dt * (scale < 1 ? 1.1 : 1.6)) smoke.push({ x: cx + SE.rand(-2, 2), y: cy, t: 0, life: SE.rand(4.5, 6.5), i: Math.floor(Math.random() * 5), flip: Math.random() < 0.5, s: scale });
     for (let i = smoke.length - 1; i >= 0; i--) {
       const p = smoke[i];
       p.t += dt;

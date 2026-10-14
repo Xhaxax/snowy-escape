@@ -97,7 +97,7 @@
     draw(ctx, dt) {
       s.t += dt;
       s.bell = Math.max(0, s.bell - dt);
-      if (SE.watching()) direct(dt);
+      // just watching: he stays quietly in the chapel
 
       // 1 background, then the window (night, storm and snowfall seen through the glass)
       SE.drawImg('bg_chapel', 0, 0);

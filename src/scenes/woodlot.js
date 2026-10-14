@@ -43,7 +43,7 @@
       SE.weather.stars(ctx, 60);
       SE.weather.sunshine(ctx, 215);
       SE.weather.draw(ctx);
-      if (!s.busy && !SE.momentPlaying()) drawMeter(ctx, dt);
+      if (!s.busy && !SE.momentPlaying() && !SE.watching()) drawMeter(ctx, dt);
       drawButtons();
       SE.hud.draw(ctx, { title: 'Woodlot', subtitle: `firewood: ${SE.save.wood} · splits this round: ${s.splits}/${ROUND}`, map: false });
     },
@@ -80,7 +80,7 @@
     if (s.chopAnim > 0 && CA) s.chopAnim = Math.min(CA.frames - 0.01, s.chopAnim + dt * 11);
     if (CA && s.chopAnim >= (s.chopEnd || CA.frames) - 0.02) s.chopAnim = 0;
     if (!SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.8 });
-    const auto = SE.watching() && v > 0.84 && (s.auto -= dt) <= 0;
+    const auto = false; // just watching never swings the axe for you
     const tap = !SE.modal && ((SE.mouse.pressed && SE.mouse.y < SE.H - 30 && SE.mouse.y > 30) || SE.key('Space'));
     if (!tap && !auto) return;
     if (s.chopAnim > 0) return; // still mid-swing
@@ -101,17 +101,18 @@
     SE.persist();
     s.splits++;
     SE.toast(perfect ? 'Clean split! +2 firewood' : '+1 firewood', '#ffe6b8');
-    if (!(s.woof >= 0)) { s.woof = 0; setTimeout(() => SE.audio.sfx('woof'), 160); }
     if (s.splits >= ROUND) finishRound();
   }
   // the round is done: stack it, carry an armful in, and the fire gets a fresh log
   function finishRound() {
     s.busy = true;
-    SE.moment('woodDone', { force: true, then: () => {
+    // the last log splits: Waffles barks from where he lies and grins, then the wood is stacked
+    s.woof = 0; SE.audio.sfx('woof'); setTimeout(() => SE.audio.sfx('woof'), 520);
+    setTimeout(() => SE.moment('woodDone', { force: true, then: () => {
       SE.save.fire = Math.min(1, SE.save.fire + 0.35); SE.persist();
       SE.celebrate('Woodpile stacked!', `${SE.save.wood} pieces of firewood. An armful is already by the fire. ${SE.pick(SE.PROPS)}`);
       SE.go('cabin', { inDoor: true });
-    } });
+    } }), 1900);
   }
   function drawButtons() {
     if (SE.watching() || s.busy || SE.momentPlaying()) return;

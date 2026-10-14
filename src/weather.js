@@ -5,10 +5,10 @@
 (function () {
   // Snow never fully stops; what changes is how much, how windy, and whether the sun is out.
   const MODES = {
-    sunny: { intensity: 0.14, wind: 4, fog: 0, sun: 1, label: 'Sunny spell', icon: 'sun' },
-    calm: { intensity: 0.32, wind: 7, fog: 0, sun: 0, label: 'Gentle snow', icon: 'snow' },
-    snowy: { intensity: 0.62, wind: 12, fog: 0.04, sun: 0, label: 'Heavy snowfall', icon: 'snow' },
-    windy: { intensity: 0.55, wind: 42, fog: 0.08, sun: 0, label: 'Windy', icon: 'snow' },
+    sunny: { intensity: 0.035, wind: 4, fog: 0, sun: 1, label: 'Sunny spell', icon: 'sun' },
+    calm: { intensity: 0.4, wind: 7, fog: 0, sun: 0, label: 'Gentle snow', icon: 'snow' },
+    snowy: { intensity: 0.78, wind: 12, fog: 0.04, sun: 0, label: 'Heavy snowfall', icon: 'snow' },
+    windy: { intensity: 0.66, wind: 42, fog: 0.08, sun: 0, label: 'Windy', icon: 'snow' },
     storm: { intensity: 1, wind: 72, fog: 0.24, sun: 0, label: 'Snowstorm', icon: 'snow' },
   };
   // Plausible transitions: weather builds up and calms down gradually.
@@ -19,9 +19,9 @@
     windy: [['storm', 0.35], ['snowy', 0.35], ['calm', 0.3]],
     storm: [['windy', 0.5], ['snowy', 0.5]],
   };
-  const MAX = 540;
+  const MAX = 1200;
   const W = (SE.weather = {
-    MODES, mode: 'calm', intensity: 0.32, wind: 7, fog: 0, sun: 0, gust: 0, timer: 150, flakes: [], saveT: 0,
+    MODES, mode: 'calm', intensity: 0.4, wind: 7, fog: 0, sun: 0, gust: 0, timer: 150, flakes: [], saveT: 0,
   });
 
   for (let i = 0; i < MAX; i++) W.flakes.push(newFlake(true));
@@ -110,7 +110,7 @@
     const prevH = sv.clock;
     sv.clock = (sv.clock + dt * W.HOURS_PER_SEC) % 24;
     if (sv.clock < prevH - 12) { sv.day++; SE.toast(`Day ${sv.day}. A new morning in the mountains.`, '#ffe6b8'); }
-    sv.snowDepth = SE.clamp(sv.snowDepth + (W.intensity * 0.0011 - W.sun * 0.0004) * dt, 0, 1);
+    sv.snowDepth = SE.clamp(sv.snowDepth + (W.intensity * 0.0009 - W.sun * 0.0004) * dt, 0, 1);
     sv.fire = SE.clamp(sv.fire - dt / (35 * 60), 0, 1);
     sv.stove = SE.clamp(sv.stove - dt / (25 * 60), 0, 1);
     W.saveT += dt;

@@ -11,14 +11,16 @@
     'cut/shovel2', 'cut/shovel3', 'cut/porch2', 'cut/climb1', 'cut/climb2', 'cut/cocoa2', 'cut/eat', 'cut/camera', 'cut/sketch',
     'cut/see_deer', 'cut/see_elk', 'cut/see_fox', 'cut/see_hare', 'cut/see_owl', 'cut/see_bird', 'cut/see_bear', 'cut/see_bear_angry', 'cut/retreat',
     'cut/cook_prep', 'cut/cook_pan', 'cut/cook_fry', 'cut/cook_plate', 'cut/cocoa_chop', 'cut/cocoa_cook', 'cut/cocoa_pour', 'cut/treat_dog', 'cut/treat_cat',
-    'cut/stack', 'cut/carry_in', 'cut/bible_read', 'cut/music', 'cut/sleep', 'cut/pocket',
+    'cut/stack', 'cut/carry_in', 'cut/fire_lay', 'cut/fire_light', 'cut/bible_read', 'cut/music', 'cut/sleep', 'cut/pocket',
     'cut/pet_dog1', 'cut/pet_dog2', 'cut/pet_dog3', 'cut/pet_cat1', 'cut/pet_cat2', 'cut/pet_cat3',
     'lake_hands', 'props/woodpile', 'snow/heap_big', 'snow/heap_small', 'smoke/p0', 'smoke/p1', 'smoke/p2', 'smoke/p3', 'smoke/p4',
-    'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td', 'map/chapel_td', 'bg_chapel', 'bg_woodlot', 'bg_bedroom', 'ui/notebook', 'ui/kit', 'couch_scene', 'lit/bg_cabin', 'lit/cabin_td', 'lit/chapel_td', 'bg_forest_dim']
+    'world_ground', 'map/pine', 'map/spruce', 'map/cabin_td', 'map/mountain_td', 'map/chop_td', 'map/fishing_td', 'map/chapel_td', 'bg_chapel', 'bg_woodlot', 'bg_bedroom', 'ui/notebook', 'ui/kit', 'couch_scene', 'props/kitchen_unlit', 'lit/bg_cabin', 'lit/cabin_td', 'lit/chapel_td', 'bg_forest_dim']
     .concat(M.images, Object.keys(M.anims))
     // each cutscene still in its other weathers and times of day (src/moments.js)
     .concat(...Object.entries(SE.CUT_VARIANTS || {}).map(([n, vs]) => vs.map((v) => `cut/${n}_${v}`)))
     .concat([0, 1, 2, 3, 4, 5, 6, 7].map((i) => `cloud/c${i}`), [0, 1, 2, 3, 4, 5].map((i) => `cloud/w${i}`))
+    // the rocking chair on the porch (an animation, 16 frames)
+    .concat([...Array(16).keys()].map((i) => `cut/porch_rock_${i}`))
     // Whispering Pines: three stills per animal
     .concat(...['fox', 'hare', 'owl', 'bird', 'deer', 'elk', 'bear'].map((k) => [1, 2, 3].map((i) => `cut/pines_${k}_${i}`)))
     // three camera-only photos per animal (wildlife encounters)

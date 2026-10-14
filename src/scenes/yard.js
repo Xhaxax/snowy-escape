@@ -54,7 +54,8 @@
         SE.toast('The storm is too strong — back inside you go!', '#cfe6ff');
         setTimeout(() => { if (SE.sceneName === 'yard') SE.go('cabin', { inDoor: true }); }, 1600);
       }
-      if (SE.watching()) direct(dt);
+      // just watching: he stays put in the yard
+      if (mode === 'rock') { drawRock(ctx, dt); SE.hud.draw(ctx, { title: 'The rocking chair', subtitle: 'creak… creak…', map: false }); return; }
 
       SE.drawImg('bg_cabin', 0, 0);
       SE.weather.sway(ctx, 'bg_cabin', [[0, 40, 120, 200], [400, 10, 80, 240]]);
@@ -101,9 +102,36 @@
       SE.celebrate('Path is clear!', `The valley is all yours again. ${SE.pick(SE.PROPS)}`);
     } });
   }
+  // The rocking chair: the cutscene, then you stay out there with him, rocking slowly with his mug
+  // and Waffles at his feet, for as long as you like (not in a snowstorm).
   function porch() {
+    if (SE.weather.stormy()) { SE.toast('Too stormy for the rocking chair. Maybe later.', '#cfe6ff'); return; }
     mode = 'busy';
-    SE.moment('porchRest', { force: true, then: () => { mode = 'yard'; s.dir.dur = 0; SE.save.porchSits = (SE.save.porchSits || 0) + 1; SE.persist(); } });
+    SE.moment('porchRest', { force: true, then: () => { mode = 'rock'; s.rockT = 0; s.sipped = -1; SE.save.porchSits = (SE.save.porchSits || 0) + 1; SE.persist(); } });
+  }
+  const ROCK_FRAMES = 16, ROCK_FPS = 5;
+  function drawRock(ctx, dt) {
+    s.rockT += dt;
+    const f = Math.floor(s.rockT * ROCK_FPS) % ROCK_FRAMES, name = `cut/porch_rock_${f}`;
+    // bright: a sunny-day light unless it is night
+    const key = SE.stillFor(name, SE.weather.night() > 0.5 ? 'night' : 'day'), img = SE.img(key);
+    ctx.fillStyle = '#06050a'; ctx.fillRect(0, 0, SE.W, SE.H);
+    if (img) {
+      const k = Math.max(1, Math.floor(Math.min(SE.W / img.width, SE.H / img.height)));
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, Math.round((SE.W - img.width * k) / 2), Math.round((SE.H - img.height * k) / 2), img.width * k, img.height * k);
+    }
+    if (SE.weather.mode !== 'sunny') SE.weather.draw(ctx, { density: 0.6 });
+    ctx.fillStyle = '#06050a'; ctx.fillRect(0, 0, SE.W, 22); ctx.fillRect(0, SE.H - 22, SE.W, 22);
+    // the creak of the chair and a sip each time round
+    const loop = Math.floor(s.rockT * ROCK_FPS / ROCK_FRAMES);
+    if (f === 2 && s.creaked !== loop) { s.creaked = loop; SE.audio.sfx('creak'); }
+    if (f === 9 && s.sipped !== loop) { s.sipped = loop; SE.audio.sfx('sip'); }
+    if (SE.weather.stormy()) { mode = 'yard'; SE.toast('The wind picks up — time to head in.', '#cfe6ff'); return; }
+    if (!SE.watching()) {
+      const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
+      if (SE.button(SE.W - 76, SE.H - 20, 70, 16, 'Get up', { alpha: a })) mode = 'yard';
+    }
   }
 
   // ------------------------------------------------------------ buttons & watch director

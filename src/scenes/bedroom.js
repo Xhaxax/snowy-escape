@@ -55,7 +55,7 @@
         if (SE.button(SE.W - 86, SE.H - 46, 80, 18, canSleep ? 'Go to sleep' : 'Sleep (at night)', { alpha: a, active: canSleep })) sleep();
         if (SE.button(SE.W - 86, SE.H - 24, 80, 18, 'Living room', { alpha: a })) SE.go('cabin');
       }
-      if (SE.watching() && !busy && night > 0.7 && !SE.momentPlaying() && Math.random() < dt * 0.05) sleep();
+
       SE.hud.draw(ctx, { title: 'Bedroom', subtitle: SE.weather.clockLabel ? SE.weather.clockLabel() : '', map: false });
     },
   });

@@ -136,3 +136,12 @@
 - New ElevenLabs sounds: sniff, hop, growl, huff, hoot, chirp, yip, bugle, wings, pounce, scribble, page. Encounter reveals use each animal's call and last longer (5.2 s).
 - Living room: the mantel lamp (the twin of the bookshelf lamp) is painted out (PixelLab inpaint) and its glow removed.
 - Sound pass 1: new ElevenLabs footsteps (deep, soft, low-passed crunch, played quieter), wooden-floor steps (SE.audio.woodSteps) when walking between cabin rooms and into the chapel, a real sip, page turns and pencil scribbles for the notebook, sketches and Bible reading. Recorded 20 s loops amb_fire (crackling fireplace) and amb_wind (soft wind in the pines, no more rain-like hiss) replace the synthesized fire and calm wind; the synth wind only adds to storms.
+- Just watch no longer acts for you: he settles on the couch (cabin) or simply stays where he is; no auto chopping, cooking, fishing, sleeping, errands.
+- Woodlot: Waffles barks (lying down) only once the round of 5 splits is done.
+- Snow: up to 1200 flakes; a sunny spell has barely any, gentle snow ~2× as before, heavy snow and storms a lot.
+- Valley: boot prints (a dent with a rim of pushed-up snow) and paw prints that new snow fills in — 30 s in sun, 13 s in light snow, 7 s heavy, 4 s in a storm.
+- Cabin: Waffles and Mochi are drawn before the night tint, so at night they sink into the dusk; the fire rims Waffles' back.
+- Lake: the hole refreezes like a real one (SE.lakeMoment): still open within ~1.5 game hours, a thin skin you tap open within ~10 h (lake_skim), otherwise frozen solid → drill a new one.
+- Kitchen lanterns are cold in daylight (props/kitchen_unlit.png overlay) and lit with their glow after dusk.
+- Fire out: no chimney smoke, a one-time hint outside, and lighting a cold hearth plays fireStart (cut/fire_lay: hands laying kindling on a cold sooty grate — PixelLab inpaint of the whole fireplace front; cut/fire_light: the match).
+- Rocking chair: longer cutscene, then an idle screen with the PixelLab animation cut/porch_rock_0..15 (animate_image of porch2: rocking, sipping, Waffles breathing), bright daylight relight, creak + sip each loop; not in a snowstorm.

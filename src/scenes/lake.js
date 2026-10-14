@@ -112,7 +112,7 @@
         SE.panel(ex - 6, ey, 13, 15, { fill: 'rgba(255,240,200,0.95)' });
         SE.text('!', ex, ey + 2, { align: 'center', size: 11, color: '#c14b4b', shadow: false, bold: true });
         if (Math.random() < dt * 2.5) SE.audio.sfx('bite');
-        if (SE.watching() && s.nibbleT < 4.5 - s.react) startMini();
+
         else if (s.nibbleT <= 0) { reset(); SE.toast('The nibble drifted off. No rush.', '#cfe6ff'); }
       }
 

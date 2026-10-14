@@ -87,8 +87,11 @@
       const heat = SE.save.stove, night = SE.weather.night();
       if (heat < 0.12) { ctx.fillStyle = 'rgba(20,12,14,0.6)'; ctx.fillRect(374, 178, 50, 34); }
       SE.glow(ctx, 398, 196, (20 + 30 * heat) * flick, '255,140,60', (0.08 + 0.22 * heat) * flick);
-      SE.glow(ctx, 463, 140, 30, '255,200,120', (0.14 + night * 0.12) * flick);
-      SE.glow(ctx, 167, 186, 30, '255,200,120', (0.12 + night * 0.12) * flick);
+      // the lanterns are only lit after dusk; in daylight they stand there cold
+      const lit = SE.clamp((night - 0.3) * 4, 0, 1);
+      if (lit < 1 && SE.img('props/kitchen_unlit')) { ctx.save(); ctx.globalAlpha = 1 - lit; SE.drawImg('props/kitchen_unlit', 0, 0); ctx.restore(); }
+      SE.glow(ctx, 463, 140, 30, '255,200,120', (0.14 + night * 0.12) * flick * lit);
+      SE.glow(ctx, 167, 186, 30, '255,200,120', (0.12 + night * 0.12) * flick * lit);
       // steam from the pot on the stove
       if (Math.random() < dt * 4 * SE.save.stove) steam.push({ x: 378 + SE.rand(-6, 6), y: 138, t: 0 });
       for (let i = steam.length - 1; i >= 0; i--) {
@@ -109,24 +112,7 @@
 
   let idleT = 0;
   function drawIdle(ctx) {
-    if (SE.watching()) {
-      // watch loop: after a short pause, cook something new (lighting the oven first if needed)
-      idleT += SE.dt;
-      if (idleT > 4) {
-        idleT = 0;
-        if (SE.save.stove < 0.3 && SE.save.wood > 0) { feedStove(true); return; }
-        if (stoveCold()) {
-          // out of firewood: the traveler heads out to chop some (a little film of its own)
-          SE.toast('Out of firewood — off to the chopping block.', '#ffe6b8');
-          SE.go('woodlot');
-          return;
-        }
-        const fishes = Object.entries(SE.save.fish).filter(([, n]) => n > 0);
-        if (fishes.length && Math.random() < 0.5) startCook(SE.pick(fishes)[0]);
-        else startCocoa();
-      }
-      return;
-    }
+    if (SE.watching()) return; // just watching: the kitchen stays quiet
     const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
     const fishes = Object.entries(SE.save.fish).filter(([, n]) => n > 0);
     let x = SE.W - 6;
