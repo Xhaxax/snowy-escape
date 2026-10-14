@@ -78,8 +78,11 @@
 
   // While you just watch, he is listening to music: headphones over his hat and little notes
   // drifting up. Scenes call this right after drawing him, with the top of his head.
+  // Switched off for now: drawn over the beanie they never sat on his ears properly. Doing it right
+  // means painting them into his sprites (a future feature); flip this on to bring them back.
+  SE.HEADPHONES = false;
   SE.headphones = function (ctx, x, y, scale = 1) {
-    if (!SE.watching()) return;
+    if (!SE.HEADPHONES || !SE.watching()) return;
     x = Math.round(x); y = Math.round(y);
     const k = Math.max(1, Math.round(scale)), px = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + dx * k, y + dy * k, w * k, h * k); };
     px(-6, -2, 13, 1, '#1b1720');                          // the band arching over his hat

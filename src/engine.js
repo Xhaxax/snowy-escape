@@ -462,8 +462,9 @@ SE.toggleWatch = function () {
   SE.save.settings.watch = !SE.save.settings.watch;
   SE.persist();
   SE.toast(SE.save.settings.watch ? 'Just watching — sit back and enjoy.' : 'Your turn again — the activities are all yours.', '#ffe6b8');
-  // sitting back to just watch: he puts his headphones on first (and keeps them on while you watch)
-  if (SE.save.settings.watch && SE.moment) SE.moment('music', { force: true });
+  // sitting back to just watch: he puts his headphones on first (and keeps them on while you watch).
+  // Parked for now (see SE.HEADPHONES in actors.js).
+  if (SE.HEADPHONES && SE.save.settings.watch && SE.moment) SE.moment('music', { force: true });
 };
 
 SE.PROPS = [
