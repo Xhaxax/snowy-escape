@@ -7,26 +7,53 @@
   let mode = 'idle', steam = [];
 
   // ------------------------------------------------------------ hot chocolate & cooking: cutscenes
-  function startCocoa() {
+  function startCocoa(mug) {
     mode = 'busy';
+    const m = mug || SE.MUGS[0];
+    const beats = SE.MOMENTS.cocoaMake;
+    beats[3].img = m.id ? 'cut/cocoa_pour_' + m.id : 'cut/cocoa_pour';
+    beats[3].text = m.line;
     SE.moment('cocoaMake', { force: true, then: () => {
       mode = 'idle';
-      SE.save.cocoa++; SE.save.dishes['Hot Chocolate'] = (SE.save.dishes['Hot Chocolate'] || 0) + 1; SE.persist();
-      SE.celebrate('Hot chocolate!', `Marshmallows on top. ${SE.pick(SE.PROPS)}`);
+      const sv = SE.save;
+      sv.cocoa++; sv.dishes['Hot Chocolate'] = (sv.dishes['Hot Chocolate'] || 0) + 1;
+      sv.mugsUsed = sv.mugsUsed || {}; sv.mugsUsed[m.id || 'red'] = true;
+      SE.persist();
+      SE.celebrate('Hot chocolate!', `${m.name}, marshmallows on top. ${SE.pick(SE.PROPS)}`);
     } });
   }
   function startCook(fish) {
     mode = 'busy';
+    const f = SE.FISH[fish] || {};
+    const beats = SE.MOMENTS.cook;
+    beats[0].img = f.cut ? 'cut/cook_prep_' + f.cut : 'cut/cook_prep';
+    beats[3].img = f.cut ? 'cut/cook_plate_' + f.cut : 'cut/cook_plate';
+    if (f.prep) beats[0].text = f.prep;
+    if (f.plate) beats[3].text = f.plate;
     SE.moment('cook', { force: true, then: () => {
       const sv = SE.save;
       sv.fish[fish]--;
       if (sv.fish[fish] <= 0) delete sv.fish[fish];
-      sv.dishes['Pan-fried Fish'] = (sv.dishes['Pan-fried Fish'] || 0) + 1;
+      const dish = f.dish || 'Pan-fried Fish';
+      sv.dishes[dish] = (sv.dishes[dish] || 0) + 1;
       sv.cooked++;
       SE.persist();
       // and then dinner, with Waffles and Mochi watching every bite
       SE.moment('eat', { force: true, then: () => { mode = 'share'; g = { fish, t: 0 }; } });
     } });
+  }
+  // which mug? the shelf of mugs, one button each
+  function drawMugs(ctx) {
+    const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
+    const used = SE.save.mugsUsed || {};
+    const bw = 112, bh = 18, x0 = SE.W - bw - 8;
+    let y = SE.H - 26 - (SE.MUGS.length + 1) * (bh + 3);
+    SE.text('Which mug?', x0 + bw / 2, y - 12, { align: 'center', size: 8, color: '#ffe6b8', alpha: a });
+    for (const m of SE.MUGS) {
+      if (SE.button(x0, y, bw, bh, m.name + (used[m.id || 'red'] ? '' : ' · new'), { alpha: a })) startCocoa(m);
+      y += bh + 3;
+    }
+    if (SE.button(x0, y, bw, bh, 'Never mind', { alpha: a, icon: 'back' })) mode = 'idle';
   }
   // after dinner: share a bite? Each choice is its own little cutscene
   let g = null;
@@ -34,7 +61,7 @@
     g.t += dt;
     SE.drawStill(ctx, 'cut/eat');
     const fish = g.fish;
-    const done = () => { mode = 'idle'; g = null; SE.celebrate('Dinner is served!', `Pan-fried ${fish}, cooked with love. ${SE.pick(SE.PROPS)}`); };
+    const done = () => { mode = 'idle'; g = null; SE.celebrate('Dinner is served!', `${(SE.FISH[fish] || {}).dish || 'Pan-fried ' + fish}, cooked with love. ${SE.pick(SE.PROPS)}`); };
     const pick = (what) => { mode = 'busy'; SE.moment(what, { force: true, then: () => { mode = 'share'; g.gave = (g.gave || []).concat(what); g.t = 0; } }); };
     const gave = g.gave || [];
     const opts = [];
@@ -120,6 +147,7 @@
       drawMochi(ctx, dt);
       if (mode === 'idle') drawIdle(ctx);
       else if (mode === 'share') drawShare(ctx, dt);
+      else if (mode === 'mug') drawMugs(ctx);
       const ovenWord = SE.save.stove > 0.6 ? 'hot' : SE.save.stove > 0.12 ? 'warm' : 'cold';
       SE.hud.draw(ctx, { title: 'Kitchen', subtitle: `oven: ${ovenWord} · firewood: ${SE.save.wood} · fish: ${SE.fishCount()}`, map: false, back: mode === 'idle' ? () => SE.go('cabin') : null });
     },
@@ -133,7 +161,7 @@
     let x = SE.W - 6;
     const btn = (label, w, cb, opts = {}) => { x -= w + 4; if (SE.button(x, SE.H - 24, w, 18, label, Object.assign({ alpha: a }, opts))) cb(); };
     const needHeat = (fn) => () => { if (stoveCold()) SE.toast('The oven is cold — add a log first.', '#cfe6ff'); else fn(); };
-    btn('Make hot chocolate', 100, needHeat(startCocoa), { icon: 'cup' });
+    btn('Make hot chocolate', 100, needHeat(() => { mode = 'mug'; }), { icon: 'cup' });
     if (fishes.length) {
       fishes.slice(0, 2).forEach(([name, n]) => btn(`Cook ${name.split(' ').pop()} ×${n}`, Math.max(84, SE.measure(`Cook ${name.split(' ').pop()} ×${n}`, 8) + 26), needHeat(() => startCook(name)), { icon: 'fish' }));
     } else {

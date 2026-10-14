@@ -158,3 +158,10 @@
 - Kitchen and living room after dark: `SE.weather.interior(ctx, lights)` cuts the night dim away around the room's real light sources (oven fire / fireplace, lit lanterns and lamp), so the flames visibly light their corner and the rest falls into shadow. The oven firebox gets a brighter flickering flame glow plus a warm spill on the floor.
 - Traveler's light: headlamp only in a real snowstorm; any other night he carries a PixelLab oil lantern sprite (`props/lantern.png`) with a calm, steady glow (half size on the map). It throws a stronger glow and a warm pool on the snow; in the woodlot it stands by the chopping block, clear of Waffles; at the lake it stands on the ice behind him and Waffles (`SE.lanternBehind` draws it before them, then only its glowing glass is redrawn over the night tint).
 - `cut/leave_out`: beanie removed from the hook and Mochi removed from the shot (PixelLab inpaint).
+
+### Fish dishes, mugs, discovery + notebook map, icons
+- Cooking: each fish has its own cutting-board still and plate (`cut/cook_prep_<char|white|pike|perch>`, `cut/cook_plate_*`; the trout keeps the originals), its own lines and dish name (Seared Arctic Char, Butter Whitefish, Crumbed Pike, Fried Perch, Pan-fried Trout). Old saves' "Pan-fried Fish" counts move to the trout.
+- Cocoa: "Make hot chocolate" opens a mug shelf (`SE.MUGS`, 6 mugs: red, enamel camp, pine tree, pottery, Waffles' paw print, Mochi's sleeping cat), each with its own pour still `cut/cocoa_pour_<id>`; `save.mugsUsed` tracks them.
+- Places must be discovered: within 92px on the map a place is found (`SE.discoverPlace`, banner + scribble), only then it gets its card and signpost arrow. `save.seenMap` records the 64px cells you walked through.
+- Notebook "Valley map" spread (2nd): a pencil/ink map drawn in code from `world_layout.js` (inked pines, dashed paths, lake wash, peak), revealed only where you have walked; found places get a little picture and their name.
+- Map woodcutting icon: the axe now leans against the stump (PixelLab inpaint). HUD: the notebook icon is a ringed notebook with a pencil; watch mode shows "Stop watching" with a stop icon.

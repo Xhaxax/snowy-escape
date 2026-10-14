@@ -13,7 +13,7 @@
   const INK = '#3b2c26', SOFT = '#7a6656', RED = '#9c3b2e';
   // the field guide: one spread per animal (sketch on the left, the photo album on the right)
   const KINDS = ['fox', 'hare', 'deer', 'elk', 'bird', 'owl', 'bear'];
-  const SPREADS = ['Days & wildlife', ...KINDS.map((k) => 'field:' + k), 'Fish & kitchen', 'Notes from the Word'];
+  const SPREADS = ['Days & wildlife', 'Valley map', ...KINDS.map((k) => 'field:' + k), 'Fish & kitchen', 'Notes from the Word'];
   const HINTS = { owl: 'Only out at night.', bird: 'Never in heavy snow or wind.', bear: 'Rare. Stays in its den in a storm.', elk: 'Rare, in the daytime.', fox: 'Day or night.', hare: 'Day or night, hard to spot.', deer: 'Often, if you are patient.' };
   const seenKind = (k) => { const sv = SE.save; return !!(((sv.pinesSeen || {})[k]) || ((sv.album || {})[k] || []).length || (sv.sketches || {})[k]); };
   const spreadTitle = (i) => { const t = SPREADS[i]; if (!t.startsWith('field:')) return t; const k = t.slice(6); return seenKind(k) ? `Field guide · ${(SE.PINES[k] || {}).name}` : 'Field guide · ???'; };
@@ -51,6 +51,110 @@
     ctx.restore();
   }
 
+  // ------------------------------------------------------------ the valley map, drawn as you walk it
+  // A pencil-and-ink map of the real valley layout (src/world_layout.js): little inked pines where the
+  // forest is, dashed footpaths, the lake in a blue wash, the peak. Only the parts you have walked
+  // through with Waffles are drawn in; places get their little picture and name once discovered.
+  const INKC = '#5a4030', PEN = '#8a6a4c';
+  let mapSketch = null;
+  function buildSketch(w, h) {
+    const Wd = window.SE_WORLD, k = w / Wd.W, c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const x = c.getContext('2d'), N = Wd.nodes;
+    const curves = Wd.edges.map(([a, b, q]) => [N[a], q, N[b]]);
+    const nearPath = (px, py) => curves.some(([a, q, b]) => {
+      for (let t = 0; t <= 1; t += 0.05) {
+        const u = 1 - t, cx = u * u * a[0] + 2 * u * t * q[0] + t * t * b[0], cy = u * u * a[1] + 2 * u * t * q[1] + t * t * b[1];
+        if (Math.hypot(cx - px, cy - py) < 46) return true;
+      }
+      return false;
+    });
+    const lk = Wd.lake, inLake = (px, py) => ((px - lk.cx) / (lk.rx + 30)) ** 2 + ((py - lk.cy) / (lk.ry + 30)) ** 2 < 1;
+    const inClear = (px, py) => Wd.clearings.some((cl) => Math.hypot(cl.x - px, cl.y - py) < cl.r + 14);
+    const mtn = (Wd.objects.find((o) => o.img === 'map/mountain_td') || {}).solid || [1060, 60, 200, 150];
+    // forest: a loose grid of tiny inked pines
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let gy = 3; gy < h - 1; gy += 6) for (let gx = 2; gx < w - 2; gx += 6) {
+      const tx = gx + Math.round(rnd() * 3 - 1.5), ty = gy + Math.round(rnd() * 2 - 1), wx = tx / k, wy = ty / k;
+      if (inClear(wx, wy) || nearPath(wx, wy) || inLake(wx, wy) || (wx > mtn[0] - 20 && wx < mtn[0] + mtn[2] + 20 && wy < mtn[1] + mtn[3] + 10)) continue;
+      x.fillStyle = rnd() < 0.3 ? PEN : INKC;
+      x.fillRect(tx, ty - 3, 1, 1); x.fillRect(tx - 1, ty - 2, 3, 1); x.fillRect(tx - 1, ty - 1, 3, 1); x.fillRect(tx - 2, ty, 5, 1);
+      x.fillStyle = PEN; x.fillRect(tx, ty + 1, 1, 1);
+    }
+    // footpaths: pencil dashes
+    x.fillStyle = PEN;
+    for (const [a, q, b] of curves) {
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]) * k, steps = Math.max(4, Math.round(len / 2));
+      for (let i = 0; i <= steps; i++) {
+        if (i % 3 === 2) continue;
+        const t = i / steps, u = 1 - t;
+        x.fillRect(Math.round((u * u * a[0] + 2 * u * t * q[0] + t * t * b[0]) * k), Math.round((u * u * a[1] + 2 * u * t * q[1] + t * t * b[1]) * k), 1, 1);
+      }
+    }
+    // the frozen lake: a blue wash and an inked shore
+    x.fillStyle = 'rgba(126,166,196,0.55)'; x.strokeStyle = INKC; x.lineWidth = 1;
+    x.beginPath(); x.ellipse(lk.cx * k, lk.cy * k, lk.rx * k, lk.ry * k, 0, 0, Math.PI * 2); x.fill(); x.stroke();
+    x.strokeStyle = 'rgba(255,255,255,0.7)'; x.beginPath(); x.moveTo((lk.cx - 40) * k, (lk.cy - 20) * k); x.lineTo((lk.cx + 10) * k, (lk.cy - 26) * k); x.stroke();
+    // the peak: two inked triangles with snow on top
+    const peak = (px, py, pw, ph) => {
+      x.fillStyle = '#efe6d2'; x.strokeStyle = INKC;
+      x.beginPath(); x.moveTo(px - pw / 2, py + ph); x.lineTo(px, py); x.lineTo(px + pw / 2, py + ph); x.closePath(); x.fill(); x.stroke();
+      x.fillStyle = PEN; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw / 2, py + ph); x.lineTo(px + pw / 6, py + ph); x.closePath(); x.fill();
+    };
+    peak((mtn[0] + 60) * k, (mtn[1] + 10) * k, 90 * k, 120 * k);
+    peak((mtn[0] + 130) * k, (mtn[1] - 10) * k, 120 * k, 150 * k);
+    return c;
+  }
+  // the little picture for each place once found
+  function placeMark(ctx, id, px, py) {
+    ctx.fillStyle = INKC;
+    const house = (cross) => {
+      ctx.fillStyle = '#efe6d2'; ctx.fillRect(px - 3, py - 3, 7, 5);
+      ctx.fillStyle = INKC; ctx.fillRect(px - 4, py - 4, 9, 1); ctx.fillRect(px - 3, py - 5, 7, 1); ctx.fillRect(px - 2, py - 6, 5, 1); ctx.fillRect(px - 1, py - 7, 3, 1);
+      ctx.fillRect(px - 3, py + 2, 7, 1); ctx.fillRect(px - 3, py - 3, 1, 5); ctx.fillRect(px + 3, py - 3, 1, 5); ctx.fillStyle = '#c0703a'; ctx.fillRect(px, py - 1, 1, 3);
+      if (cross) { ctx.fillStyle = INKC; ctx.fillRect(px, py - 11, 1, 4); ctx.fillRect(px - 1, py - 10, 3, 1); }
+    };
+    if (id === 'cabin') house(false);
+    else if (id === 'chapel') house(true);
+    else if (id === 'woodlot') { ctx.fillRect(px - 3, py, 7, 2); ctx.fillStyle = '#c0703a'; ctx.fillRect(px - 3, py, 1, 2); ctx.fillStyle = INKC; ctx.fillRect(px + 2, py - 4, 1, 4); ctx.fillRect(px + 1, py - 4, 3, 1); }
+    else if (id === 'lake') { ctx.fillStyle = '#2f4a60'; ctx.fillRect(px - 1, py - 1, 3, 2); ctx.fillStyle = INKC; ctx.fillRect(px + 2, py - 5, 1, 4); ctx.fillRect(px + 3, py - 5, 2, 1); }
+    else if (id === 'summit') { ctx.fillRect(px, py - 6, 1, 6); ctx.fillStyle = '#b8402e'; ctx.fillRect(px + 1, py - 6, 3, 2); }
+    else if (id === 'forest') { for (const [dx, dy] of [[-3, 0], [3, 1], [0, -2]]) { ctx.fillStyle = '#3c5a3a'; ctx.fillRect(px + dx, py + dy - 4, 1, 1); ctx.fillRect(px + dx - 1, py + dy - 3, 3, 2); ctx.fillRect(px + dx - 2, py + dy - 1, 5, 1); } }
+    else if (id === 'trail') { ctx.fillRect(px, py - 4, 1, 5); ctx.fillRect(px - 1, py, 3, 1); ctx.fillRect(px - 2, py - 1, 1, 1); ctx.fillRect(px + 2, py - 1, 1, 1); }
+  }
+  function drawValleyMap(ctx, x, y, w, h) {
+    const Wd = window.SE_WORLD, k = w / Wd.W, mh = Math.min(h, Math.round(Wd.H * k));
+    if (!mapSketch || mapSketch.width !== w) mapSketch = buildSketch(w, mh);
+    const sv = SE.save, S = SE.MAP_SEEN || { c: 64, w: Math.ceil(Wd.W / 64), h: Math.ceil(Wd.H / 64) };
+    // reveal what has been walked through (and the cabin you started from)
+    const fog = document.createElement('canvas'); fog.width = w; fog.height = mh;
+    const f = fog.getContext('2d');
+    const reveal = (wx, wy, r) => {
+      const g = f.createRadialGradient(wx * k, wy * k, 0, wx * k, wy * k, r * k);
+      g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      f.fillStyle = g; f.fillRect(0, 0, w, mh);
+    };
+    reveal(Wd.nodes.cabin[0], Wd.nodes.cabin[1], 150);
+    const seen = sv.seenMap || '';
+    for (let j = 0; j < S.h; j++) for (let i = 0; i < S.w; i++) if (seen[j * S.w + i] === '1') reveal((i + 0.5) * S.c, (j + 0.5) * S.c, S.c * 1.05);
+    f.globalCompositeOperation = 'source-in'; f.drawImage(mapSketch, 0, 0);
+    ctx.drawImage(fog, x, y);
+    // the places you found, with their names
+    let found = 0;
+    for (const [id, p] of Object.entries(SE.PLACES || {})) {
+      if (!SE.placeFound || !SE.placeFound(id)) continue;
+      found++;
+      const n = Wd.nodes[p.node], px = Math.round(x + n[0] * k), py = Math.round(y + Math.min(n[1], Wd.H - 30) * k);
+      placeMark(ctx, id, px, py);
+      const above = id === 'woodlot' || id === 'summit';
+      write(p.label, px + (id === 'woodlot' ? 10 : 0), above ? py - 15 : py + 3, { align: 'center', size: 6, color: RED });
+    }
+    const here = (SE.PLACES || {})[sv.location];
+    if (here) { const n = Wd.nodes[here.node]; ctx.fillStyle = RED; const hx = Math.round(x + n[0] * k) + 6, hy = Math.round(y + n[1] * k) - 8; ctx.fillRect(hx - 1, hy - 1, 3, 3); }
+    write(`Places found ${found}/${Object.keys(SE.PLACES || {}).length}`, x + 4, y + mh - 9, { size: 6, color: SOFT });
+    write('N', x + w - 8, y + 2, { size: 7, color: INKC }); ctx.fillStyle = INKC; ctx.fillRect(x + w - 6, y + 10, 1, 6);
+  }
+
   SE.frameHooks.push(function drawNotebook(ctx, dt) {
     if (!NB.open) return;
     const img = SE.img('ui/notebook');
@@ -82,8 +186,10 @@
         ctx.strokeStyle = 'rgba(122,102,86,0.5)'; ctx.strokeRect(cx + 0.5, cy + 0.5, 47, 23);
         if (seen) SE.drawSketchPage(ctx, k, cx + 1, cy + 1, 46, 22, Math.max(0.12, n / N)); else write('?', cx + 24, cy + 7, { align: 'center', color: SOFT });
         write(seen ? `${(SE.PINES[k] || {}).name.split(' ').pop()} ${n}/${N}` : '???', cx + 24, cy + 25, { align: 'center', size: 6, color: seen ? INK : SOFT });
-        if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: cy, w: 48, h: 30 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = 1 + i; NB.turn = 1; SE.audio.sfx('page'); } }
+        if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: cy, w: 48, h: 30 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('field:' + k); NB.turn = 1; SE.audio.sfx('page'); } }
       });
+    } else if (SPREADS[NB.spread] === 'Valley map') {
+      drawValleyMap(ctx, L.x - 2, L.y - 1, R.x + R.w - L.x + 4, 142);
     } else if (SPREADS[NB.spread].startsWith('field:')) {
       const k = SPREADS[NB.spread].slice(6), P = SE.PINES[k] || {}, seen = seenKind(k);
       if (!seen) {
@@ -141,8 +247,11 @@
       para('in the bucket · caught in all', L.x, y + 4, L.w, { size: 6, color: SOFT });
       write('Kitchen', R.x, R.y, { size: 8, color: RED });
       y = R.y + 14;
-      write('Hot chocolate', R.x, y); write(String(sv.cocoa), R.x + R.w, y, { align: 'right', color: SOFT }); y += 10;
-      for (const d of Object.keys(SE.DISHES || {})) { write(d, R.x, y); write(String(sv.dishes[d] || 0), R.x + R.w, y, { align: 'right', color: SOFT }); y += 10; }
+      for (const d of Object.keys(SE.DISHES || {})) {
+        const n = sv.dishes[d] || 0, known = n || d === 'Hot Chocolate';
+        write(known ? d : '???', R.x, y, { color: known ? INK : SOFT }); write(String(n), R.x + R.w, y, { align: 'right', color: SOFT }); y += 10;
+      }
+      write('Mugs tried', R.x, y); write(`${Object.keys(sv.mugsUsed || {}).length}/${(SE.MUGS || []).length}`, R.x + R.w, y, { align: 'right', color: SOFT }); y += 10;
       write('Meals cooked', R.x, y); write(String(sv.cooked), R.x + R.w, y, { align: 'right', color: SOFT }); y += 16;
       para('Catch fish at the Frozen Lake; the kitchen turns them into dinner for three.', R.x, y, R.w, { size: 6, color: SOFT });
     } else {

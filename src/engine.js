@@ -222,6 +222,9 @@ SE.load = function () {
       SE.hadSave = true;
       const d = SE.defaultSave();
       SE.save = Object.assign(d, data, { settings: Object.assign(d.settings, data.settings || {}) });
+      // older saves only knew one fish dish
+      const ds = SE.save.dishes;
+      if (ds && ds['Pan-fried Fish']) { ds['Pan-fried Trout'] = (ds['Pan-fried Trout'] || 0) + ds['Pan-fried Fish']; delete ds['Pan-fried Fish']; }
       return;
     }
   } catch (e) { /* storage blocked: play without saving */ }
@@ -387,7 +390,10 @@ SE.uiBlocked = (opts) => SE.modal && !opts.modal;
 // Tiny 8x8 icons drawn from bitmaps so they stay crisp.
 const ICONS = {
   map: ['01111110', '11011011', '10111101', '11011011', '10111101', '11011011', '01111110', '00000000'],
-  book: ['01111110', '11000011', '11011011', '11000011', '11011011', '11000011', '11111111', '01111110'],
+  // the field notebook: spiral rings on top, ruled lines, a pencil beside it
+  book: ['010101000', '111111101', '100000101', '101110101', '100000101', '101110101', '100000100', '111111100'],
+  // stop watching: a square stop sign inside a ring
+  stop: ['00111100', '01000010', '10111101', '10111101', '10111101', '10111101', '01000010', '00111100'],
   clock: ['00111100', '01000010', '10010001', '10010001', '10011101', '10000001', '01000010', '00111100'],
   note: ['00011111', '00010001', '00010001', '00010001', '01110001', '11110111', '11101111', '01000110'],
   snow: ['00011000', '01011010', '00111100', '11111111', '11111111', '00111100', '01011010', '00011000'],
@@ -407,8 +413,8 @@ SE.drawIcon = function (name, x, y, color = '#fff7ea', scale = 1) {
   if (!rows) return;
   const ctx = SE.ctx;
   ctx.fillStyle = color;
-  for (let j = 0; j < 8; j++)
-    for (let i = 0; i < 8; i++) if (rows[j][i] === '1') ctx.fillRect(Math.round(x) + i * scale, Math.round(y) + j * scale, scale, scale);
+  for (let j = 0; j < rows.length; j++)
+    for (let i = 0; i < rows[j].length; i++) if (rows[j][i] === '1') ctx.fillRect(Math.round(x) + i * scale, Math.round(y) + j * scale, scale, scale);
 };
 
 SE.heart = function (x, y, size, color, alpha) {

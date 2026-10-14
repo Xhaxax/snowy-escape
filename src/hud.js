@@ -4,15 +4,34 @@
 (function () {
   const H = (SE.hud = { panel: null, alpha: 1, tab: 0 });
 
+  // cut: the variant of the cooking stills (cut/cook_prep_<cut>, cut/cook_plate_<cut>; none = the trout stills)
   SE.FISH = {
-    'Brook Trout': { color: '#d98b6a', rarity: 0.32, size: 1, img: 'fish/brook' },
-    'Arctic Char': { color: '#e86f5b', rarity: 0.24, size: 1.1, img: 'fish/char' },
-    'Lake Whitefish': { color: '#c9d4e2', rarity: 0.22, size: 1, img: 'fish/white' },
-    'Northern Pike': { color: '#8fae6a', rarity: 0.14, size: 1.35, img: 'fish/pike' },
-    'Golden Perch': { color: '#f2c84b', rarity: 0.08, size: 0.9, img: 'fish/perch' },
+    'Brook Trout': { color: '#d98b6a', rarity: 0.32, size: 1, img: 'fish/brook', dish: 'Pan-fried Trout',
+      prep: 'A speckled brook trout. A sharp knife, a steady hand. Two neat fillets.', plate: 'Onto the plate, with dill and lemon.' },
+    'Arctic Char': { color: '#e86f5b', rarity: 0.24, size: 1.1, img: 'fish/char', cut: 'char', dish: 'Seared Arctic Char',
+      prep: 'An arctic char, belly red as the embers. Two fillets, skin on.', plate: 'Skin crisp, flesh rosy pink. Dill and a wedge of lemon.' },
+    'Lake Whitefish': { color: '#c9d4e2', rarity: 0.22, size: 1, img: 'fish/white', cut: 'white', dish: 'Butter Whitefish',
+      prep: 'A silver whitefish, cold from the lake. Gently, the flesh is soft.', plate: 'Flaky and white, in brown butter, with little boiled potatoes.' },
+    'Northern Pike': { color: '#8fae6a', rarity: 0.14, size: 1.35, img: 'fish/pike', cut: 'pike', dish: 'Crumbed Pike',
+      prep: 'A long northern pike. Mind the teeth, mind the bones.', plate: 'Breaded and golden, with a spoon of lingonberries.' },
+    'Golden Perch': { color: '#f2c84b', rarity: 0.08, size: 0.9, img: 'fish/perch', cut: 'perch', dish: 'Fried Perch',
+      prep: 'A striped golden perch. Small, but the sweetest of them all.', plate: 'A little pile of golden fillets, brown butter, lemon.' },
   };
+  // the mugs on the kitchen shelf; cocoa can go into any of them (cut/cocoa_pour_<id>, '' = the red one)
+  SE.MUGS = [
+    { id: '', name: 'Big red mug', line: 'Into the big red mug. One last stir.' },
+    { id: 'blue', name: 'Enamel camp mug', line: 'Into the speckled camp mug. It has seen a lot of summits.' },
+    { id: 'pine', name: 'Pine tree mug', line: 'Into the mug with the little pine tree on it.' },
+    { id: 'stone', name: 'Pottery mug', line: 'Into the heavy pottery mug, glaze running down its sides.' },
+    { id: 'paw', name: "Waffles' mug", line: "Into the paw-print mug. Waffles approves." },
+    { id: 'cat', name: "Mochi's mug", line: "Into the sleeping-cat mug. Mochi pretends not to care." },
+  ];
   SE.DISHES = {
-    'Pan-fried Fish': 'Crispy skin, butter and dill.',
+    'Pan-fried Trout': 'Crispy skin, butter and dill.',
+    'Seared Arctic Char': 'Rosy pink, crisp skin.',
+    'Butter Whitefish': 'Flaky, with little potatoes.',
+    'Crumbed Pike': 'Golden crumbs, lingonberries.',
+    'Fried Perch': 'Small, golden, the sweetest.',
     'Hot Chocolate': 'With a tiny cloud of marshmallows.',
   };
 
@@ -73,7 +92,7 @@
     if (a < 0.02 && !H.panel) {
       drawTimerPill(ctx, 0.55);
       // keep a faint "Watching" toggle so watch mode can always be switched off
-      if (SE.watching() && opts.watch !== false && SE.button(SE.W - 76, 6, 70, 18, 'Watching', { icon: 'play', active: true, alpha: 0.5 })) SE.toggleWatch();
+      if (SE.watching() && opts.watch !== false && SE.button(SE.W - 96, 6, 90, 18, 'Stop watching', { icon: 'stop', active: true, alpha: 0.5 })) SE.toggleWatch();
       return;
     }
 
@@ -113,10 +132,10 @@
     // the big "Just watch" toggle: activities play themselves on a loop
     if (opts.watch !== false) {
       const on = SE.watching();
-      const label = on ? 'Watching' : 'Just watch';
+      const label = on ? 'Stop watching' : 'Just watch';
       const w = SE.measure(label, 8) + 24;
       x -= w + 2;
-      if (SE.button(x, 6, w, 18, label, { icon: 'play', active: on, alpha: Math.max(a, on ? 0.5 : 0) })) SE.toggleWatch();
+      if (SE.button(x, 6, w, 18, label, { icon: on ? 'stop' : 'play', active: on, alpha: Math.max(a, on ? 0.5 : 0) })) SE.toggleWatch();
     }
     if (opts.back) {
       if (SE.button(6, SE.H - 24, 54, 18, 'Back', { icon: 'back', alpha: a })) opts.back();

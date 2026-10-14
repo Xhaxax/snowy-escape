@@ -16,6 +16,32 @@
     woodlot: { node: 'woodlot', label: 'Woodlot', desc: 'The chopping block, a big snowy woodpile and felled pines.', scene: 'woodlot' },
     chapel: { node: 'chapel', label: 'Little Chapel', desc: 'A quiet log chapel with a bell tower. Candles, pews, peace.', scene: 'chapel' },
   };
+  // Places have to be found first. Walk close with Waffles and the spot is discovered: he sketches it
+  // into the notebook map. Until then there is no card and no signpost arrow pointing to it.
+  const FOUND_R = 92;
+  SE.placeFound = (id) => id === 'cabin' || !!(SE.save.found || {})[id];
+  // the parts of the valley you have walked through, for the notebook map (64px cells, '0'/'1')
+  const SEEN_C = 64, SEEN_W = Math.ceil(WW / SEEN_C), SEEN_H = Math.ceil(WH / SEEN_C);
+  SE.MAP_SEEN = { c: SEEN_C, w: SEEN_W, h: SEEN_H };
+  function markSeen(x, y) {
+    const sv = SE.save;
+    if (!sv.seenMap || sv.seenMap.length !== SEEN_W * SEEN_H) sv.seenMap = '0'.repeat(SEEN_W * SEEN_H);
+    const ci = SE.clamp((x / SEEN_C) | 0, 0, SEEN_W - 1), cj = SE.clamp((y / SEEN_C) | 0, 0, SEEN_H - 1);
+    let changed = false, a = sv.seenMap.split('');
+    for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
+      if (i < 0 || j < 0 || i >= SEEN_W || j >= SEEN_H) continue;
+      if (a[j * SEEN_W + i] !== '1') { a[j * SEEN_W + i] = '1'; changed = true; }
+    }
+    if (changed) sv.seenMap = a.join('');
+  }
+  SE.discoverPlace = function (id) {
+    if (SE.placeFound(id)) return false;
+    SE.save.found = Object.assign({ cabin: true }, SE.save.found, { [id]: true });
+    SE.persist();
+    SE.audio.sfx('scribble');
+    SE.celebrate(`Found: ${SE.PLACES[id].label}`, 'Sketched it into the notebook map.');
+    return true;
+  };
   // path network, lake, clearings and landmarks come from src/world_layout.js (also used by
   // tools/build_world.py, which auto-tiles the ground with the PixelLab Wang tilesets)
   const L = window.SE_WORLD;
@@ -112,7 +138,7 @@
       drawTree(c, t);
     }
     for (; bi < buildings.length; bi++) c.drawImage(buildings[bi].img, buildings[bi].o.x, buildings[bi].o.y);
-    world = cv;
+    world = cv; SE.mapWorld = cv;
     walkMask = buildMask(pathPts);
   }
   function isSorted(o) { return o.sorted || o.img === 'map/cabin_td'; }
@@ -176,6 +202,7 @@
         trail: [], prints: [], stepT: 0, cam: { x: at[0] - SE.W / 2, y: at[1] - SE.H / 2 }, drag: null, follow: true,
         pop: { id: null, a: 0 }, wild: 0, nextWild: SE.rand(2400, 4200), alert: null,
       };
+      SE.mapS = s;
       for (let k = 0; k < 30; k++) s.trail.push({ x: s.dog.x, y: s.dog.y });
       clampCam();
       SE.audio.setMusic('outdoors');
@@ -229,6 +256,10 @@
       SE.weather.draw(ctx, { density: 0.5 });
       drawOffscreen(ctx, cx, cy);
       if (SE.weather.stormy()) SE.text('Snowstorm — the trails are closed until it calms down', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#cfe6ff', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
+      if (((s.t * 4) | 0) !== s.seenTick) { s.seenTick = (s.t * 4) | 0; markSeen(s.hero.x, s.hero.y); }
+      for (const [id, p] of Object.entries(SE.PLACES)) {
+        if (!SE.placeFound(id) && Math.hypot(N[p.node][0] - s.hero.x, N[p.node][1] - s.hero.y) < FOUND_R && !SE.momentPlaying()) SE.discoverPlace(id);
+      }
       drawPopup(ctx, dt);
       drawFooter(ctx);
       SE.hud.draw(ctx, { watch: false, title: 'The Valley' });
@@ -383,6 +414,7 @@
   function nearPlace() {
     let best = null, bd = ENTER_R;
     for (const [id, p] of Object.entries(SE.PLACES)) {
+      if (!SE.placeFound(id)) continue;
       const [x, y] = N[p.node];
       const d = Math.hypot(s.hero.x - x, s.hero.y - y);
       if (d < bd) { bd = d; best = id; }
@@ -412,6 +444,7 @@
   // faint arrows toward places that are off screen, so you can find your way
   function drawOffscreen(ctx, cx, cy) {
     for (const [id, p] of Object.entries(SE.PLACES)) {
+      if (!SE.placeFound(id)) continue;
       const [x, y] = N[p.node];
       const sx = x - cx, sy = y - cy;
       if (sx > 10 && sx < SE.W - 10 && sy > 30 && sy < SE.H - 10) continue;
@@ -432,7 +465,9 @@
       return;
     }
     if (SE.sceneTime < 10 && s.moved < 30) {
-      const tip = SE.touch.on ? 'Drag on the left to walk · tap the card to go in' : 'WASD or arrow keys to walk · hold Shift to hurry · E to go in';
+      const unfound = Object.keys(SE.PLACES).some((id) => !SE.placeFound(id));
+      const tip = unfound && SE.sceneTime > 5 ? 'Explore the valley with Waffles: new places go into your notebook map'
+        : SE.touch.on ? 'Drag on the left to walk · tap the card to go in' : 'WASD or arrow keys to walk · hold Shift to hurry · E to go in';
       const cx = SE.W / 2 + (SE.touch.on ? 30 : 0), w = SE.measure(tip, 8) + 14; // touch: clear of the stick
       SE.panel(cx - w / 2, SE.H - 22, w, 15, { alpha: 0.85 });
       SE.text(tip, cx, SE.H - 18, { align: 'center', size: 8, color: '#fff7ea', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
