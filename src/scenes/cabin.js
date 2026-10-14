@@ -11,7 +11,7 @@
   };
   // where Mochi can be in the living room, and the jumps between those spots
   // (cat spots, not the middle of the couch: the armrests, the corner of the couch back, the sill)
-  const CAT_SURF = { sill: [262, 336, 134], armL: [203, 209, 164], armR: [365, 371, 167], couchBack: [222, 232, 142], coffee: [318, 326, 200], shelf: [198, 234, 68], shelfR: [416, 432, 172], rug: [212, 300, 256] }; // the rug starts past Waffles (120–184)
+  const CAT_SURF = { sill: [262, 336, 134], armL: [203, 209, 167], armR: [365, 371, 170], couchBack: [222, 232, 146], coffee: [318, 326, 202], shelf: [198, 234, 68], shelfR: [416, 432, 177], rug: [212, 300, 256] }; // paw heights measured on bg_living // the rug starts past Waffles (120–184)
   const CAT_LINKS = [['rug', 'armL'], ['armL', 'couchBack'], ['couchBack', 'sill'], ['couchBack', 'shelf'], ['rug', 'armR'], ['armR', 'sill'], ['rug', 'coffee'], ['armR', 'shelfR']];
   let mochi = null;
   const dir = { t: 0, dur: 0 }; // (kept for the petting callbacks)
@@ -39,8 +39,8 @@
     mode = 'busy';
     const [text, ref] = SE.pick(SE.VERSES || [['Be still, and know that I am God.', 'Psalm 46:10']]);
     SE.MOMENTS.bible = [
-      { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.3, 'page'], [1.4, 'page'], [2.2, 'scribble']] },
-      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft'], [2.4, 'page']] },
+      { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.3, 'bible'], [1.8, 'bible'], [2.6, 'scribble']] },
+      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft'], [2.6, 'bible']] },
     ];
     SE.moment('bible', { force: true, then: () => {
       mode = 'room';

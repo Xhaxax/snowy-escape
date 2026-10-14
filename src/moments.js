@@ -58,21 +58,34 @@
       { img: 'cut/chop', dur: 2.6, text: '', pan: 1, sounds: [[0.15, 'chop'], [0.5, 'twig']] },
     ],
     shovel: [
-      { img: 'cut/shovel', dur: 2.8, text: 'Clearing the path.', pan: -1, sounds: [[0.2, 'stomp'], [0.8, 'step'], [1.4, 'stomp']] },
+      { img: 'cut/shovel', dur: 2.8, text: 'Clearing the path.', pan: -1, sounds: [[0.2, 'toss'], [0.8, 'step'], [1.4, 'toss']] },
     ],
     porch: [
       { img: 'cut/porch', dur: 3.6, text: 'A blanket, a mug, the slow creak of the chair.', pan: 1, sounds: [[0.3, 'creak'], [1.8, 'sip']] },
     ],
+    // leaving: the chapel door behind you, the way back down from the summit
+    chapelLeave: [
+      { black: 0.5, sounds: [[0.1, 'creak']] },
+      { img: 'cut/chapel_close', dur: 3.8, text: 'The door swings shut on the candlelight.', pan: 1, sounds: [[0.6, 'latch']] },
+      { black: 2.0, text: 'Back into the snow, Waffles at your side.', sounds: [[0.3, 'step'], [0.9, 'step'], [1.5, 'step']] },
+    ],
+    summitLeave: [
+      { black: 0.5, sounds: [[0.05, 'gust']] },
+      { img: 'cut/summit', dur: 3.6, text: 'One last look over the clouds.', pan: 1, sounds: [[0.3, 'gust']] },
+      { black: 2.2, text: 'Then down the ridge again. Waffles leads.', sounds: [[0.3, 'step'], [0.8, 'stomp'], [1.3, 'step'], [1.8, 'stomp']] },
+    ],
+    // the Long Walk: its own pictures along the way (one or two of them each time)
+    trailWalk: [],
     pray: [
       { black: 0.6 },
-      { img: 'cut/pray', dur: 3.8, text: '', pan: 0, sounds: [[0.4, 'soft'], [2.4, 'bell']] },
+      { img: 'cut/pray', dur: 3.8, text: '', pan: 0, sounds: [[0.4, 'soft'], [2.2, 'soft']] },
     ],
 
     // ---- whole actions told in stills (no minigame): each ends with the job done
     shovelling: [
-      { black: 0.5, sounds: [[0.05, 'stomp']] },
-      { img: 'cut/shovel', dur: 3.4, text: 'Knee-deep. One scoop at a time.', pan: -1, sounds: [[0.3, 'scrape'], [0.9, 'stomp'], [1.7, 'scrape'], [2.4, 'stomp']] },
-      { img: 'cut/shovel2', dur: 3.4, text: 'Scrape… lift… fwump.', pan: 1, sounds: [[0.2, 'scrape'], [0.8, 'stomp'], [1.6, 'scrape'], [2.3, 'stomp'], [2.9, 'woof']] },
+      { black: 0.5, sounds: [[0.05, 'toss']] },
+      { img: 'cut/shovel', dur: 3.4, text: 'Knee-deep. One scoop at a time.', pan: -1, sounds: [[0.3, 'shovel'], [0.9, 'toss'], [1.7, 'shovel'], [2.4, 'toss']] },
+      { img: 'cut/shovel2', dur: 3.4, text: 'Scrape… lift… fwump.', pan: 1, sounds: [[0.2, 'shovel'], [0.8, 'toss'], [1.6, 'shovel'], [2.3, 'toss'], [2.9, 'woof']] },
       { img: 'cut/shovel3', dur: 3.6, text: 'Clear, all the way to the door.', pan: -1, sounds: [[0.4, 'step'], [0.8, 'step'], [1.6, 'soft']] },
     ],
     porchRest: [
@@ -87,6 +100,7 @@
     // Coffee Talk style: four pictures, the sounds of the kitchen between them, the drink is made
     cocoaMake: [
       { img: 'cut/cocoa_chop', dur: 3.2, text: 'A bar of dark chocolate, chopped fine.', pan: 1, sounds: [[0.3, 'chop'], [0.8, 'chop'], [1.3, 'chop'], [1.9, 'chop']] },
+      { img: 'cut/cocoa_drop', dur: 3.0, text: 'Into the warm milk it goes, every last crumb.', pan: -1, sounds: [[0.4, 'pour'], [1.4, 'stir']] },
       { img: 'cut/cocoa2', dur: 3.2, text: 'Milk in the pot, two heaped spoons of cocoa.', pan: -1, sounds: [[0.2, 'pour'], [1.6, 'stir']] },
       { img: 'cut/cocoa_cook', dur: 3.4, text: 'Low heat. Stir until it is smooth and dark.', pan: 1, sounds: [[0.3, 'stir'], [1.1, 'stir'], [1.9, 'stir'], [2.7, 'stir']] },
       { img: 'cut/cocoa_pour', dur: 3.6, text: 'Into the big red mug. One last stir.', pan: -1, sounds: [[0.2, 'pour'], [1.8, 'stir'], [2.6, 'sip']] },
@@ -128,16 +142,28 @@
       { img: 'cut/sketch', dur: 4.2, text: 'A few quick lines while it holds still.', pan: -1, sounds: [[0.3, 'page'], [0.8, 'scribble'], [2.6, 'scribble']] },
     ],
   };
-  // petting: two of these stills each time, never the same pair in a row
+  // the Long Walk: its own trail picture now and then (never the summit climb)
+  SE.trailMoment = function () {
+    SE.MOMENTS.trailWalk = [
+      { black: 0.5, sounds: [[0.05, 'gust']] },
+      { img: 'cut/trail', dur: 4.0, text: SE.pick(['Mile after mile under the pines. Waffles knows the way.', 'The old trail goes on and on. Snow squeaks under your boots.', 'Footprints behind you, nothing but trail ahead.']), pan: Math.random() < 0.5 ? 1 : -1, sounds: [[0.4, 'step'], [0.9, 'step'], [1.4, 'step'], [1.9, 'step']] },
+    ];
+    SE.moment('trailWalk', { force: true });
+  };
+  // petting: ONE of these stills each time, never the same one twice in a row, so it stays a little surprise
   SE.PET_STILLS = {
     dog: [['cut/pet_dog1', 'Right behind the ears. His favourite spot.'], ['cut/pet_dog2', 'A big fluffy head lands in your lap.'], ['cut/pet_dog3', 'Belly up. Tail thumping the rug.']],
     cat: [['cut/pet_cat1', 'Chin scratches. She approves.'], ['cut/pet_cat2', 'A head bump. You have been chosen.'], ['cut/pet_cat3', 'Kneading, purring, a little bit of claw.']],
   };
+  const lastPet = {};
   SE.petMoment = function (kind, then) {
     const list = SE.PET_STILLS[kind].filter(([img]) => SE.img(img));
-    const pick = list.sort(() => Math.random() - 0.5).slice(0, 2);
-    SE.MOMENTS.pet = pick.map(([img, text], i) => ({ img, dur: 3.4, text, pan: i ? -1 : 1, sounds: kind === 'dog' ? [[0.5, 'soft'], [1.6, i ? 'woof' : 'soft']] : [[0.4, 'purr'], [2.0, 'purr']] }));
-    if (!pick.length) { if (then) then(); return; }
+    const fresh = list.filter(([img]) => img !== lastPet[kind]);
+    const pick = SE.pick(fresh.length ? fresh : list);
+    if (!pick) { if (then) then(); return; }
+    lastPet[kind] = pick[0];
+    SE.MOMENTS.pet = [{ img: pick[0], dur: 4.2, text: pick[1], pan: Math.random() < 0.5 ? 1 : -1,
+      sounds: kind === 'dog' ? [[0.5, 'soft'], [2.4, 'woof']] : [[0.4, 'purr'], [2.2, 'purr'], [3.4, 'meow']] }];
     SE.moment('pet', { force: true, then });
   };
   // Every still exists for the weather and the time of day it is shown in: 'day' (a sunny spell),
@@ -152,7 +178,7 @@
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
     trail: ['snow', 'storm', 'night'], forest: ['snow', 'storm', 'night'], summit: ['snow', 'storm', 'night'],
     porch: ['snow', 'storm', 'night'], shovel: ['day', 'storm', 'night'], leave: ['day', 'snow', 'storm'],
-    chapel: ['day', 'snow', 'storm'], home: ['day', 'storm'], pray: ['day'],
+    chapel: ['day', 'snow', 'storm'], home: ['day', 'storm'],
   };
   // Stills that happen indoors only change between day and night (lamplight stays warm either way);
   // everything else is outdoors and also gets the live snowfall of the current weather on top.
@@ -199,7 +225,7 @@
   }
   function stillFor(img, force) {
     const name = img.replace(/^cut\//, '');
-    const base = BASE[name] || (/^porch_rock/.test(name) ? 'day' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
+    const base = BASE[name] || (/^porch_rock/.test(name) || /^sketch_/.test(name) ? 'day' : name === 'chapel_close' ? 'night' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
     if (base === 'any') return img;
     const want = force || wanted(img);
     if (want === base) return img;
@@ -238,7 +264,10 @@
     const fresh = !lastPlayed[name] || SE.time - lastPlayed[name] > COOLDOWN || opts.force;
     if (!beats || !fresh || m) { if (opts.go) SE.go(...opts.go); if (opts.then) opts.then(); return false; }
     lastPlayed[name] = SE.time;
-    m = { beats: beats.map((b) => ({ ...b, img: b.img && stillFor(b.img) })), i: 0, t: 0, played: new Set(), opts, fadeIn: 0 };
+    // a cutscene that starts while a scene is still fading in (or on the very first frames of a new
+    // scene) opens fully black: no glimpse of the room behind it before the black
+    const instant = SE.sceneTime < 0.8 || (SE.fade && (SE.fade.a > 0.02 || SE.fade.next));
+    m = { beats: beats.map((b) => ({ ...b, img: b.img && stillFor(b.img) })), i: 0, t: 0, played: new Set(), opts, fadeIn: 0, instant };
     if (opts.go) m.beats[m.beats.length - 1].go = opts.go; // switch scenes during the last beat
     SE.modal = 'moment';
     return true;
@@ -263,7 +292,7 @@
     const len = b.black != null ? b.black : b.dur;
     // fade in from the scene at the start, out to the (new) scene at the very end
     const first = m.i === 0, last = m.i === m.beats.length - 1;
-    const a = Math.min(1, first ? m.t / 0.35 : 1) * Math.min(1, last ? (len - m.t) / 0.45 : 1);
+    const a = Math.min(1, first && !m.instant ? m.t / 0.35 : 1) * Math.min(1, last ? (len - m.t) / 0.45 : 1);
     ctx.fillStyle = `rgba(6,5,10,${SE.clamp(a, 0, 1)})`;
     ctx.fillRect(0, 0, SE.W, SE.H);
     if (b.img || b.anim) {

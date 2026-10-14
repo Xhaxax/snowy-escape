@@ -259,7 +259,7 @@
     ctx.restore();
     // the fish across your palms, still flapping now and then
     const flap = (c.t % 3) < 1.1;
-    SE.drawFishWiggle(ctx, c.species, HANDS.x, HANDS.y + Math.sin(SE.time * 2) * 1, 3, flap ? c.t : 0, HANDS.rot, 1.2);
+    SE.drawFishWiggle(ctx, c.species, HANDS.x, HANDS.y + Math.sin(SE.time * 2) * 1, 4.5, flap ? c.t : 0, HANDS.rot, 1.2); // big, filling your mittens
     const W = 220, x = SE.W / 2 - W / 2, y = SE.H - 58;
     SE.panel(x, y, W, 50, { fill: 'rgba(48,40,70,0.92)', alpha: pop });
     SE.text(c.species, SE.W / 2, y + 5, { align: 'center', size: 11, color: '#ffe6b8', alpha: pop });

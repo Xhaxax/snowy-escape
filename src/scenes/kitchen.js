@@ -11,8 +11,9 @@
     mode = 'busy';
     const m = mug || SE.MUGS[0];
     const beats = SE.MOMENTS.cocoaMake;
-    beats[3].img = m.id ? 'cut/cocoa_pour_' + m.id : 'cut/cocoa_pour';
-    beats[3].text = m.line;
+    const pour = beats.findIndex((b) => b.img && b.img.startsWith('cut/cocoa_pour'));
+    beats[pour].img = m.id ? 'cut/cocoa_pour_' + m.id : 'cut/cocoa_pour';
+    beats[pour].text = m.line;
     SE.moment('cocoaMake', { force: true, then: () => {
       mode = 'idle';
       const sv = SE.save;
@@ -95,9 +96,10 @@
     kmochi.update(dt);
     kmochi.draw();
   }
-  // Mochi in the kitchen: the back counter, the island, the window sill, the shelf, the floor
-  const KCAT_SURF = { counter: [180, 345, 156], island: [192, 248, 188], sill: [280, 318, 134], shelf: [196, 222, 62], floor: [150, 330, 262], right: [448, 476, 158] };
-  const KCAT_LINKS = [['floor', 'island'], ['island', 'counter'], ['counter', 'sill'], ['counter', 'shelf'], ['floor', 'counter']];
+  // Mochi in the kitchen: only where nothing stands in front of her or under her paws: the window
+  // sill right of the jars, the clear end of the island, and the floor. Never the counter or the board.
+  const KCAT_SURF = { sill: [284, 322, 134], island: [246, 262, 188], floor: [150, 330, 262] };
+  const KCAT_LINKS = [['floor', 'island'], ['island', 'sill']];
   let kmochi = null;
 
   // ------------------------------------------------------------ scene
@@ -109,6 +111,9 @@
     draw(ctx, dt) {
       SE.drawImg('bg_kitchen', 0, 0);
       SE.weather.windows(ctx, WINDOWS);
+      // Mochi belongs to the room: drawn before the dark falls over it, so at night only the oven and
+      // the lanterns pick her out
+      drawMochi(ctx, dt);
       const flick = 0.8 + 0.15 * Math.sin(SE.time * 8) + 0.05 * Math.random();
       const heat = SE.save.stove, night = SE.weather.night();
       // the lanterns are only lit after dusk; in daylight they stand there cold
@@ -144,7 +149,6 @@
         ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2);
       }
 
-      drawMochi(ctx, dt);
       if (mode === 'idle') drawIdle(ctx);
       else if (mode === 'share') drawShare(ctx, dt);
       else if (mode === 'mug') drawMugs(ctx);

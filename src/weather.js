@@ -216,11 +216,44 @@
     ctx.restore();
   };
   // Windows of an interior: darker blue at night, brighter in sun, grey in storms.
+  // The window glass in the room art is painted at night (dark snowy sky, sometimes a moon). By day
+  // that glass is repainted in daylight: the panes are read from the backdrop once (bluish pixels
+  // inside the window), and their light and dark (trees, snow, frost) kept but shifted into a pale
+  // winter sky and bright snow. Frames and mullions stay as painted. Fades out as night comes.
+  const dayGlass = {};
+  function daylight(ctx, r) {
+    const key = `${SE.sceneName}:${r.x},${r.y},${r.w},${r.h}`;
+    if (dayGlass[key] === undefined) {
+      dayGlass[key] = null;
+      try {
+        const cw = ctx.canvas.width / SE.W;
+        const src = ctx.getImageData(Math.round(r.x * cw), Math.round(r.y * cw), Math.round(r.w * cw), Math.round(r.h * cw));
+        const c = document.createElement('canvas'); c.width = r.w; c.height = r.h;
+        const x = c.getContext('2d'), out = x.createImageData(r.w, r.h);
+        for (let yy = 0; yy < r.h; yy++) for (let xx = 0; xx < r.w; xx++) {
+          const si = (Math.floor(yy * cw) * src.width + Math.floor(xx * cw)) * 4, di = (yy * r.w + xx) * 4;
+          const R = src.data[si], G = src.data[si + 1], B = src.data[si + 2];
+          if (!(B > R + 18 && B > 60)) continue; // not glass
+          const L = (0.3 * R + 0.59 * G + 0.11 * B) / 255, t = yy / r.h;
+          const sky = [200 - 30 * t, 222 - 12 * t, 244 - 4 * t], snow = [236, 241, 248];
+          const base = t < 0.55 ? sky : snow.map((v, i) => sky[i] + (v - sky[i]) * Math.min(1, (t - 0.55) * 3));
+          const lit = 0.62 + 0.55 * Math.min(1, L * 2.2);
+          out.data[di] = Math.min(255, base[0] * lit); out.data[di + 1] = Math.min(255, base[1] * lit); out.data[di + 2] = Math.min(255, base[2] * lit); out.data[di + 3] = 255;
+        }
+        x.putImageData(out, 0, 0);
+        dayGlass[key] = c;
+      } catch (e) { /* canvas not readable: keep the painted glass */ }
+    }
+    return dayGlass[key];
+  }
+  W.dayGlass = daylight;
   W.windows = function (ctx, rects) {
     const n = W.night();
     ctx.save();
     for (const r of rects) {
-      ctx.fillStyle = `rgba(20,26,70,${0.15 + 0.5 * n})`;
+      const day = daylight(ctx, r);
+      if (day && n < 0.98) { ctx.globalAlpha = 1 - n; ctx.drawImage(day, r.x, r.y); ctx.globalAlpha = 1; }
+      ctx.fillStyle = `rgba(20,26,70,${0.5 * n})`;
       ctx.fillRect(r.x, r.y, r.w, r.h);
       if (W.sun > 0.05) { ctx.fillStyle = `rgba(255,240,200,${0.18 * W.sun})`; ctx.fillRect(r.x, r.y, r.w, r.h); }
       if (W.fog > 0.05) { ctx.fillStyle = `rgba(220,226,240,${W.fog})`; ctx.fillRect(r.x, r.y, r.w, r.h); }

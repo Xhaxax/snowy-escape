@@ -43,8 +43,11 @@
     SE.toast(`Focus for ${len} minutes. You've got this.`, '#ffe6b8');
   };
   F.stop = function () { F.running = false; };
+  // The timer belongs to the idle scenes: it only counts while you sit back and just watch.
+  // Taking over again pauses it; watching again carries on.
   F.update = function (dt) {
     if (!F.running) return;
+    if (!SE.watching()) return;
     F.left -= dt;
     if (F.left <= 0) {
       SE.audio.sfx('chime');
@@ -126,9 +129,14 @@
     }, SE.save.settings.hideUi);
     btn('note', () => toggle('sound'), H.panel === 'sound');
     btn('snow', () => toggle('weather'), H.panel === 'weather');
-    btn('clock', () => toggle('focus'), H.panel === 'focus' || F.running);
+    // while you just watch and no timer runs yet, the clock glows now and then: the timer lives here
+    btn('clock', () => toggle('focus'), H.panel === 'focus' || (F.running && SE.watching()) || (SE.watching() && !F.running && Math.sin(SE.time * 2.5) > 0.6));
     btn('book', () => { H.close(); SE.openNotebook(); }, SE.notebook && SE.notebook.open);
-    if (opts.map) btn('map', () => { H.panel = null; SE.go('map'); });
+    if (opts.map) btn('map', () => {
+      H.panel = null;
+      const leave = { chapel: 'chapelLeave', summit: 'summitLeave' }[SE.sceneName];
+      if (leave) SE.moment(leave, { force: true, go: ['map', {}] }); else SE.go('map');
+    });
     // the big "Just watch" toggle: activities play themselves on a loop
     if (opts.watch !== false) {
       const on = SE.watching();
@@ -148,7 +156,8 @@
 
   function drawTimerPill(ctx, a) {
     if (!F.running) return;
-    const label = `${F.phase === 'focus' ? 'Focus' : 'Break'} ${fmt(F.left)}`;
+    const paused = !SE.watching();
+    const label = paused ? `Paused ${fmt(F.left)}` : `${F.phase === 'focus' ? 'Focus' : 'Break'} ${fmt(F.left)}`;
     const w = SE.measure(label, 8) + 22;
     SE.panel(SE.W - 6 - w, 28, w, 15, { alpha: Math.max(a, 0.55) * 0.9, fill: F.phase === 'focus' ? 'rgba(54,46,78,0.9)' : 'rgba(60,98,92,0.9)' });
     SE.drawIcon('clock', SE.W - w + 1, 31.5, '#ffe6b8');
@@ -201,8 +210,17 @@
       });
     } else if (H.panel === 'focus') {
       SE.text('Focus timer', px + 12, py + 8, { size: 10, color: '#ffe6b8' });
-      SE.text('Study or work alongside the traveler.', px + 12, py + 24, { size: 7, color: '#dfe8ff' });
-      if (F.running) {
+      SE.text('Study or work while the traveler just watches.', px + 12, py + 24, { size: 7, color: '#dfe8ff' });
+      if (!SE.watching()) {
+        // the timer runs in the idle scenes only: point the way there
+        SE.text(F.running ? `Paused at ${fmt(F.left)}.` : 'It runs while you sit back and', px + pw / 2, py + 44, { align: 'center', size: 8 });
+        SE.text(F.running ? 'It counts on while you just watch.' : 'let the mountains be: Just watch.', px + pw / 2, py + 56, { align: 'center', size: 8 });
+        if (SE.button(px + pw / 2 - 52, py + 76, 104, 18, F.running ? 'Just watch again' : 'Just watch & focus', { modal: true, active: true })) {
+          SE.toggleWatch();
+          if (!F.running) F.start(25, 5);
+          H.close();
+        }
+      } else if (F.running) {
         SE.text(`${F.phase === 'focus' ? 'Focusing' : 'On a break'} — ${fmt(F.left)}`, px + pw / 2, py + 50, { align: 'center', size: 12 });
         if (SE.button(px + pw / 2 - 40, py + 76, 80, 18, 'Stop timer', { modal: true })) F.stop();
       } else {

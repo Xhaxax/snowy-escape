@@ -1,10 +1,9 @@
-// Whispering Pines, told in stills like an encounter but longer: you and Waffles settle low in the
-// snow and wait, and if you are lucky one animal comes by and you watch it for a while (three
-// pictures of what it does: a fox listening and pouncing, an owl dropping onto a hare, a bear on the
-// trail of a deer...). Who comes depends on the hour and the weather: the owl only at night, the
-// cardinal never in heavy snow or wind, the bear stays in its den in a storm. Each trip you may take
-// one photo (a beat you have not got yet in this light and weather, if there is one) and add a few
-// lines to that animal's sketch, which takes several calm trips to finish.
+// Whispering Pines, told in stills: you and Waffles settle low in the snow and wait (a black screen,
+// Waffles sniffing), and if you are lucky one animal comes by and you see ONE moment of what it does.
+// Each animal has three moments, seen in order over three trips (a fox listening, then pouncing...).
+// Who comes depends on the hour and the weather: the owl only at night, the cardinal never in heavy
+// snow or wind, the bear stays in its den in a storm. Then you get one chance: take a photo OR sit
+// and add to its sketch. Either way the animal is gone afterwards and you head back.
 'use strict';
 
 (function () {
@@ -78,11 +77,17 @@
   }
 
   let s = null;
-  function build(kind) {
+  // the moment you get to see this trip: the next one you have not seen yet, in order
+  function nextBeat(kind) {
+    const n = (SE.save.pinesBeats || {})[kind] || 0;
+    return n < 3 ? n + 1 : 1 + Math.floor(Math.random() * 3);
+  }
+  function build(kind, b) {
     const P = PINES[kind];
+    const [text, sounds] = P.beats[b - 1];
     SE.MOMENTS.pines_watch = [
       { black: 3.2, text: SE.pick(['You wait. Waffles’ ears twitch…', 'Snow ticks off the branches. Waffles goes very still…', 'Breath held. Something is coming through the trees…']), sounds: [[0.6, 'twig'], [1.9, 'rustle']] },
-      ...P.beats.map(([text, sounds], i) => ({ img: `cut/pines_${kind}_${i + 1}`, dur: BEAT_DUR, text, pan: i % 2 ? -1 : 1, sounds })),
+      { img: `cut/pines_${kind}_${b}`, dur: BEAT_DUR + 1.6, text, pan: b % 2 ? 1 : -1, sounds },
     ];
   }
   SE.MOMENTS.pines_nobody = [
@@ -96,12 +101,16 @@
     const kind = pickAnimal();
     s.kind = kind;
     if (!kind) { s.state = 'busy'; SE.moment(again ? 'pines_more' : 'pines_nobody', { force: true, then: () => { s.state = 'empty'; s.waited = (s.waited || 0) + 1; } }); return; }
-    build(kind);
+    const b = nextBeat(kind);
+    build(kind, b);
     s.state = 'busy';
     const seen = SE.save.pinesSeen || (SE.save.pinesSeen = {});
     seen[kind] = (seen[kind] || 0) + 1;
+    const beats = SE.save.pinesBeats || (SE.save.pinesBeats = {});
+    beats[kind] = Math.min(3, Math.max(beats[kind] || 0, b));
     SE.persist();
     SE.moment('pines_watch', { force: true, then: () => {
+      s.beat = b;
       if (seen[kind] === 1) SE.celebrate('New in your field guide!', `${PINES[kind].name} · see the notebook`, { y: 2 });
       // a bear may notice you once it gives up on the deer
       if (PINES[kind].bear && Math.random() < 0.3) { s.state = 'busy'; SE.moment('bear_angry', { force: true, then: () => { s.angry = true; s.state = 'meet'; } }); }
@@ -115,7 +124,7 @@
       SE.save.sketches = SE.save.sketches || {};
       SE.save.pinesAlbum = SE.save.pinesAlbum || {};
       SE.persist();
-      s = { t: 0, state: 'busy', kind: null, photoTaken: false, sketched: false, photo: null, sketch: null, flash: 0, angry: false };
+      s = { t: 0, state: 'busy', kind: null, beat: 0, photoTaken: false, sketched: false, photo: null, sketch: null, flash: 0, angry: false };
       SE.audio.setMusic('outdoors');
       arrive(false);
     },
@@ -125,10 +134,13 @@
     },
     draw(ctx, dt) {
       s.t += dt;
-      SE.drawStill(ctx, s.angry ? 'cut/see_bear_angry' : s.kind ? `cut/pines_${s.kind}_3` : 'cut/forest');
+      // until the moment has played the screen stays black (no flash of the picture before the wait)
+      if (s.angry) SE.drawStill(ctx, 'cut/see_bear_angry');
+      else if (s.kind && s.beat) SE.drawStill(ctx, `cut/pines_${s.kind}_${s.beat}`);
+      else if (s.state === 'empty') SE.drawStill(ctx, 'cut/forest');
+      else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, SE.W, SE.H); }
       if (s.flash > 0) { s.flash -= dt * 3; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
       if (s.photo) drawPhoto(ctx, dt);
-      else if (s.sketch) drawSketch(ctx, dt);
       else drawChoices();
       SE.hud.draw(ctx, { watch: false, title: 'Whispering Pines', subtitle: s.kind ? PINES[s.kind].name : 'waiting quietly' });
     },
@@ -144,8 +156,9 @@
     } else if (s.angry) {
       items.push(['Back away slowly', 104, () => { s.state = 'busy'; SE.moment('bear_retreat', { force: true, then: () => { SE.save.bears = (SE.save.bears || 0) + 1; SE.persist(); goBack(); } }); }, null]);
     } else {
-      if (!s.photoTaken) items.push(['Take a photo', 84, takePhoto, 'cam']);
-      if (!s.sketched) items.push(['Sketch it', 62, sketchIt, 'book']);
+      // one chance: the shutter or the pencil, then it is gone
+      items.push(['Take a photo', 84, takePhoto, 'cam']);
+      if (!SE.sketchDone(s.kind)) items.push(['Sketch it', 62, sketchIt, 'book']);
       items.push(['Head back', 66, goBack, null]);
     }
     let x = SE.W - 6 - items.reduce((t, i) => t + i[1] + 4, 0);
@@ -158,8 +171,7 @@
     SE.moment('photo', { force: true, then: () => {
       const kind = s.kind, cond = condNow(kind);
       const album = SE.save.pinesAlbum[kind] || (SE.save.pinesAlbum[kind] = []);
-      const open = [1, 2, 3].filter((b) => !album.includes(`${b}_${cond}`));
-      const beat = open.length ? SE.pick(open) : SE.pick([1, 2, 3]);
+      const beat = s.beat || 1;
       const key = `${beat}_${cond}`, isNew = !album.includes(key);
       if (isNew) album.push(key);
       SE.persist();
@@ -185,7 +197,7 @@
       if (p.isNew) SE.celebrate('New photo!', `${PINES[s.kind].name} · ${n}/${p.of} in your album`, { y: 2 });
       else SE.toast('You already have this one in your album. Lovely anyway.', '#cfe6ff');
     }
-    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, 'Into the album', {}) || (p.t > 0.6 && SE.key('Space'))) s.photo = null;
+    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, 'Into the album', {}) || (p.t > 0.6 && SE.key('Space'))) { s.photo = null; leaveAfter('The shutter clicks — and it is gone between the trees.'); }
   }
 
   // ------------------------------------------------------------ the sketch: a few more lines each trip
@@ -193,43 +205,43 @@
   SE.sketchDone = (kind) => ((SE.save.sketches || {})[kind] || 0) >= SE.sketchTrips(kind);
   function sketchIt() {
     s.state = 'busy'; s.sketched = true;
-    SE.moment('sketch', { force: true, then: () => {
-      const sk = SE.save.sketches;
-      const before = sk[s.kind] || 0, N = SE.sketchTrips(s.kind);
-      sk[s.kind] = Math.min(N, before + 1);
-      SE.persist();
-      s.sketch = { t: 0, from: before / N, to: sk[s.kind] / N, done: sk[s.kind] >= N && before < N };
-      SE.audio.sfx('scribble');
-      s.state = 'meet';
+    const kind = s.kind, sk = SE.save.sketches, N = SE.sketchTrips(kind);
+    const before = Math.min(N, sk[kind] || 0), after = Math.min(N, before + 1);
+    sk[kind] = after;
+    SE.persist();
+    // the notebook on your knee: where the drawing was, then a few more minutes of pencil
+    const beats = [];
+    if (before > 0) beats.push({ img: SE.sketchStill(kind, before), dur: 2.2, text: 'The page from last time.', pan: 1, sounds: [[0.2, 'page']] });
+    beats.push({ img: SE.sketchStill(kind, after), dur: 5.2, pan: -1,
+      text: after >= N ? `The last lines. The ${PINES[kind].name.toLowerCase()} is finished.` : `A few more lines while it holds still. Sketch ${after} of ${N}.`,
+      sounds: [[0.3, 'scribble'], [1.8, 'scribble'], [3.4, 'scribble']] });
+    SE.MOMENTS.pines_sketch = beats;
+    SE.moment('pines_sketch', { force: true, then: () => {
+      if (after >= N && before < N) SE.celebrate('Sketch complete!', `${PINES[kind].name} · in your field guide`, { y: 2 });
+      leaveAfter('You look up from the page. It has slipped away into the pines.');
     } });
   }
-  // The sketch on its page: the animal in pencil, drawn in from left to right as far as you got.
-  SE.drawSketchPage = function (ctx, kind, x, y, w, h, frac) {
-    const img = SE.img(`cut/pines_${kind}_1`) || SE.img(`cut/see_${kind}`);
-    if (!img) return;
-    const cw = Math.round(w * frac);
-    ctx.save();
-    ctx.beginPath(); ctx.rect(x, y, cw, h); ctx.clip();
-    ctx.filter = 'grayscale(1) sepia(0.55) contrast(1.25) brightness(1.12)';
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, x, y, w, h);
-    ctx.restore();
-    if (frac < 1) { // the unfinished edge: faint guide lines
-      ctx.fillStyle = 'rgba(90,70,60,0.35)';
-      for (let i = 0; i < h; i += 3) ctx.fillRect(x + cw, y + i, 1 + ((i * 7) % 5), 1);
-    }
-  };
-  function drawSketch(ctx, dt) {
-    const k = s.sketch;
-    k.t += dt;
-    const w = 240, h = 160, x = SE.W / 2 - w / 2, y = 30;
-    ctx.fillStyle = 'rgba(20,14,30,0.5)'; ctx.fillRect(x + 4, y + 5, w, h);
-    ctx.fillStyle = '#f4ead2'; ctx.fillRect(x, y, w, h);
-    const frac = k.from + (k.to - k.from) * Math.min(1, k.t / 2.2);
-    SE.drawSketchPage(ctx, s.kind, x + 12, y + 10, w - 24, Math.round((w - 24) * 136 / 240), frac);
-    const n = SE.save.sketches[s.kind], N = SE.sketchTrips(s.kind);
-    SE.text(n >= N ? `${PINES[s.kind].name} — finished!` : `${PINES[s.kind].name} — sketch ${n}/${N}. Come back to finish it.`, x + w / 2, y + h - 18, { align: 'center', size: 7, color: '#4a3a32', shadow: false });
-    if (k.done && k.t > 2.3 && !k.cheered) { k.cheered = true; SE.celebrate('Sketch complete!', `${PINES[s.kind].name} · in your field guide`, { y: 2 }); }
-    if (k.t > 1.2 && SE.button(SE.W / 2 - 40, SE.H - 24, 80, 18, 'Close notebook')) { s.sketch = null; SE.audio.sfx('page'); }
+  // after the photo or the sketch the animal is gone, and so are you
+  SE.MOMENTS.pines_gone = [{ black: 2.2, sounds: [[0.3, 'rustle'], [1.2, 'step']] }];
+  function leaveAfter(text) {
+    s.state = 'busy';
+    SE.MOMENTS.pines_gone[0].text = text;
+    SE.moment('pines_gone', { force: true, then: goBack });
   }
+  // the notebook still for stage n of an animal's sketch (cut/sketch_<kind>_<n>)
+  SE.sketchStill = (kind, n) => `cut/sketch_${kind}_${Math.max(1, Math.min(SE.sketchTrips(kind), n))}`;
+  // The sketch on its page: the drawing as far as you have got, cut from that stage's notebook still
+  // (the right-hand page in cut/sketch_*). Nothing drawn yet: an empty page.
+  const PAGE = { x: 104, y: 22, w: 92, h: 90 }; // the right-hand page of the close-up notebook still
+  SE.drawSketchPage = function (ctx, kind, x, y, w, h, frac) {
+    const N = SE.sketchTrips(kind), n = Math.round(frac * N);
+    if (n <= 0) return;
+    const img = SE.img(SE.sketchStill(kind, n));
+    if (!img) return;
+    const sc = Math.min(w / PAGE.w, h / PAGE.h), dw = PAGE.w * sc, dh = PAGE.h * sc;
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, PAGE.x, PAGE.y, PAGE.w, PAGE.h, Math.round(x + (w - dw) / 2), Math.round(y + (h - dh) / 2), Math.round(dw), Math.round(dh));
+    ctx.restore();
+  };
+
 })();

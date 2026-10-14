@@ -1,5 +1,5 @@
 // The Little Chapel: a quiet log chapel in the valley. Kneel and pray at the altar while Waffles
-// rests by the pews, light a candle, ring the bell, read a verse from the open Bible. Now and then
+// rests by the pews, light a candle, read a verse from the open Bible. Now and then
 // a cardinal comes to the window ledge.
 'use strict';
 
@@ -37,7 +37,9 @@
 
   function startPrayer() {
     if (s.mode !== 'stand') return;
-    if (!SE.watching()) SE.moment('pray'); // hands folded over the Bible, a candle, the bell far off
+    // before kneeling he lights a candle if none is burning: a little light to pray by
+    if (!s.votives.length) lightCandle(true);
+    if (!SE.watching()) SE.moment('pray'); // kneeling at the altar, hands folded
     s.mode = 'kneel'; s.k = 0; s.prayT = 0; s.prayed = false;
     s.verse = SE.pick(VERSES.filter((v) => v !== s.verse));
     s.verseT = 0;
@@ -55,20 +57,14 @@
     for (let i = 0; i < 5; i++) SE.spawnFloater(v.x + SE.rand(-1, 1), 154, 'spark', '#ffd38a');
     if (!auto) SE.toast(SE.pick(['A little flame for someone you love.', 'You light a candle. It flickers, then stands tall.', 'One more small light against the dark.']), '#ffe6b8');
   }
-  function ringBell(auto) {
-    if (s.bell > 0) return;
-    s.bell = 5.5;
-    for (let i = 0; i < 3; i++) setTimeout(() => { if (SE.sceneName === 'chapel') SE.audio.sfx('bell'); }, i * 1800);
-    if (!auto) SE.toast('The bell rings out over the snowy valley.', '#cfe6ff');
-  }
 
-  // Watch mode: a slow film — pray for a long while, rise, light a candle, sometimes ring the bell.
+
+  // Watch mode: a slow film — light a candle, pray for a long while, rise.
   function direct(dt) {
     s.dirT -= dt;
     if (s.dirT > 0) return;
     if (s.mode === 'stand') {
       if (Math.random() < 0.35) lightCandle(true);
-      if (Math.random() < 0.15) ringBell(true);
       startPrayer();
       s.dirT = SE.rand(55, 85);
     } else if (s.mode === 'pray') { standUp(); s.dirT = SE.rand(8, 14); } else s.dirT = 2;
@@ -102,6 +98,14 @@
       // 1 background, then the window (night, storm and snowfall seen through the glass)
       SE.drawImg('bg_chapel', 0, 0);
       drawWindow(ctx);
+      // by day the slanting beam from the window is warm sunlight rather than cold moonlight
+      { const dayK = 1 - SE.weather.night();
+        if (dayK > 0.02) {
+          ctx.save(); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = 0.35 * dayK;
+          ctx.fillStyle = '#ffd9a0';
+          ctx.beginPath(); ctx.moveTo(62, 56); ctx.lineTo(196, 128); ctx.lineTo(196, 242); ctx.lineTo(62, 190); ctx.closePath(); ctx.fill();
+          ctx.restore();
+        } }
       SE.weather.interior(ctx);
       drawBird(ctx, dt);
 
@@ -149,8 +153,11 @@
     const n = SE.weather.night();
     ctx.save();
     archPath(ctx); ctx.clip();
+    // by day the glass shows daylight, not the painted night
+    const day = SE.weather.dayGlass(ctx, WIN);
+    if (day && n < 0.98) { ctx.globalAlpha = 1 - n; ctx.drawImage(day, WIN.x, WIN.y); ctx.globalAlpha = 1; }
     ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = `rgba(60,70,150,${0.1 + 0.5 * n})`;
+    ctx.fillStyle = `rgba(60,70,150,${0.5 * n})`;
     ctx.fillRect(WIN.x, WIN.y, WIN.w, WIN.h);
     ctx.globalCompositeOperation = 'source-over';
     if (SE.weather.fog > 0.05) { ctx.fillStyle = `rgba(220,226,240,${SE.weather.fog})`; ctx.fillRect(WIN.x, WIN.y, WIN.w, WIN.h); }
@@ -171,7 +178,7 @@
       if (m.t > m.life || m.x > 200 || m.y > 250) Object.assign(m, newMote(false));
       if (!inBeam(m.x, m.y)) continue;
       const a = Math.sin(Math.PI * Math.min(1, m.t / m.life)) * (0.35 + 0.25 * Math.sin(s.t * 2 + m.p)) * (1 - night * 0.4);
-      ctx.fillStyle = `rgba(220,232,255,${a})`;
+      ctx.fillStyle = night > 0.5 ? `rgba(220,232,255,${a})` : `rgba(255,240,205,${a})`;
       ctx.fillRect(Math.round(m.x), Math.round(m.y), 1, 1);
     }
   }
@@ -305,7 +312,6 @@
     const items = [
       [kneeling ? 'Stand up' : 'Kneel and pray', 84, () => (kneeling ? standUp() : startPrayer()), { active: kneeling }],
       ['Light a candle', 76, () => lightCandle(false), {}],
-      ['Ring the bell', 70, () => ringBell(false), { active: s.bell > 0 }],
     ];
     let x = SE.W - 6 - items.reduce((sum, i) => sum + i[1] + 4, 0);
     for (const [label, w, cb, o] of items) { if (SE.button(x, by, w, 18, label, Object.assign({ alpha: kneeling ? 1 : a }, o))) cb(); x += w + 4; }

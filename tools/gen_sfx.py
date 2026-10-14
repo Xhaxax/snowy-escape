@@ -15,7 +15,7 @@ OUT = os.path.join(ROOT, 'assets', 'audio')
 API = 'https://api.elevenlabs.io/v1/sound-generation'
 
 SNOW = 'one single slow footstep of a heavy winter boot sinking into deep soft fresh snow, a soft deep satisfying crunch, warm and muffled, low pitched, gentle, no squeak, no hiss, no music'
-WOOD = 'one single heavy footstep of a winter boot on old wooden cabin floorboards, a deep hollow knock with a soft creak, indoors, no music'
+WOOD = 'one single slow footstep of a man in soft leather boots on a solid old wooden plank floor indoors, a warm dull muffled thud of the heel, very short, close, no echo, no click, no tapping, no music'
 SOUNDS = {
     # walking: several takes so steps never repeat
     'sfx_step1': (SNOW, 0.6), 'sfx_step2': (SNOW + ', slightly heavier', 0.6), 'sfx_step3': (SNOW + ', lighter and faster', 0.5),
@@ -40,20 +40,20 @@ SOUNDS = {
     'sfx_sizzle': ('fish fillets sizzling in butter in a cast iron pan', 2.5),
     'sfx_scrape': ('knife scraping scales off a fresh trout on a wooden board', 1.0),
     'sfx_purr': ('a small cat purring contentedly, close', 2.0),
-    'sfx_woof': ('a big friendly Bernese mountain dog giving one happy bark', 0.7),
+    'sfx_woof': ('one single deep low bark of a big heavy Bernese mountain dog, a chesty booming woof, deep voice, friendly, close, outdoors, no other sounds', 0.8),
     'sfx_camera': ('vintage film camera shutter click and film advance lever', 0.8),
     'sfx_pop': ('soft wooden ui click, cozy', 0.5),
     # inside: boots on the floorboards of the cabin and the chapel
-    'sfx_wood1': (WOOD, 0.6), 'sfx_wood2': (WOOD + ', a little louder creak', 0.6), 'sfx_wood3': (WOOD + ', softer', 0.5), 'sfx_wood4': (WOOD + ', a squeaky board', 0.7),
+    'sfx_wood1': (WOOD, 0.5), 'sfx_wood2': (WOOD + ', a faint low creak of the board', 0.6), 'sfx_wood3': (WOOD + ', softer', 0.5), 'sfx_wood4': (WOOD + ', slightly heavier', 0.5),
     'sfx_sip': ('a man taking a small slow sip of hot chocolate from a ceramic mug, a soft slurp and a contented exhale, close', 1.4),
     # long loops for the ambience (they replace the synthesized wind and fire)
-    'amb_fire': ('a cozy wood fire crackling and popping in a stone fireplace, steady warm crackles and soft hiss of burning logs, close, continuous, no music, no voices', 20.0),
+    'amb_fire': ('a big roaring wood fire in a stone fireplace: deep low rumbling roar of flames, heavy logs burning, strong full crackling and deep wood pops, warm bass, close, continuous, no high clicks, no music, no voices', 22.0),
     'amb_wind': ('gentle cold winter wind blowing softly through snowy pine trees outdoors, calm low whoosh, continuous, no rain, no birds, no music', 20.0),
     # Whispering Pines: the animals
     'sfx_sniff': ('a deer sniffing the cold air, short quick nasal sniffs, quiet snowy forest', 1.4),
     'sfx_hop': ('a snowshoe hare hopping through soft powder snow, three soft quick thumps', 1.2),
-    'sfx_growl': ('a grizzly bear giving a low deep rumbling growl, distant, snowy forest', 2.0),
-    'sfx_huff': ('a bear huffing and blowing air through its nose, two sharp huffs', 1.2),
+    'sfx_growl': ('a large grizzly bear growling: one long deep guttural throaty rumble, low and menacing, animal only, no human voice, no laughter, no music', 2.2),
+    'sfx_huff': ('a large bear exhaling two heavy low snorts through its nose and jaw popping, deep animal breath, no human voice, no laughter', 1.4),
     'sfx_hoot': ('a great grey owl hooting softly at night, deep slow hoo hoo hoo, quiet winter forest', 2.4),
     'sfx_chirp': ('a northern cardinal bird chirping, bright short metallic chip notes, winter morning', 1.6),
     'sfx_yip': ('a red fox giving two short high yips in a snowy forest, distant', 1.2),
@@ -64,7 +64,16 @@ SOUNDS = {
     'sfx_jingle': ('a short soft cozy reward jingle, three gentle rising notes on a warm wooden music box and soft bells, winter cabin feeling, calm, not loud', 2.0),
     # the notebook
     'sfx_scribble': ('a pencil sketching quickly on paper in a notebook, soft scratchy strokes', 2.0),
-    'sfx_page': ('turning a page of a small paper notebook, crisp paper rustle', 0.7),
+    # reading the Bible: a heavy old book's thin pages
+    'sfx_bible': ('slowly turning one thin page of a heavy old leather-bound Bible, a soft delicate paper whisper, close, quiet room, no crinkle, no music', 1.2),
+    'sfx_page': ('a single soft page of a small leather notebook being turned slowly by hand, gentle quiet paper flip, close, no crinkling, no music', 0.8),
+    # shoveling the path: the blade going into the snow, then the snow thrown aside
+    'sfx_shovel': ('a metal snow shovel pushed into deep packed snow, a scraping crunchy scoop, outdoors, close', 1.0),
+    'sfx_toss': ('a shovelful of heavy snow thrown onto a snow bank, a soft heavy whumpf of falling snow', 0.8),
+    # the rocking chair on the porch
+    'sfx_rock': ('one soft slow creak of an old wooden rocking chair rocking back on porch boards, gentle, quiet, outdoors in snow', 1.0),
+    # Mochi
+    'sfx_meow': ('a small fluffy house cat giving one short soft friendly meow, close, quiet cozy room', 0.9),
 }
 
 

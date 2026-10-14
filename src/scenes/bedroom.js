@@ -5,7 +5,7 @@
 
 (function () {
   const WINDOW = [{ x: 238, y: 54, w: 92, h: 70 }];
-  const BED_SURF = { quilt: [190, 290, 162], chest: [298, 334, 152], rug: [302, 350, 262] }; // the rug right of Waffles (he sleeps at 214–278)
+  const BED_SURF = { quilt: [190, 290, 162], chest: [306, 346, 168], rug: [302, 350, 262] }; // the rug right of Waffles (he sleeps at 214–278)
   const BED_LINKS = [['rug', 'quilt'], ['quilt', 'chest'], ['rug', 'chest']];
   let mochi = null, busy = false;
 
@@ -43,12 +43,20 @@
     draw(ctx, dt) {
       SE.drawImg('bg_bedroom', 0, 0);
       SE.weather.windows(ctx, WINDOW);
-      SE.weather.interior(ctx);
-      const night = SE.weather.night(), fl = 0.85 + 0.1 * Math.sin(SE.time * 7) + 0.05 * Math.random();
-      SE.glow(ctx, 112, 148, 70 * fl, '255,180,100', (0.12 + night * 0.16) * fl); // the bedside lamp
-      SE.glow(ctx, 112, 140, 12, '255,230,160', 0.4 * fl);
+      // Waffles and Mochi are part of the room: drawn before the night falls over it, so the oil lamp
+      // is what lights them (and catches their outline)
       SE.drawDogRest(214, 266, {});
       if (mochi) { mochi.update(dt); mochi.draw(); }
+      const night = SE.weather.night(), fl = 0.9 + 0.06 * Math.sin(SE.time * 5) + 0.04 * Math.random();
+      // after dark only the lamp on the nightstand and the candles on the shelf light the room
+      SE.weather.interior(ctx, [
+        { x: 61, y: 160, r: 150, k: 0.9 * fl },
+        { x: 96, y: 60, r: 46, k: 0.55 * fl },
+      ]);
+      // the oil lamp: a warm glow around its glass and a soft pool on the wall and the nightstand
+      SE.glow(ctx, 61, 158, 80 * fl, '255,176,96', (0.14 + night * 0.2) * fl);
+      SE.glow(ctx, 61, 160, 14 * fl, '255,226,160', (0.35 + night * 0.25) * fl);
+      SE.glow(ctx, 96, 60, 20 * fl, '255,200,120', (0.08 + night * 0.12) * fl); // the shelf candles
       if (!busy && !SE.momentPlaying() && !SE.watching()) {
         const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
         const canSleep = night >= 0.5 || (SE.save.settings.time || 'cycle') === 'night';

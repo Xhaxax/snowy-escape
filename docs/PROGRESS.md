@@ -180,3 +180,17 @@
 
 ### Slower walk
 - On the valley map he walks at 24 px/s (was 34), 44 with Shift (was 60), scripted walks 21 (was 28); the stride animation and footstep sounds slowed to match.
+
+### Whispering Pines trips, sketch progression, and a big polish round
+- Pines: the trip opens black (Waffles sniffing, no glimpse of a picture first) and shows ONE moment of the animal; its three moments are seen in order over three trips (`save.pinesBeats`). Then one chance: a photo (of that moment, in the current light) OR a sketch sitting, and the animal is gone (`pines_gone`) and you head back.
+- Sketch progression: each animal has a notebook still per sitting (`cut/sketch_<kind>_<n>`, fox 4, hare 3, deer 4, elk 5, bird 3, owl 6, bear 7). Built by `tools/build_sketch_stages.py` from a PixelLab finished pencil sketch per animal (`assets/img/sketch_src/<kind>.png`) on a PixelLab close-up of the notebook (`sketch_src/page.png`): faint underdrawing, then outlines, then shading; hidden under the glove where it overlaps; then `tools/sketch_notes.cjs` writes the name and field notes (one more line per stage) in the game font. The field guide shows that page.
+- Notebook: red ribbon lies across the page; sticky-note tabs (Notes, Map, Wildlife, Kitchen, Word, Awards) jump to sections. HUD notebook icon is a small colour open book; "Stop watching" has a step-out icon.
+- Focus timer only counts while you just watch (paused otherwise); its panel leads you to "Just watch & focus", and the clock glows while you watch without a timer.
+- Chapel: no bell; he lights a candle before praying if none burns; new prayer still at the altar (no book). Leaving the chapel: the door closing on the candlelight (inpainted from the arrival still). Leaving the summit: one last look, then down the ridge.
+- Long Walk: its own trail still (contrast/colour boosted), not the summit climb.
+- Sounds (ElevenLabs, levelled): deeper Waffles bark, real bear growl/huff, softer page turn, a Bible page, snow shovel scrape + toss, Mochi's meow (now and then, and in petting), wooden floor steps, a deep roaring fire loop, a soft rocking-chair creak (only now and then; sips every 25–50 s), valley birdsong chirps by day.
+- Petting plays one still, never the same twice in a row.
+- No snow piles; shoveling is optional, the path never blocks.
+- Kitchen: Mochi only on the sill, the clear end of the island, or the floor; drawn under the night so she sits in the dark like the room. Mochi frames are planted on their surface (per-frame foot gap); bedroom chest and living-room perches measured to the art.
+- Lighting: bedroom lamp glow sits on the lamp (not the pillow) and lights the room after dark; windows show daylight by day (glass repainted from the backdrop), the chapel beam is warm by day; map cabin/chapel only glow at windows and the door; map cabin has its porch (PixelLab inpaint); valley lantern is a tiny lantern hanging from his hand.
+- Bigger fish in your mittens; a still of the chopped chocolate dropping into the pot; cutscenes that start on a scene change open fully black (no one-frame flash of the next room); floating place signs on the map removed.

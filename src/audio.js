@@ -270,7 +270,7 @@
       return SFX.click(ctx.currentTime);
     } else {
       const f = files['sfx_' + name] ? 'sfx_' + name : FILE_FOR[name];
-      if (f && files[f]) return playFile(f, sfxBus, 1, 0.97 + Math.random() * 0.06);
+      if (f && files[f]) return playFile(f, sfxBus, opts && opts.gain != null ? opts.gain : 1, 0.97 + Math.random() * 0.06);
     }
     if (!SFX[name]) return;
     return SFX[name](ctx.currentTime + 0.005, opts);

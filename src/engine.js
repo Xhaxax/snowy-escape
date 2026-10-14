@@ -390,8 +390,8 @@ const ICONS = {
   map: ['01111110', '11011011', '10111101', '11011011', '10111101', '11011011', '01111110', '00000000'],
   // the field notebook: spiral rings on top, ruled lines, a pencil beside it
   book: ['010101000', '111111101', '100000101', '101110101', '100000101', '101110101', '100000100', '111111100'],
-  // stop watching: a square stop sign inside a ring
-  stop: ['00111100', '01000010', '10111101', '10111101', '10111101', '10111101', '01000010', '00111100'],
+  // stop watching: an arrow stepping out through a door
+  stop: ['11110000', '10000100', '10000110', '10111111', '10111111', '10000110', '10000100', '11110000'],
   clock: ['00111100', '01000010', '10010001', '10010001', '10011101', '10000001', '01000010', '00111100'],
   note: ['00011111', '00010001', '00010001', '00010001', '01110001', '11110111', '11101111', '01000110'],
   snow: ['00011000', '01011010', '00111100', '11111111', '11111111', '00111100', '01011010', '00011000'],
@@ -406,7 +406,19 @@ const ICONS = {
   play: ['01000000', '01100000', '01110000', '01111000', '01111000', '01110000', '01100000', '01000000'],
   hand: ['00011000', '00011010', '01011011', '11011011', '11111111', '11111110', '01111110', '00111100'],
 };
+// A few icons are little colour pictures instead of one-colour glyphs, so they read at a glance.
+// Letters: o outline, b cover, p page, l writing, r ribbon.
+const PICS = {
+  book: { pal: { o: '#2b1d1a', b: '#8a5a3a', p: '#f6ead2', l: '#9a8670', r: '#c4473f' }, rows: [
+    '.ooooo.ooooo.', 'opppppopppppo', 'oplllprplllpo', 'opppppropppppo'.slice(0, 13), 'oplllprplllpo', 'opppppropppppo'.slice(0, 13), 'oplllprplllpo', 'opppppropppppo'.slice(0, 13), 'obbbbbrbbbbbo', '.ooooorooooo.', '......r......'] },
+};
 SE.drawIcon = function (name, x, y, color = '#fff7ea', scale = 1) {
+  const pic = PICS[name];
+  if (pic) {
+    const ctx = SE.ctx, ox = Math.round(x) - 2, oy = Math.round(y) - 1;
+    pic.rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) { const c = pic.pal[row[i]]; if (c) { ctx.fillStyle = c; ctx.fillRect(ox + i * scale, oy + j * scale, scale, scale); } } });
+    return;
+  }
   const rows = ICONS[name];
   if (!rows) return;
   const ctx = SE.ctx;
@@ -476,7 +488,9 @@ SE.watching = () => !!SE.save.settings.watch;
 SE.toggleWatch = function () {
   SE.save.settings.watch = !SE.save.settings.watch;
   SE.persist();
-  SE.toast(SE.save.settings.watch ? 'Just watching — sit back and enjoy.' : 'Your turn again — the activities are all yours.', '#ffe6b8');
+  const F = SE.focus || {};
+  if (SE.save.settings.watch) SE.toast(F.running ? 'Just watching. The focus timer carries on.' : 'Just watching. The clock up top starts a focus timer.', '#ffe6b8');
+  else SE.toast(F.running ? 'Your turn again. The focus timer waits until you just watch again.' : 'Your turn again — the activities are all yours.', '#ffe6b8');
   // sitting back to just watch: he puts his headphones on first (and keeps them on while you watch).
   // Parked for now (see SE.HEADPHONES in actors.js).
   if (SE.HEADPHONES && SE.save.settings.watch && SE.moment) SE.moment('music', { force: true });

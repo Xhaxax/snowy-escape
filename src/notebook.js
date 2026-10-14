@@ -155,6 +155,42 @@
     write('N', x + w - 8, y + 2, { size: 7, color: INKC }); ctx.fillStyle = INKC; ctx.fillRect(x + w - 6, y + 10, 1, 6);
   }
 
+  // the red ribbon bookmark: it lies across the right-hand page from the top of the gutter and
+  // hangs out at the bottom (the hanging end is part of ui/notebook.png)
+  function drawRibbon(ctx, bx, by) {
+    const top = [bx + 204, by + 34], end = [bx + 229, by + 188];
+    for (let y = top[1]; y <= end[1]; y++) {
+      const t = (y - top[1]) / (end[1] - top[1]);
+      const x = Math.round(top[0] + (end[0] - top[0]) * (t * t * 0.4 + t * 0.6)); // a soft curve, like silk lying on paper
+      ctx.fillStyle = '#5c1a1e'; ctx.fillRect(x - 3, y, 1, 1); ctx.fillRect(x + 3, y, 1, 1);
+      ctx.fillStyle = '#8e2a2c'; ctx.fillRect(x - 2, y, 5, 1);
+      ctx.fillStyle = '#b84a44'; ctx.fillRect(x - 1, y, 1, 1);
+    }
+  }
+  // sticky notes on the edge of the book: shortcuts to each part of it
+  const TABS = [
+    ['Notes', '#f2d16b', () => 0], ['Map', '#9fd3a8', () => SPREADS.indexOf('Valley map')], ['Wildlife', '#f4a7a0', () => SPREADS.indexOf('field:fox')],
+    ['Kitchen', '#f6c18c', () => SPREADS.indexOf('Fish & kitchen')], ['Word', '#b9c8f0', () => SPREADS.indexOf('Notes from the Word')], ['Awards', '#e6b8f0', () => SPREADS.indexOf('Achievements')],
+  ];
+  function tabOf(i) {
+    for (let t = TABS.length - 1; t >= 0; t--) if (i >= TABS[t][2]()) return t;
+    return 0;
+  }
+  function drawTabs(ctx, bx, by) {
+    const cur = tabOf(NB.spread);
+    TABS.forEach(([label, col, to], t) => {
+      const on = t === cur, w = 38, h = 15, x = bx + BOOK.w - 14 + (on ? 4 : 0), y = by + 26 + t * 21;
+      const r = { x, y, w, h };
+      const hover = !NB.photo && SE.inRect(SE.mouse.x, SE.mouse.y, r);
+      ctx.fillStyle = 'rgba(20,12,20,0.35)'; ctx.fillRect(x + 1, y + 2, w, h);
+      ctx.fillStyle = col; ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x, y, w, 2);   // the sticky strip
+      ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(x, y + h - 1, w, 1);
+      write(label, x + 5 + (hover ? 1 : 0), y + 3, { size: 7, color: '#3b2c26' });
+      if (hover) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; const n = to(); if (n >= 0 && n !== NB.spread) { NB.spread = n; NB.turn = 1; SE.audio.sfx('page'); } } }
+    });
+  }
+
   SE.frameHooks.push(function drawNotebook(ctx, dt) {
     if (!NB.open) return;
     const img = SE.img('ui/notebook');
@@ -162,6 +198,8 @@
     ctx.fillStyle = 'rgba(10,8,16,0.72)'; ctx.fillRect(0, 0, SE.W, SE.H);
     NB.turn = Math.max(0, NB.turn - dt * 5);
     if (img) ctx.drawImage(img, bx, by - Math.round(NB.turn * 3));
+    drawRibbon(ctx, bx, by - Math.round(NB.turn * 3));
+    drawTabs(ctx, bx, by);
     const L = { x: bx + LEFT.x, y: by + LEFT.y, w: LEFT.w, h: LEFT.h }, R = { x: bx + RIGHT.x, y: by + RIGHT.y, w: RIGHT.w, h: RIGHT.h };
     const sv = SE.save, W = SE.WILDLIFE || {};
     write(spreadTitle(NB.spread), SE.W / 2, by + 16, { align: 'center', size: 8, color: '#f3e6cf', shadow: true });

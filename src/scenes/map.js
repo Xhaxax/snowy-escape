@@ -209,8 +209,11 @@
       // a scripted walk (e.g. heading home through a storm) plays by itself
       if (p && p.walkTo && p.walkTo !== here) setTimeout(() => { if (SE.sceneName === 'map' && !s.walking) startWalk(p.walkTo); }, 800);
     },
-    update() {
+    update(dt) {
       SE.audio.setAmbience({ wind: 0.4 + SE.weather.wind / 90, birds: 0.35 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 0.8 : 0 });
+      // birdsong in the valley by day: a far-off chirp now and then (not at night, not in a storm)
+      const W = SE.weather, calm = !W.stormy() && W.mode !== 'windy';
+      if (calm && W.night() < 0.4 && Math.random() < (dt || 0.016) * 0.22) SE.audio.sfx('chirp', { gain: 0.18 + Math.random() * 0.2 });
     },
     draw(ctx, dt) {
       s.t += dt;
@@ -250,11 +253,13 @@
       ctx.save(); ctx.translate(-cx, -cy);
       SE.nightLights(ctx, 'lit/cabin_td', CABIN.x, CABIN.y, CABIN_LIGHTS);
       SE.nightLights(ctx, 'lit/chapel_td', CHAPEL.x, CHAPEL.y, CHAPEL_LIGHTS);
-      SE.travelerLight(ctx, s.hero.x + 4, s.hero.y - 5, s.hero.dir === 'w' ? -1 : 1, 0.6); // his lantern / headlamp
+      { // his lantern hangs from the hand on the side he faces (the headlamp in a storm)
+        const d = s.hero.dir, hx = s.hero.x + (d === 'w' ? -6 : d === 'n' ? -5 : 6);
+        SE.travelerLight(ctx, hx, s.hero.y - 6, d === 'w' ? -1 : 1, 0.6, { x: s.hero.x + (d === 'w' ? -2 : 2), y: s.hero.y - 18 });
+      }
       ctx.restore();
       SE.weather.sunshine(ctx, 0);
       SE.weather.draw(ctx, { density: 0.5 });
-      drawOffscreen(ctx, cx, cy);
       if (SE.weather.stormy()) SE.text('Snowstorm — the trails are closed until it calms down', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#cfe6ff', alpha: 0.7 + 0.3 * Math.sin(SE.time * 2) });
       if (((s.t * 4) | 0) !== s.seenTick) { s.seenTick = (s.t * 4) | 0; markSeen(s.hero.x, s.hero.y); }
       for (const [id, p] of Object.entries(SE.PLACES)) {
@@ -301,19 +306,13 @@
     const ky = (SE.held('ArrowDown', 'KeyS') ? 1 : 0) - (SE.held('ArrowUp', 'KeyW') ? 1 : 0);
     if (!kx && !ky) return 0;
     const hurry = SE.held('ShiftLeft', 'ShiftRight');
-    const speed = (hurry ? 44 : 24) * (SE.save.snowDepth > 0.6 ? 0.85 : 1);
+    const speed = hurry ? 44 : 24;
     const n = Math.hypot(kx, ky), vx = (kx / n) * speed * dt, vy = (ky / n) * speed * dt;
     h.dir = dirOf(kx, ky);
     const ox = h.x, oy = h.y;
     // slide along the edges of the path rather than sticking to them
     if (canWalk(h.x + vx, h.y)) h.x += vx;
     if (canWalk(h.x, h.y + vy)) h.y += vy;
-    // the path out of the yard is buried: shovel it before you wander off
-    const home = N[SE.PLACES.cabin.node];
-    if (SE.save.snowDepth >= 0.6 && Math.hypot(h.x - home[0], h.y - home[1]) > 96 && Math.hypot(ox - home[0], oy - home[1]) <= 96) {
-      h.x = ox; h.y = oy;
-      if (s.buriedT <= 0) { SE.toast('The path is buried in snow — shovel it first (press E at the cabin).', '#cfe6ff'); s.buriedT = 4; }
-    }
     if (hurry) h.anim += dt * 0.8;
     return Math.hypot(h.x - ox, h.y - oy);
   }
@@ -323,7 +322,7 @@
     let moved = 0;
     if (s.walking) {
       const w = s.walking;
-      let budget = 21 * (SE.save.snowDepth > 0.6 ? 0.85 : 1) * dt;
+      let budget = 21 * dt;
       while (budget > 0 && w.path[w.i]) {
         const t = w.path[w.i];
         const dx = t[0] - h.x, dy = t[1] - h.y, d = Math.hypot(dx, dy);
@@ -342,7 +341,7 @@
       s.stepT -= dt * (SE.held('ShiftLeft', 'ShiftRight') ? 1.8 : 1);
       if (s.stepT <= 0) {
         s.stepT = 0.43;
-        SE.audio.sfx('step', { deep: SE.save.snowDepth > 0.6 || SE.weather.stormy() });
+        SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.weather.mode === 'snowy' });
         const side = (Math.floor(h.anim / 0.34) % 2) ? 1 : -1;
         s.prints.push({ x: h.x + (h.dir === 'n' || h.dir === 's' ? side * 2 : 0), y: h.y + (h.dir === 'e' || h.dir === 'w' ? side * 2 : 0), t: 0 });
       }
@@ -385,7 +384,7 @@
     SE.save.location = id;
     SE.persist();
     if (id === 'cabin') SE.audio.sfx('door');
-    const buried = id === 'cabin' && SE.save.snowDepth >= 0.6;
+    const buried = false; // shoveling is up to you now: the path never blocks the way
     const to = [buried ? 'yard' : SE.PLACES[id].scene, buried ? { mode: 'shovel' } : { arrived: s.moved > 40, inDoor: true }];
     // arriving somewhere special plays a little still-frame moment first (sound carries it)
     const mid = id === 'lake' && SE.lakeMoment ? SE.lakeMoment() : id;

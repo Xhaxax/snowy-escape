@@ -45,7 +45,7 @@
 
       // now and then the trail turns uphill: a short cutscene of the climb, then the walk goes on
       if (walking && !SE.momentPlaying()) s.segT -= dt;
-      if (s.segT <= 0) { s.segT = SE.rand(FLAT[0], FLAT[1]); SE.moment('climb', { force: true }); }
+      if (s.segT <= 0) { s.segT = SE.rand(FLAT[0], FLAT[1]); SE.trailMoment(); }
       // on the flat, now and then something turns up beside the path (Waffles notices first)
       if (walking && SE.pickEncounter && !SE.weather.stormy()) {
         s.wildT -= dt;
@@ -103,7 +103,7 @@
         s.heroAt = [tx + SE.animSize(walkAnim).w * 0.62, ty + SE.animSize(walkAnim).h * 0.58];
         s.headAt = { x: tx + SE.animSize(walkAnim).w * 0.66, y: ty + SE.animSize(walkAnim).h * 0.16 };
         if (walking && frame !== s.lastFrame && (frame === 1 || frame === 5)) {
-          SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.save.snowDepth > 0.6 });
+          SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.weather.mode === 'snowy' });
           s.prints.push({ x: tx + (frame === 1 ? 4 : 14), y: GROUND + 2 + (frame === 1 ? 0 : 3), s: s.scroll });
         }
         s.lastFrame = frame;

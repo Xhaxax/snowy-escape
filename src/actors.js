@@ -143,6 +143,20 @@
     const sw = s < 1 ? Math.sin(SE.time * 1.6) * 0.8 : 0; // carried on the map it sways a little; set down it stands still
     const lx = Math.round(x + sw), ly = Math.round(y);
     // the lantern itself (its flame sits at 10,18 in the sprite), then the soft light it throws
+    if (s < 1) {
+      // on the valley map he is tiny: a small hand-drawn lantern hanging from his hand by its bail
+      const sw2 = Math.round(Math.sin(SE.time * 3.2) * 0.6), hx = lx + sw2, hy = ly;
+      const O = '#2b2420', Y = '#ffc860', W = '#fff1c0';
+      const px = (c, x, y, w = 1, h = 1) => { ctx.fillStyle = c; ctx.fillRect(hx + x, hy + y, w, h); };
+      px(O, 0, -4); px(O, -1, -3); px(O, 1, -3);          // the wire bail
+      px(O, -2, -2, 5, 1);                                 // the cap
+      px(O, -2, -1, 1, 3); px(O, 2, -1, 1, 3);             // the frame
+      px(Y, -1, -1, 3, 3); px(W, 0, 0);                    // the glowing glass and flame
+      px(O, -2, 2, 5, 1);                                  // the base
+      SE.glow(ctx, hx, hy, 44 * calm, '255,176,96', 0.3 * k * calm);
+      SE.glow(ctx, hx, hy, 9, '255,214,150', 0.5 * k * calm);
+      return;
+    }
     if (im && opts.behind) {
       // its body was drawn behind the characters; only the glowing glass shows through the dark
       ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = k;
@@ -290,6 +304,28 @@
   // `links` are the jumps between them. Each time a room is entered she is somewhere new: most often
   // lying in a loaf (counter, shelf, quilt…) or sitting up, watching the room; now and then she strolls
   // along or hops to another spot. She is always seen from the front-diagonal, never side-on.
+  // empty rows below the lowest pixel of each frame of a strip (cached)
+  const gaps = {};
+  function footGap(anim, frame) {
+    if (!gaps[anim]) {
+      const a = SE.anims[anim], img = a && SE.images[a.img];
+      if (!img || !img.width) return 0;
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, img.width, img.height).data, fw = img.width / a.frames;
+      gaps[anim] = [];
+      for (let f = 0; f < a.frames; f++) {
+        let g = 0;
+        for (let y = img.height - 1; y >= 0; y--, g++) {
+          let any = false;
+          for (let i = Math.floor(f * fw); i < Math.floor((f + 1) * fw); i++) if (d[(y * img.width + i) * 4 + 3] > 20) { any = true; break; }
+          if (any) break;
+        }
+        gaps[anim].push(g);
+      }
+    }
+    return gaps[anim][frame] || 0;
+  }
   SE.Mochi = function (surfaces, links) {
     const ids = Object.keys(surfaces);
     const m = { state: 'rest', t: 0, dur: SE.rand(10, 20), pose: SE.pick(['loaf', 'loaf', 'loaf', 'sit']), face: SE.pick(['se', 'sw']) };
@@ -299,6 +335,8 @@
     const has = (n) => !!SE.anims[n];
     const frames = (n) => (SE.anims[n] ? SE.anims[n].frames : 1);
     function rest(pose, dur) { m.state = 'rest'; m.t = 0; m.pose = pose; m.dur = dur; m.face = SE.pick(['se', 'sw']); }
+    // now and then a small meow (not while you just watch at night, she sleeps then)
+    let meowT = SE.rand(40, 120);
     function decide() {
       const [a, b] = surfaces[m.surf], r = Math.random(), nb = neighbours();
       m.t = 0;
@@ -312,6 +350,8 @@
       rest(pose, pose === 'loaf' ? SE.rand(18, 36) : SE.rand(6, 12));
     }
     m.update = function (dt) {
+      meowT -= dt;
+      if (meowT <= 0) { meowT = SE.rand(60, 180); if (!(SE.momentPlaying && SE.momentPlaying()) && SE.weather.night() < 0.8) SE.audio.sfx('meow', { gain: 0.7 }); }
       m.t += dt;
       if (m.state === 'rest' && m.t > m.dur) decide();
       else if (m.state === 'walk') {
@@ -347,7 +387,9 @@
       if (!SE.anims[anim]) { anim = 'mochi_sit_se'; frame = frames(anim) - 1; }
       if (!SE.anims[anim]) return null;
       const sz = SE.animSize(anim);
-      const x = Math.round(m.x - sz.w / 2), y = Math.round(m.y - sz.h);
+      // some frames leave a few empty rows under her paws: drop them so she always sits on the surface
+      const gap = m.state === 'jump' ? 0 : footGap(anim, frame);
+      const x = Math.round(m.x - sz.w / 2), y = Math.round(m.y - sz.h + gap);
       SE.drawAnim(anim, x, y, 0, { frame, flip: !!flip });
       return { x, y, w: sz.w, h: sz.h };
     };
