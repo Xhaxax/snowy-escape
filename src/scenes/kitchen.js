@@ -97,8 +97,9 @@
     kmochi.draw();
   }
   // Mochi in the kitchen: only where nothing stands in front of her or under her paws: the window
-  // sill right of the jars, the clear end of the island, and the floor. Never the counter or the board.
-  const KCAT_SURF = { sill: [284, 322, 134], island: [246, 262, 188], floor: [150, 330, 262] };
+  // sill right of the jars, the open stretch of the island top between the lantern and the spice jar
+  // (paws on the middle of the top, not its back edge), and the floor. Never the counter or the board.
+  const KCAT_SURF = { sill: [284, 322, 134], island: [194, 212, 200], floor: [150, 330, 262] };
   const KCAT_LINKS = [['floor', 'island'], ['island', 'sill']];
   let kmochi = null;
 
