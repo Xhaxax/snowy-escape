@@ -8,6 +8,8 @@
   const NB = { open: false, spread: 0, photo: null, turn: 0 };
   SE.notebook = NB;
   const BOOK = { w: 400, h: 240 };
+  // three takes of a page turning, so flipping through never sounds like one repeated sample
+  const turnPage = () => SE.audio.sfx(SE.pick(['page', 'page2', 'page3']));
   // page areas inside ui/notebook.png (the ribbon hangs below the gutter)
   const LEFT = { x: 94, y: 42, w: 98, h: 140 }, RIGHT = { x: 216, y: 42, w: 98, h: 140 };
   const INK = '#3b2c26', SOFT = '#7a6656', RED = '#9c3b2e';
@@ -21,12 +23,12 @@
   SE.MOMENTS.pocket = [{ img: 'cut/pocket', dur: 2.0, text: '', pan: 1, sounds: [[0.2, 'rustle'], [1.1, 'rustle']] }];
   SE.openNotebook = function () {
     if (NB.open || SE.momentPlaying()) return;
-    SE.moment('pocket', { force: true, then: () => { NB.open = true; NB.photo = null; SE.modal = 'notebook'; SE.audio.sfx('page'); } });
+    SE.moment('pocket', { force: true, then: () => { NB.open = true; NB.photo = null; SE.modal = 'notebook'; turnPage(); } });
   };
-  function close() { NB.open = false; NB.photo = null; if (SE.modal === 'notebook') SE.modal = null; SE.audio.sfx('page'); }
+  function close() { NB.open = false; NB.photo = null; if (SE.modal === 'notebook') SE.modal = null; turnPage(); }
   function turn(d) {
     const n = SE.clamp(NB.spread + d, 0, SPREADS.length - 1);
-    if (n !== NB.spread) { NB.spread = n; NB.turn = 1; SE.audio.sfx('page'); }
+    if (n !== NB.spread) { NB.spread = n; NB.turn = 1; turnPage(); }
   }
 
   const write = (text, x, y, o = {}) => SE.text(text, x, y, Object.assign({ size: 7, color: INK, shadow: false }, o));
@@ -176,18 +178,36 @@
     for (let t = TABS.length - 1; t >= 0; t--) if (i >= TABS[t][2]()) return t;
     return 0;
   }
+  // The tabs are stuck onto the pages: three along the top edge and three along the bottom, each
+  // with its sticky end on the paper and its labelled flag standing out past the edge of the book.
+  // The open section's tab stands out a little further.
+  // [x on the book, edge, the paper's edge there (measured on ui/notebook: the pages curve up toward the spine)]
+  const TAB_POS = [[96, 'top', 37], [140, 'top', 35], [252, 'top', 35], [100, 'bottom', 182], [146, 'bottom', 181], [262, 'bottom', 182]];
   function drawTabs(ctx, bx, by) {
     const cur = tabOf(NB.spread);
     TABS.forEach(([label, col, to], t) => {
-      const on = t === cur, w = 38, h = 15, x = bx + BOOK.w - 14 + (on ? 4 : 0), y = by + 26 + t * 21;
+      const [px, side, py] = TAB_POS[t], on = t === cur, w = 34, stick = 3;
+      const x = bx + px;
+      const top = side === 'top';
+      // the cover is thin above the paper but deep below it: bottom flags reach past it too
+      const flag = (top ? 11 : 25) + (on ? 4 : 0);
+      const edge = by + py;
+      const y = top ? edge - flag : edge - stick, h = flag + stick;
       const r = { x, y, w, h };
       const hover = !NB.photo && SE.inRect(SE.mouse.x, SE.mouse.y, r);
-      ctx.fillStyle = 'rgba(20,12,20,0.35)'; ctx.fillRect(x + 1, y + 2, w, h);
+      // a soft shadow where the note lies on the paper, and under the flag
+      ctx.fillStyle = 'rgba(40,24,16,0.22)';
+      if (top) ctx.fillRect(x + 1, edge, w, stick + 1); else ctx.fillRect(x + 1, edge - stick - 1, w, stick + 1);
+      ctx.fillStyle = 'rgba(20,12,20,0.3)'; ctx.fillRect(x + 2, top ? y + 1 : y + 2, w, h);
       ctx.fillStyle = col; ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x, y, w, 2);   // the sticky strip
-      ctx.fillStyle = 'rgba(0,0,0,0.12)'; ctx.fillRect(x, y + h - 1, w, 1);
-      write(label, x + 5 + (hover ? 1 : 0), y + 3, { size: 7, color: '#3b2c26' });
-      if (hover) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; const n = to(); if (n >= 0 && n !== NB.spread) { NB.spread = n; NB.turn = 1; SE.audio.sfx('page'); } } }
+      // the sticky strip on the page is a touch paler (glued flat), the free end catches the light
+      ctx.fillStyle = 'rgba(255,250,235,0.28)';
+      if (top) ctx.fillRect(x, edge, w, stick); else ctx.fillRect(x, edge - stick, w, stick);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x, top ? y : y + h - 2, w, 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.14)'; ctx.fillRect(x, top ? edge - 1 : edge, w, 1); // the fold where it leaves the page
+      const ty = top ? y + 2 : edge + flag - 9;
+      write(label, x + w / 2 + (hover ? 1 : 0), ty, { size: 7, color: '#3b2c26', align: 'center' });
+      if (hover) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; const n = to(); if (n >= 0 && n !== NB.spread) { NB.spread = n; NB.turn = 1; turnPage(); } } }
     });
   }
 
@@ -199,7 +219,7 @@
     NB.turn = Math.max(0, NB.turn - dt * 5);
     if (img) ctx.drawImage(img, bx, by - Math.round(NB.turn * 3));
     drawRibbon(ctx, bx, by - Math.round(NB.turn * 3));
-    drawTabs(ctx, bx, by);
+    drawTabs(ctx, bx, by - Math.round(NB.turn * 3));
     const L = { x: bx + LEFT.x, y: by + LEFT.y, w: LEFT.w, h: LEFT.h }, R = { x: bx + RIGHT.x, y: by + RIGHT.y, w: RIGHT.w, h: RIGHT.h };
     const sv = SE.save, W = SE.WILDLIFE || {};
     write(spreadTitle(NB.spread), SE.W / 2, by + 16, { align: 'center', size: 8, color: '#f3e6cf', shadow: true });
@@ -219,7 +239,7 @@
       row('Focus sessions', sv.focusSessions);
       y += 4;
       write(`Achievements ${SE.ach.count()}/${SE.ach.list.length}  ▶`, L.x, y, { color: RED });
-      if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: L.x, y, w: L.w, h: 9 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('Achievements'); NB.turn = 1; SE.audio.sfx('page'); } }
+      if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: L.x, y, w: L.w, h: 9 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('Achievements'); NB.turn = 1; turnPage(); } }
       write('Field guide', R.x, R.y, { size: 8, color: RED });
       KINDS.forEach((k, i) => {
         const cx = R.x + (i % 2) * 52, cy = R.y + 12 + Math.floor(i / 2) * 32;
@@ -227,7 +247,7 @@
         ctx.strokeStyle = 'rgba(122,102,86,0.5)'; ctx.strokeRect(cx + 0.5, cy + 0.5, 47, 23);
         if (seen) SE.drawSketchPage(ctx, k, cx + 1, cy + 1, 46, 22, Math.max(0.12, n / N)); else write('?', cx + 24, cy + 7, { align: 'center', color: SOFT });
         write(seen ? `${(SE.PINES[k] || {}).name.split(' ').pop()} ${n}/${N}` : '???', cx + 24, cy + 25, { align: 'center', size: 6, color: seen ? INK : SOFT });
-        if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: cy, w: 48, h: 30 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('field:' + k); NB.turn = 1; SE.audio.sfx('page'); } }
+        if (SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: cy, w: 48, h: 30 })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; NB.spread = SPREADS.indexOf('field:' + k); NB.turn = 1; turnPage(); } }
       });
     } else if (SPREADS[NB.spread].startsWith('Achievements')) {
       const first = SPREADS[NB.spread] === 'Achievements' ? 0 : 2;

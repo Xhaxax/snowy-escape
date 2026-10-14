@@ -72,7 +72,9 @@ SOUNDS = {
     'sfx_scribble': ('a pencil sketching quickly on paper in a notebook, soft scratchy strokes', 2.0),
     # reading the Bible: a heavy old book's thin pages
     'sfx_bible': ('slowly turning one thin page of a heavy old leather-bound Bible, a soft delicate paper whisper, close, quiet room, no crinkle, no music', 1.2),
-    'sfx_page': ('a single soft page of a small leather notebook being turned slowly by hand, gentle quiet paper flip, close, no crinkling, no music', 0.8),
+    'sfx_page': ('flipping one page of a hardcover paper notebook by hand: a quick dry paper swish and the soft flap of the page landing, close, natural, no crinkling, no plastic, no music', 0.9),
+    'sfx_page2': ('turning a single thick paper page in a journal: a light airy paper whoosh and a gentle soft landing of the page, close, natural, no crinkle, no music', 0.9),
+    'sfx_page3': ('a page of an old notebook turned slowly: soft papery brush and a muffled flap, close and quiet, natural, no crinkling, no music', 1.0),
     # shoveling the path: the blade going into the snow, then the snow thrown aside
     'sfx_shovel': ('a metal snow shovel pushed into deep packed snow, a scraping crunchy scoop, outdoors, close', 1.0),
     'sfx_toss': ('a shovelful of heavy snow thrown onto a snow bank, a soft heavy whumpf of falling snow', 0.8),
