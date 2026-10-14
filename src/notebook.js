@@ -252,7 +252,6 @@
         // left page: the sketch, as far as you have got with it
         const n = Math.min(SE.sketchTrips(k), (sv.sketches || {})[k] || 0), N = SE.sketchTrips(k);
         write(P.name, L.x, L.y, { size: 8, color: RED });
-        ctx.strokeStyle = 'rgba(122,102,86,0.45)'; ctx.strokeRect(L.x + 0.5, L.y + 12.5, L.w - 1, 56);
         SE.drawSketchPage(ctx, k, L.x + 1, L.y + 13, L.w - 2, 55, n / N);
         let y = L.y + 74;
         write(n >= N ? 'Sketch finished!' : `Sketch: ${n} of ${N} sittings`, L.x, y, { color: n >= N ? RED : INK }); y += 10;

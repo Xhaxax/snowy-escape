@@ -230,17 +230,17 @@
   }
   // the notebook still for stage n of an animal's sketch (cut/sketch_<kind>_<n>)
   SE.sketchStill = (kind, n) => `cut/sketch_${kind}_${Math.max(1, Math.min(SE.sketchTrips(kind), n))}`;
-  // The sketch on its page: the drawing as far as you have got, cut from that stage's notebook still
-  // (the right-hand page in cut/sketch_*). Nothing drawn yet: an empty page.
-  const PAGE = { x: 104, y: 22, w: 92, h: 90 }; // the right-hand page of the close-up notebook still
+  // The sketch on its page: just the pencil drawing as far as you have got (assets/img/sketch/
+  // <kind>_<n>.png, the same drawing as the cutscene's notebook page, without page or glove), set
+  // straight onto the paper so there are no edges. Nothing drawn yet: an empty page.
   SE.drawSketchPage = function (ctx, kind, x, y, w, h, frac) {
     const N = SE.sketchTrips(kind), n = Math.round(frac * N);
     if (n <= 0) return;
-    const img = SE.img(SE.sketchStill(kind, n));
+    const img = SE.img(`sketch/${kind}_${Math.min(N, n)}`);
     if (!img) return;
-    const sc = Math.min(w / PAGE.w, h / PAGE.h), dw = PAGE.w * sc, dh = PAGE.h * sc;
+    const sc = Math.min(w / img.width, h / img.height, 2), dw = Math.round(img.width * sc), dh = Math.round(img.height * sc);
     ctx.save(); ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, PAGE.x, PAGE.y, PAGE.w, PAGE.h, Math.round(x + (w - dw) / 2), Math.round(y + (h - dh) / 2), Math.round(dw), Math.round(dh));
+    ctx.drawImage(img, Math.round(x + (w - dw) / 2), Math.round(y + (h - dh) / 2), dw, dh);
     ctx.restore();
   };
 

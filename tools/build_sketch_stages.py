@@ -24,7 +24,7 @@ def lum(c):
     return 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
 
 
-def stage(page, art, f, rnd):
+def stage(page, art, f, rnd, bare=False):
     """page with the drawing at fraction f (0..1] of the way to finished"""
     art = art.crop(art.getbbox())
     sc = min(1.0, MAXW / art.width, MAXH / art.height)
@@ -69,20 +69,28 @@ def stage(page, art, f, rnd):
         if not (0 <= X < out.width and 0 <= Y < out.height):
             continue
         base = o[X, Y]
-        if lum(base) < 170 or base[0] - base[2] > 70:  # not paper (the glove, the pencil, the fold): it is in front
+        if not bare and (lum(base) < 170 or base[0] - base[2] > 70):  # not paper (the glove, the pencil, the fold): it is in front
             continue
         ink = tuple(int(GRAPHITE[i] * (0.55 + 0.45 * (1 - dark)) ) for i in range(3))
-        o[X, Y] = tuple(int(base[i] * (1 - alpha) + ink[i] * alpha) for i in range(3)) + (255,)
+        if bare:  # just the pencil on clear paper, for the notebook page
+            o[X, Y] = ink + (int(255 * alpha),)
+        else:
+            o[X, Y] = tuple(int(base[i] * (1 - alpha) + ink[i] * alpha) for i in range(3)) + (255,)
     return out
 
 
 def main():
+    import os
+    os.makedirs(f'{ROOT}/sketch', exist_ok=True)
     page = Image.open(f'{ROOT}/sketch_src/page.png').convert('RGBA')
     for kind, n in TRIPS.items():
         art = Image.open(f'{ROOT}/sketch_src/{kind}.png').convert('RGBA')
         for k in range(1, n + 1):
             rnd = random.Random(kind)  # the same stroke order every stage
             stage(page, art, k / n, rnd).save(f'{ROOT}/cut/sketch_{kind}_{k}.png')
+            # the drawing alone (no glove, no page), cropped: what the field guide shows
+            bare = stage(Image.new('RGBA', page.size, (0, 0, 0, 0)), art, k / n, random.Random(kind), bare=True)
+            bare.crop(bare.getbbox() or (0, 0, 1, 1)).save(f'{ROOT}/sketch/{kind}_{k}.png')
         print(kind, n)
 
 
