@@ -6,7 +6,7 @@
   const WINDOWS = [{ x: 186, y: 175, r: 20 }, { x: 277, y: 176, r: 20 }, { x: 230, y: 118, r: 16 }, { x: 356, y: 183, r: 18 }, { x: 256, y: 171, r: 9 }];
   let menu = 'main', confirmT = 0;
   // where a saved journey picks up again
-  const RESUME = { cabin: 'cabin', woodlot: 'woodlot', lake: 'lake', forest: 'forest', summit: 'summit', trail: 'map', chapel: 'chapel' };
+  const RESUME = { hall: 'hall', cabin: 'cabin', woodlot: 'woodlot', lake: 'lake', forest: 'forest', summit: 'summit', trail: 'map', chapel: 'chapel' };
   const hasJourney = () => !!SE.hadSave && (SE.save.day > 1 || SE.save.distance > 0 || SE.save.cooked > 0 || SE.save.logs > 0 || SE.fishCount() > 0 || SE.save.prayers > 0);
   function start(scene, params) { SE.audio.unlock(); SE.audio.sfx('door'); menu = 'main'; SE.go(scene, params || {}); }
 

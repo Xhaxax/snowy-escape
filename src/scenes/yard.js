@@ -52,7 +52,7 @@
       if (SE.weather.stormy() && s.t > 2 && !s.leaving) {
         s.leaving = true;
         SE.toast('The storm is too strong — back inside you go!', '#cfe6ff');
-        setTimeout(() => { if (SE.sceneName === 'yard') SE.go('cabin', { inDoor: true }); }, 1600);
+        setTimeout(() => { if (SE.sceneName === 'yard') SE.go('hall', { fromOutside: true }); }, 1600);
       }
       // just watching: he stays put in the yard
       if (mode === 'rock') { drawRock(ctx, dt); SE.hud.draw(ctx, { title: 'The rocking chair', subtitle: 'creak… creak…', map: false }); return; }
@@ -139,7 +139,7 @@
     const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
     if (SE.watching() || mode === 'busy' || SE.momentPlaying()) return;
     const items = mode === 'yard'
-      ? [['Chop wood', 62, () => SE.go('woodlot')], ['Shovel snow', 70, shovel], ['Rocking chair', 74, porch], ['Go inside', 58, () => SE.moment('home', { go: ['cabin', { inDoor: true }] })], ['Wander off', 64, leave]]
+      ? [['Chop wood', 62, () => SE.go('woodlot')], ['Shovel snow', 70, shovel], ['Rocking chair', 74, porch], ['Go inside', 58, () => SE.moment('home', { go: ['hall', { fromOutside: true }] })], ['Wander off', 64, leave]]
       : [];
     // a column on the right, so the woodpile and Waffles stay visible along the bottom
     let y = SE.H - 6 - items.length * 20;

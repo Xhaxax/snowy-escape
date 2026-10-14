@@ -2,9 +2,7 @@
 'use strict';
 
 (function () {
-  const WINDOWS = [{ x: 265, y: 66, w: 78, h: 64 }, { x: 441, y: 89, w: 15, h: 30 }]; // big window + the pane in the front door
-  // the front door in the right wall: you come in (and go out) through it
-  const DOOR = { x: 430, y: 64, w: 41, h: 168, hinge: 471 };
+  const WINDOWS = [{ x: 265, y: 66, w: 78, h: 64 }, { x: 443, y: 58, w: 34, h: 104 }]; // big window + the tall side window
   const POS = {
     dog: { x: 120, y: 254 },  // Waffles on the rug in front of the fire
     cat: { x: 292, y: 134 },  // Mochi on the windowsill, watching the snow
@@ -13,9 +11,10 @@
   };
   // where Mochi can be in the living room, and the jumps between those spots
   // (cat spots, not the middle of the couch: the armrests, the corner of the couch back, the sill)
-  const CAT_SURF = { sill: [262, 336, 134], armL: [203, 209, 164], armR: [365, 371, 167], couchBack: [222, 232, 142], coffee: [318, 326, 200], shelf: [198, 234, 68], mat: [404, 428, 240], rug: [200, 300, 256] };
-  const CAT_LINKS = [['rug', 'armL'], ['armL', 'couchBack'], ['couchBack', 'sill'], ['couchBack', 'shelf'], ['rug', 'armR'], ['armR', 'sill'], ['rug', 'coffee'], ['rug', 'mat']];
+  const CAT_SURF = { sill: [262, 336, 134], armL: [203, 209, 164], armR: [365, 371, 167], couchBack: [222, 232, 142], coffee: [318, 326, 200], shelf: [198, 234, 68], shelfR: [416, 432, 172], rug: [212, 300, 256] }; // the rug starts past Waffles (120–184)
+  const CAT_LINKS = [['rug', 'armL'], ['armL', 'couchBack'], ['couchBack', 'sill'], ['couchBack', 'shelf'], ['rug', 'armR'], ['armR', 'sill'], ['rug', 'coffee'], ['armR', 'shelfR']];
   let mochi = null;
+  const dir = { t: 0, dur: 0 }; // (kept for the petting callbacks)
   let mode = 'room', sip = 0, sips = 0, drink = 'cocoa', steam = [], idleHint = 0;
 
   function bottomOf(anim, x, y) { const s = SE.animSize(anim); return { x: Math.round(x), y: Math.round(y - s.h), w: s.w, h: s.h }; }
@@ -86,85 +85,8 @@
     else SE.toast(auto ? 'A fresh log on the fire. Crackle, pop.' : 'The fire crackles happily.', '#ffe6b8');
     return true;
   }
-  function goOutside() {
-    if (SE.weather.stormy()) { SE.toast('Too stormy to go out. The fire and Mochi are right here.', '#cfe6ff'); return; }
-    if (doorT > 0) return;
-    SE.audio.sfx('door'); SE.audio.sfx('gust');
-    doorT = 1.5; doorOut = true;
-    setTimeout(() => { if (SE.sceneName === 'cabin') SE.go('yard'); }, 650);
-  }
-
-  // The door swings in on its hinge: cold daylight (or night) in the gap, a gust of snow across the mat.
-  let doorT = 0, doorOut = false;
-  const gust = [];
-  function drawDoor(ctx, dt) {
-    if (doorT <= 0) return;
-    doorT -= dt;
-    const k = doorT / 1.5;
-    const open = Math.sin(Math.min(1, (1 - k) * 2.2) * Math.PI / 2) * (doorOut ? 1 : Math.min(1, k * 2.2));
-    if (open < 0.02) return;
-    const n = SE.weather.night(), ang = open * Math.PI * 0.45;
-    // the leaf turns in on its hinge (right edge): seen ever more edge-on, its free edge nearer to us
-    const leafW = Math.max(4, Math.round(DOOR.w * Math.cos(ang) + 9 * Math.sin(ang)));
-    const gapR = DOOR.hinge - leafW;
-    if (gapR > DOOR.x) {
-      // through the gap: snowy yard, dark pines, falling snow (blue-black at night)
-      const gw = gapR - DOOR.x, gy = DOOR.y + DOOR.h * 0.62;
-      const sky = ctx.createLinearGradient(0, DOOR.y, 0, gy);
-      sky.addColorStop(0, n > 0.5 ? '#0e1230' : '#9fb0d6'); sky.addColorStop(1, n > 0.5 ? '#26305e' : '#dfe6f4');
-      ctx.fillStyle = sky; ctx.fillRect(DOOR.x, DOOR.y, gw, gy - DOOR.y);
-      ctx.fillStyle = n > 0.5 ? '#0c1a26' : '#2e4a4c';
-      for (let i = 0; i < 4; i++) {
-        const tx = DOOR.x + 4 + i * 11, th = 26 + (i % 2) * 14;
-        ctx.beginPath(); ctx.moveTo(tx, gy - th); ctx.lineTo(tx + 7, gy); ctx.lineTo(tx - 7, gy); ctx.fill();
-      }
-      const snow = ctx.createLinearGradient(0, gy, 0, DOOR.y + DOOR.h);
-      snow.addColorStop(0, n > 0.5 ? '#3a4680' : '#e8eef8'); snow.addColorStop(1, n > 0.5 ? '#5a66a0' : '#ffffff');
-      ctx.fillStyle = snow; ctx.fillRect(DOOR.x, gy, gw, DOOR.y + DOOR.h - gy);
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      for (let i = 0; i < 14; i++) {
-        const fx = DOOR.x + ((i * 37 + SE.time * 30) % gw), fy = DOOR.y + ((i * 53 + SE.time * 40) % DOOR.h);
-        ctx.fillRect(Math.round(fx), Math.round(fy), 1, 1);
-      }
-      ctx.fillStyle = '#1e120e'; ctx.fillRect(DOOR.x - 1, DOOR.y, 1, DOOR.h); // the frame edge
-    }
-    // the leaf itself: the painted door, squeezed toward the hinge and a touch taller at its free edge
-    const img = SE.img('bg_living');
-    if (img) {
-      const grow = Math.round(6 * Math.sin(ang));
-      ctx.drawImage(img, DOOR.x, DOOR.y, DOOR.w, DOOR.h, gapR, DOOR.y - grow, leafW, DOOR.h + grow * 2);
-      ctx.fillStyle = `rgba(20,10,8,${0.35 * Math.sin(ang)})`; ctx.fillRect(gapR, DOOR.y - grow, leafW, DOOR.h + grow * 2);
-    }
-    // cold light spilling across the floor, and snow blowing in
-    ctx.save(); ctx.globalCompositeOperation = 'lighter';
-    ctx.fillStyle = `rgba(150,180,230,${(n > 0.5 ? 0.08 : 0.2) * open})`;
-    ctx.beginPath(); ctx.moveTo(DOOR.x, DOOR.y + DOOR.h); ctx.lineTo(gapR, DOOR.y + DOOR.h); ctx.lineTo(gapR - 30, SE.H); ctx.lineTo(DOOR.x - 80, SE.H); ctx.fill();
-    ctx.restore();
-    if (gapR > DOOR.x && Math.random() < dt * 40 * open) gust.push({ x: DOOR.x + Math.random() * (gapR - DOOR.x), y: DOOR.y + 20 + Math.random() * (DOOR.h - 30), vx: -SE.rand(40, 90), vy: SE.rand(5, 25), t: 0 });
-  }
-  function drawGust(ctx, dt) {
-    for (let i = gust.length - 1; i >= 0; i--) {
-      const f = gust[i]; f.t += dt; f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= 0.97;
-      if (f.t > 1.2) { gust.splice(i, 1); continue; }
-      ctx.fillStyle = `rgba(255,255,255,${0.9 * (1 - f.t / 1.2)})`; ctx.fillRect(Math.round(f.x), Math.round(f.y), 1, 1);
-    }
-  }
-
-  // Watch mode: a gentle director cycles couch → pets → couch, each time a little different.
-  const dir = { t: 0, dur: 0, last: null };
-  function direct(dt) {
-    dir.t += dt;
-    if (mode === 'busy' || SE.momentPlaying()) return;
-    if (SE.save.fire < 0.4 && SE.save.wood > 0 && (dir.fireT = (dir.fireT || 0) + dt) > 3) { dir.fireT = 0; addLog(true); }
-    if (dir.t < dir.dur) return;
-    const options = ['couch', 'couch', 'petDog', 'petCat', 'room', 'bible'].filter((m) => m !== dir.last && m !== mode);
-    const next = SE.pick(options);
-    dir.last = next; dir.t = 0;
-    if (next === 'couch') { sitDown(true); dir.dur = SE.rand(35, 55); }
-    else if (next === 'room') { mode = 'room'; dir.dur = SE.rand(12, 20); }
-    else if (next === 'bible') { readBible(); dir.dur = 999; }
-    else { startPet(next === 'petDog' ? 'dog' : 'cat'); dir.dur = 999; }
-  }
+  // the front door is in the entrance hall now
+  function goOutside() { SE.go('hall', {}); }
 
   SE.addScene('cabin', {
     enter(p) {
@@ -176,7 +98,6 @@
       SE.audio.woodSteps(p.arrived || p.from === 'yard' || p.inDoor ? 2 : 3);
       if (p.arrived) SE.toast('Home. Mochi was waiting by the door.', '#ffe6b8');
       // coming in from outside: the front door is still swinging shut behind you
-      if (p.arrived || p.from === 'yard' || p.inDoor) { doorT = 1.5; doorOut = false; gust.length = 0; setTimeout(() => SE.audio.sfx('latch'), 1100); }
       // the first time in the cabin after dark each day, he lights the lantern (a little moment)
       if (SE.weather.night() > 0.5 && SE.save.lanternDay !== SE.save.day) { SE.save.lanternDay = SE.save.day; SE.persist(); setTimeout(() => { if (SE.sceneName === 'cabin') SE.moment('lantern'); }, 700); }
     },
@@ -189,16 +110,13 @@
       SE.drawImg('bg_living', 0, 0);
       if (mode === 'couch') drawCouchArt(ctx);
       SE.weather.windows(ctx, WINDOWS);
-      drawDoor(ctx, dt);
       // Waffles and Mochi are part of the room: drawn before the night falls over it, so after dark
       // they sink into the dusk like the furniture and only the firelight picks them out
       const dogR = SE.drawDogRest(POS.dog.x, POS.dog.y, {});
       let catR = null;
       if (mode !== 'couch' && mochi) { mochi.update(dt); catR = mochi.draw(); }
       SE.weather.interior(ctx);
-      drawGust(ctx, dt);
       if (mode === 'room' && !SE.watching() && hotspot(BIBLE, 'Read the Bible')) readBible();
-      if (mode === 'room' && !SE.watching() && doorT <= 0 && hotspot(DOOR, SE.weather.stormy() ? 'The storm howls outside' : 'Step outside')) goOutside();
 
       // fire (its size follows the fire level) + lamps that matter more at night
       const fire = SE.save.fire, night = SE.weather.night();
@@ -234,7 +152,7 @@
           ['Read the Bible', 78, readBible],
           ['Kitchen', 52, () => SE.go('kitchen')],
           ['Bedroom', 52, () => SE.go('bedroom')],
-          ['Step outside', 70, goOutside],
+          ['Entrance', 56, goOutside],
         ];
         let x = SE.W - 6 - items.reduce((s, i) => s + i[1] + 4, 0);
         for (const [label, w, cb] of items) { if (SE.button(x, by, w, 18, label, { alpha: a })) cb(); x += w + 4; }

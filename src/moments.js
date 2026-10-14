@@ -146,7 +146,7 @@
   const BASE = {
     alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
     shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'day', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
-    leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
+    leave: 'night', leave_door: 'night', leave_coat: 'day', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
   };
   SE.CUT_VARIANTS = {
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
@@ -156,7 +156,7 @@
   };
   // Stills that happen indoors only change between day and night (lamplight stays warm either way);
   // everything else is outdoors and also gets the live snowfall of the current weather on top.
-  const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake|fire_)|kitchen_)/;
+  const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake|fire_|leave_)|kitchen_)/;
   SE.stillIndoor = (img) => INDOOR.test(img);
   function wanted(img) {
     const W = SE.weather;

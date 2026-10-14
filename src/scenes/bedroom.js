@@ -5,7 +5,7 @@
 
 (function () {
   const WINDOW = [{ x: 238, y: 54, w: 92, h: 70 }];
-  const BED_SURF = { quilt: [190, 290, 162], chest: [298, 334, 152], rug: [150, 330, 262] };
+  const BED_SURF = { quilt: [190, 290, 162], chest: [298, 334, 152], rug: [302, 350, 262] }; // the rug right of Waffles (he sleeps at 214–278)
   const BED_LINKS = [['rug', 'quilt'], ['quilt', 'chest'], ['rug', 'chest']];
   let mochi = null, busy = false;
 
