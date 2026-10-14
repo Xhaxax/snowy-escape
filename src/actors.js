@@ -96,12 +96,13 @@
   // What he carries when it is dark out: a lantern swinging at his side at night, and a headlamp
   // when the snow comes down hard (its beam cuts a cone through the flakes the way he faces).
   // (x, y) is about his hand; dir is +1 facing right, -1 facing left. Drawn after the night tint.
-  SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1) {
+  // head: where his forehead is in this scene's sprite, so the headlamp sits on his beanie
+  SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1, head = null) {
     const W = SE.weather, n = W.night();
     const heavy = W.stormy() || W.mode === 'windy' || W.mode === 'snowy';
     const fl = 0.9 + 0.1 * Math.sin(SE.time * 9) * Math.sin(SE.time * 3.7);
     if (heavy && (n > 0.25 || W.stormy())) {
-      const hx = x, hy = y - 14 * scale, k = W.stormy() ? 1 : SE.clamp(n * 1.4, 0, 1);
+      const hx = head ? head.x : x, hy = head ? head.y : y - 14 * scale, k = W.stormy() ? 1 : SE.clamp(n * 1.4, 0, 1);
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const g = ctx.createLinearGradient(hx, hy, hx + dir * 120 * scale, hy + 30 * scale);
       g.addColorStop(0, `rgba(235,240,255,${0.32 * k})`); g.addColorStop(1, 'rgba(235,240,255,0)');
@@ -109,7 +110,10 @@
       ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + dir * 120 * scale, hy - 18 * scale); ctx.lineTo(hx + dir * 120 * scale, hy + 46 * scale); ctx.closePath(); ctx.fill();
       ctx.restore();
       SE.glow(ctx, hx, hy, 8 * scale, '240,245,255', 0.6 * k);
-      ctx.fillStyle = '#fffbe8'; ctx.fillRect(Math.round(hx), Math.round(hy), 2, 1);
+      // the lamp itself, strapped over the beanie: a dark band and the bright little lens
+      ctx.fillStyle = '#1c1a22'; ctx.fillRect(Math.round(hx - 3 * scale), Math.round(hy), Math.max(2, Math.round(6 * scale)), 1);
+      ctx.fillStyle = '#3a3640'; ctx.fillRect(Math.round(hx - (dir < 0 ? 1 : 0)), Math.round(hy - 1), 2, 2);
+      ctx.fillStyle = '#fffbe8'; ctx.fillRect(Math.round(hx + (dir < 0 ? -1 : 1)), Math.round(hy - 1), 1, 1);
       return;
     }
     if (n < 0.35) return;

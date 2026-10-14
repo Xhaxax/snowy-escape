@@ -55,7 +55,7 @@
       } else SE.drawActorFallback(ctx, 210, 196, '#a0522d');
 
       SE.weather.tint(ctx, 0.75);
-      SE.travelerLight(ctx, 184, 234, 1); // the lantern set down on the ledge beside them
+      SE.travelerLight(ctx, 184, 234, 1, 1, { x: 228, y: 239 - (SE.animSize('summit_pair').h || 60) + 12 }); // the lantern on the ledge (or his headlamp)
       SE.weather.stars(ctx, 90);
 
       // shooting stars

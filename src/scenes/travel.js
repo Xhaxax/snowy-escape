@@ -101,6 +101,7 @@
         SE.drawAnim(walkAnim, tx, ty, 0, { frame });
         SE.headphones(ctx, tx + 14, ty + 3);
         s.heroAt = [tx + SE.animSize(walkAnim).w * 0.62, ty + SE.animSize(walkAnim).h * 0.58];
+        s.headAt = { x: tx + SE.animSize(walkAnim).w * 0.66, y: ty + SE.animSize(walkAnim).h * 0.16 };
         if (walking && frame !== s.lastFrame && (frame === 1 || frame === 5)) {
           SE.audio.sfx('step', { deep: SE.weather.stormy() || SE.save.snowDepth > 0.6 });
           s.prints.push({ x: tx + (frame === 1 ? 4 : 14), y: GROUND + 2 + (frame === 1 ? 0 : 3), s: s.scroll });
@@ -117,7 +118,7 @@
       } else SE.drawActorFallback(ctx, dx, GROUND - 22, '#2b2220', true);
 
       SE.weather.tint(ctx, 0.8);
-      if (s.heroAt) SE.travelerLight(ctx, s.heroAt[0], s.heroAt[1], 1);
+      if (s.heroAt) SE.travelerLight(ctx, s.heroAt[0], s.heroAt[1], 1, 1, s.headAt);
       SE.weather.stars(ctx, 50);
       SE.weather.sunshine(ctx, 200);
       SE.weather.draw(ctx);

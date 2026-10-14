@@ -38,8 +38,7 @@
       }
       SE.weather.tint(ctx);
       // a headlamp on his beanie in heavy weather (facing the stump), otherwise the lantern set down in the snow
-      const W = SE.weather, heavy = W.stormy() || W.mode === 'windy' || W.mode === 'snowy';
-      if (heavy) SE.travelerLight(ctx, HEAD.x - 4, HEAD.y + 22, -1); else SE.travelerLight(ctx, 322, 224, 1);
+      SE.travelerLight(ctx, 268, 224, -1, 1, { x: HEAD.x - 7, y: HEAD.y + 8 }); // lantern in the snow, or the headlamp on his beanie
       SE.weather.stars(ctx, 60);
       SE.weather.sunshine(ctx, 215);
       SE.weather.draw(ctx);

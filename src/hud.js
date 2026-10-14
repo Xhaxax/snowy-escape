@@ -63,6 +63,7 @@
   // ------------------------------------------------------------ main draw
   // opts: { title, back: fn|null, map: bool }
   H.draw = function (ctx, opts = {}) {
+    if (SE.applyLighting) SE.applyLighting(ctx); // light the characters before the UI goes on top
     F.update(SE.dt);
     const hideUi = SE.save.settings.hideUi && !H.panel && !SE.modal;
     const target = hideUi && SE.idleTime > 7 ? 0 : 1;

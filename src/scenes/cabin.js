@@ -134,8 +134,7 @@
       if (dogR && mode === 'room' && !SE.watching() && hotspot(dogR, 'Pet Waffles')) startPet('dog');
       if (mode === 'couch') drawCouch(ctx, dt);
       else if (catR && mode === 'room' && !SE.watching() && hotspot(catR, 'Pet Mochi')) startPet('cat');
-      // a warm rim of firelight along Waffles' back when the room is dark
-      if (dogR && night > 0.3) SE.glow(ctx, dogR.x + 8, dogR.y + 8, 26, '255,150,70', 0.18 * night * fl * flick);
+
 
       // warm vignette
       const v = ctx.createRadialGradient(SE.W / 2, SE.H / 2, 120, SE.W / 2, SE.H / 2, 300);
