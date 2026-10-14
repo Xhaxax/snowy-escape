@@ -26,10 +26,6 @@ window.SE_MANIFEST = {
    "frames": 8,
    "fps": 6.0
   },
-  "chop": {
-   "frames": 9,
-   "fps": 12.0
-  },
   "shovel": {
    "frames": 9,
    "fps": 7.0
@@ -237,6 +233,10 @@ window.SE_MANIFEST = {
   "couch_sip": {
    "frames": 10,
    "fps": 5.0
+  },
+  "chop_big": {
+   "frames": 14,
+   "fps": 11.0
   }
  }
 };

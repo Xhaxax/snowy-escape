@@ -4,9 +4,12 @@
 'use strict';
 
 (function () {
-  const CHOP = { x: 262, y: 246 };  // feet of the chopper (his stump is part of the sprite)
-  const DOG = { x: 330, y: 250 };
-  const PILE = { x: 156, y: 244 };   // the fresh split logs, growing beside the block
+  const CHOP = { x: 186, y: 178 };  // the top of the log on the clearing's own stump (where chips fly)
+  const MAN = { x: 150, y: 104 };   // chop_big is painted over this 128x128 corner of bg_woodlot
+  const HEAD = { x: 241, y: 136 };  // his beanie, for the headphones
+  const IMPACT = 5;                  // the chop_big frame where the axe bites
+  const DOG = { x: 220, y: 258 };  // in the snow between the two felled trunks
+  const PILE = { x: 266, y: 228 };   // the fresh split logs, growing beside him
   const ROUND = 5;                  // good splits before the wood is stacked and carried in
   let s = null;
 
@@ -34,7 +37,9 @@
         ctx.fillStyle = c.c; ctx.fillRect(Math.round(c.x), Math.round(c.y), c.s, c.s);
       }
       SE.weather.tint(ctx);
-      SE.travelerLight && SE.travelerLight(ctx, CHOP.x + 20, CHOP.y - 30);
+      // a headlamp on his beanie in heavy weather (facing the stump), otherwise the lantern set down in the snow
+      const W = SE.weather, heavy = W.stormy() || W.mode === 'windy' || W.mode === 'snowy';
+      if (heavy) SE.travelerLight(ctx, HEAD.x - 4, HEAD.y + 22, -1); else SE.travelerLight(ctx, 322, 224, 1);
       SE.weather.stars(ctx, 60);
       SE.weather.sunshine(ctx, 215);
       SE.weather.draw(ctx);
@@ -46,10 +51,13 @@
 
   function drawActors(ctx, dt) {
     SE.drawWoodpile(ctx, PILE.x, PILE.y, s.splits * 3 + 3);
-    if (SE.anims.chop) {
-      const frame = s.chopAnim > 0 ? Math.floor(s.chopAnim) % SE.anims.chop.frames : 0;
-      SE.drawAnim('chop', CHOP.x - 40, CHOP.y - SE.animSize('chop').h, 0, { frame });
-      SE.headphones(ctx, CHOP.x - 40 + 32, CHOP.y - SE.animSize('chop').h + 8);
+    // the traveler at the stump, full size: frame 0 is him ready with the axe up and a log standing
+    // on the block; a swing plays the rest (down onto the log, the halves fall, the axe comes back up)
+    const A = SE.anims.chop_big ? 'chop_big' : null;
+    if (A) {
+      const frame = s.chopAnim > 0 ? Math.floor(s.chopAnim) % SE.anims[A].frames : 0;
+      SE.drawAnim(A, MAN.x, MAN.y, 0, { frame });
+      SE.headphones(ctx, HEAD.x, HEAD.y);
     }
     // Waffles lies in the snow watching; a good split gets a bark from where he lies, then a grin
     s.woof = (s.woof == null ? -1 : s.woof) + (s.woof >= 0 ? dt : 0);
@@ -68,17 +76,25 @@
     ctx.fillStyle = 'rgba(127,211,138,0.85)'; ctx.fillRect(x, y, 18, h * 0.22);
     ctx.fillStyle = 'rgba(232,194,122,0.7)'; ctx.fillRect(x, y + h * 0.22, 18, h * 0.16);
     ctx.fillStyle = '#fff7ea'; ctx.fillRect(x - 3, Math.round(y + h * (1 - v)) - 1, 24, 3);
-    if (s.chopAnim > 0 && SE.anims.chop) s.chopAnim = Math.min(SE.anims.chop.frames - 0.01, s.chopAnim + dt * 12);
-    if (SE.anims.chop && s.chopAnim >= SE.anims.chop.frames - 0.02) s.chopAnim = 0;
+    const CA = SE.anims.chop_big;
+    if (s.chopAnim > 0 && CA) s.chopAnim = Math.min(CA.frames - 0.01, s.chopAnim + dt * 11);
+    if (CA && s.chopAnim >= (s.chopEnd || CA.frames) - 0.02) s.chopAnim = 0;
     if (!SE.watching()) SE.text('Click (or Space) when the swing is high — no rush', SE.W / 2, SE.H - 40, { align: 'center', size: 8, color: '#ffe6b8', alpha: 0.8 });
     const auto = SE.watching() && v > 0.84 && (s.auto -= dt) <= 0;
     const tap = !SE.modal && ((SE.mouse.pressed && SE.mouse.y < SE.H - 30 && SE.mouse.y > 30) || SE.key('Space'));
     if (!tap && !auto) return;
+    if (s.chopAnim > 0) return; // still mid-swing
     s.auto = SE.rand(2.2, 4);
     s.chopAnim = 0.01;
-    SE.audio.sfx('chop');
     const good = v > 0.62, perfect = v > 0.78;
-    for (let i = 0; i < (perfect ? 16 : 7); i++) s.chips.push({ x: CHOP.x + 4, y: CHOP.y - 20, vx: SE.rand(-60, 60), vy: SE.rand(-90, -30), t: 0, s: Math.random() < 0.3 ? 2 : 1, c: SE.pick(['#c99a62', '#e8c99a', '#8a5a34']) });
+    s.chopEnd = good ? null : IMPACT + 2; // a glancing blow doesn't split the log: the swing stops short
+    // the axe meets the log a few frames into the swing: the thunk and the chips come then
+    const st = s;
+    setTimeout(() => {
+      if (s !== st) return;
+      SE.audio.sfx('chop');
+      for (let i = 0; i < (perfect ? 16 : 7); i++) s.chips.push({ x: CHOP.x, y: CHOP.y, vx: SE.rand(-60, 60), vy: SE.rand(-90, -30), t: 0, s: Math.random() < 0.3 ? 2 : 1, c: SE.pick(['#c99a62', '#e8c99a', '#8a5a34']) });
+    }, IMPACT * 1000 / 11);
     if (!good) { SE.toast('Glanced off — try again, no hurry.', '#cfe6ff'); return; }
     SE.save.wood = Math.min(40, SE.save.wood + (perfect ? 2 : 1));
     SE.save.logs++;
