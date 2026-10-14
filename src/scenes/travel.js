@@ -39,7 +39,7 @@
       const dt = rdt;
       if (!s.arrived) s.t += dt;
       const walking = !s.arrived;
-      const pxPerSec = 24; // the same unhurried pace as in the valley
+      const pxPerSec = 28; // the same unhurried pace as in the valley
       if (walking) s.scroll += pxPerSec * dt;
 
       // now and then the trail turns uphill: a short cutscene of the climb, then the walk goes on
@@ -93,7 +93,7 @@
       const walkAnim = SE.anims.trav_walk_e ? 'trav_walk_e' : 'traveler_walk';
       const tSize = SE.animSize(walkAnim);
       const tx = 180, ty = GROUND - (tSize.h || 54);
-      const walkT = s.t * 0.78; // a slower, heavier stride (matches the valley)
+      const walkT = s.t * 0.9; // a slower, heavier stride (matches the valley)
       if (SE.anims[walkAnim]) {
         const fps = 10;
         const frame = walking ? Math.floor(walkT * fps) % SE.anims[walkAnim].frames : 0;
@@ -128,7 +128,7 @@
 
   function overlay(ctx, dt, rdt, walking) {
     // how far we've wandered today
-    const stepM = (walking ? 24 * dt : 0) * 0.5;
+    const stepM = (walking ? 28 * dt : 0) * 0.5;
     s.walked += stepM;
     SE.save.distance += stepM;
     // little thoughts

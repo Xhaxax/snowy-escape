@@ -28,7 +28,7 @@
     ],
     chapel: [
       { black: 0.7, sounds: [[0.05, 'stomp']] },
-      { img: 'cut/chapel', dur: 3.6, text: 'Quiet. Candlelight.', pan: 1, sounds: [[0.35, 'creak'], [2.3, 'bell']] },
+      { img: 'cut/chapel', dur: 3.6, text: 'Quiet. Candlelight.', pan: 1, sounds: [[0.35, 'creak'], [1.6, 'soft']] },
     ],
     summit: [
       { black: 0.8, sounds: [[0.0, 'gust']] },
