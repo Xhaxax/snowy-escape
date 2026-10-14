@@ -176,6 +176,7 @@
     draw(ctx, dt) {
       if (SE.watching()) direct(dt); else dir.t = dir.dur = 0;
       SE.drawImg('bg_living', 0, 0);
+      if (mode === 'couch') drawCouchArt(ctx);
       SE.weather.windows(ctx, WINDOWS);
       drawDoor(ctx, dt);
       SE.weather.interior(ctx);
@@ -246,29 +247,39 @@
     return false;
   }
 
+  // On the couch: a PixelLab painting of him leaning back on the left cushion, coat and boots off
+  // (the boots stand on the rug, his wool socks up on the seat), Mochi asleep on his lap. It is laid
+  // over the room (couch_scene, the changed pixels only), and a sip is a short animation of him
+  // lifting the mug to his lips (couch_sip) over the same spot.
+  const COUCH = { x: 176, y: 16 }, SIP = { x: 212, y: 104 }, SIP_LEN = 2;
+  function drawCouchArt(ctx) {
+    const img = SE.img('couch_scene');
+    if (!img) return;
+    ctx.drawImage(img, COUCH.x, COUCH.y);
+    if (sip > 0 && SE.anims.couch_sip) {
+      const a = SE.anims.couch_sip, frame = Math.min(a.frames - 1, Math.floor((SIP_LEN - sip) / SIP_LEN * a.frames));
+      SE.drawAnim('couch_sip', SIP.x, SIP.y, 0, { frame });
+    }
+  }
+  function takeSip() { sip = SIP_LEN; setTimeout(() => SE.audio.sfx('sip'), 700); }
   function drawCouch(ctx, dt) {
-    const r = bottomOf('couch_sit', POS.couch.x, POS.couch.y);
-    // the coffee table stands in front of him: hide whatever of the sprite is below its top edge
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SE.W, 196); ctx.clip();
-    if (SE.anims.couch_sit) SE.drawAnim('couch_sit', r.x, r.y, SE.time * 0.55, { pingpong: true });
-    SE.headphones(ctx, r.x + 26, r.y + 9);
-    ctx.restore();
-    if (!SE.anims.couch_sit) SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
-    // steam from the mug
+    SE.headphones(ctx, 241, 113);
+    if (!SE.img('couch_scene')) SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
+    // steam from the mug while it rests in his hands
     sip = Math.max(0, sip - dt);
-    const mug = { x: r.x + 22, y: r.y + 36 }; // the mug in his hands (couch_sit art)
-    if (sips < 6 && Math.random() < dt * (sip > 0 ? 10 : 3)) steam.push({ x: mug.x + SE.rand(-2, 2), y: mug.y, t: 0 });
+    const mug = { x: 257, y: 143 };
+    if (sips < 6 && sip <= 0 && Math.random() < dt * 3) steam.push({ x: mug.x + SE.rand(-2, 2), y: mug.y, t: 0 });
     for (let i = steam.length - 1; i >= 0; i--) {
       const p = steam[i];
       p.t += dt;
-      if (p.t > 1.6) { steam.splice(i, 1); continue; }
+      if (p.t > 1.6 || sip > 0) { steam.splice(i, 1); continue; }
       p.y -= 10 * dt;
       p.x += Math.sin(p.t * 4 + i) * 0.15;
       ctx.fillStyle = `rgba(255,255,255,${0.35 * (1 - p.t / 1.6)})`;
       ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 2);
     }
     // stroke the cat on the lap
-    const lap = { x: r.x + r.w * 0.2, y: r.y + r.h * 0.45, w: r.w * 0.6, h: r.h * 0.35 };
+    const lap = { x: 256, y: 158, w: 36, h: 20 };
     if (!SE.modal && SE.inRect(SE.mouse.x, SE.mouse.y, lap)) {
       SE.cursor = 'grab';
       if (SE.mouse.down && SE.mouse.moved > 0) {
@@ -280,7 +291,7 @@
     if (SE.watching()) {
       // sip now and then, and give Mochi a little scratch
       drawCouch.autoSip = (drawCouch.autoSip || SE.rand(5, 9)) - dt;
-      if (drawCouch.autoSip <= 0) { drawCouch.autoSip = SE.rand(7, 12); sip = 0.8; SE.audio.sfx('sip'); sips = (sips + 1) % 6; }
+      if (drawCouch.autoSip <= 0) { drawCouch.autoSip = SE.rand(7, 12); takeSip(); sips = (sips + 1) % 6; }
       drawCouch.autoPet = (drawCouch.autoPet || SE.rand(3, 6)) - dt;
       if (drawCouch.autoPet <= 0) {
         drawCouch.autoPet = SE.rand(6, 11);
@@ -291,8 +302,8 @@
     }
     const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
     const by = SE.H - 24;
-    if (SE.button(SE.W - 160, by, 70, 18, sips < 6 ? 'Take a sip' : 'Mug empty', { alpha: a, icon: 'cup' }) && sips < 6) {
-      sips++; sip = 0.8; SE.audio.sfx('sip');
+    if (SE.button(SE.W - 160, by, 70, 18, sips < 6 ? 'Take a sip' : 'Mug empty', { alpha: a, icon: 'cup' }) && sips < 6 && sip <= 0) {
+      sips++; takeSip();
       if (sips === 6) SE.celebrate('Every last drop', drink === 'cocoa' ? 'Chocolatey bliss. ' + SE.pick(SE.PROPS) : 'A lovely cup of tea.');
     }
     if (SE.button(SE.W - 86, by, 80, 18, 'Get up', { alpha: a })) mode = 'room';
