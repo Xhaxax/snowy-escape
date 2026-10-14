@@ -128,8 +128,14 @@
       ctx.save(); ctx.imageSmoothingEnabled = false; ctx.globalAlpha = 0.5 + 0.5 * k;
       ctx.drawImage(im, lx - Math.round(10 * s), ly - Math.round(18 * s), w, h); ctx.restore();
     }
-    SE.glow(ctx, lx, ly, 64 * scale * calm, '255,176,96', 0.22 * k * calm);
-    SE.glow(ctx, lx, ly, 16 * scale * calm, '255,214,150', 0.4 * k * calm);
+    SE.glow(ctx, lx, ly, 110 * scale * calm, '255,170,90', 0.38 * k * calm);
+    SE.glow(ctx, lx, ly, 20 * scale * calm, '255,214,150', 0.55 * k * calm);
+    // a warm pool of light on the snow it stands on
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.28 * k * calm;
+    ctx.translate(lx, ly + 11 * s); ctx.scale(1, 0.32);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 60 * scale);
+    g.addColorStop(0, 'rgba(255,190,110,1)'); g.addColorStop(1, 'rgba(255,150,70,0)');
+    ctx.fillStyle = g; ctx.fillRect(-60 * scale, -60 * scale, 120 * scale, 120 * scale); ctx.restore();
   };
 
   // Lit windows after dark: drawn AFTER the night tint, so the warm panes keep their full colour and

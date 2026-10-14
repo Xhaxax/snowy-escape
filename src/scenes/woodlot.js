@@ -38,7 +38,7 @@
       }
       SE.weather.tint(ctx);
       // a headlamp on his beanie in heavy weather (facing the stump), otherwise the lantern set down in the snow
-      SE.travelerLight(ctx, 268, 224, -1, 1, { x: HEAD.x - 7, y: HEAD.y + 8 }); // lantern in the snow, or the headlamp on his beanie
+      SE.travelerLight(ctx, 204, 224, -1, 1, { x: HEAD.x - 7, y: HEAD.y + 8 }); // the lantern stands in the snow by the chopping block (clear of Waffles), or the headlamp on his beanie
       SE.weather.stars(ctx, 60);
       SE.weather.sunshine(ctx, 215);
       SE.weather.draw(ctx);
