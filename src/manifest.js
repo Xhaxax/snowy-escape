@@ -119,7 +119,7 @@ window.SE_MANIFEST = {
    "fps": 8.0
   },
   "trav_pray": {
-   "frames": 13,
+   "frames": 18,
    "fps": 5.0
   },
   "summit_sit": {

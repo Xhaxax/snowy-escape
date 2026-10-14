@@ -72,6 +72,10 @@ SOUNDS = {
     'sfx_toss': ('a shovelful of heavy snow thrown onto a snow bank, a soft heavy whumpf of falling snow', 0.8),
     # the rocking chair on the porch
     'sfx_rock': ('one soft slow creak of an old wooden rocking chair rocking back on porch boards, gentle, quiet, outdoors in snow', 1.0),
+    # hot chocolate
+    'sfx_powder': ('a heaped spoonful of dry cocoa powder tipped into a small saucepan of warm milk, a soft dry whisper and a tap of the spoon on the rim', 1.4),
+    'sfx_stir': ('a wooden spoon slowly stirring warm milk in a small metal saucepan, soft liquid swirls and a gentle scrape, close, calm', 2.4),
+    'sfx_plop': ('small pieces of chopped chocolate dropping into warm milk in a saucepan, a few soft little plops', 1.2),
     # Mochi
     'sfx_meow': ('a small fluffy house cat giving one short soft friendly meow, close, quiet cozy room', 0.9),
 }

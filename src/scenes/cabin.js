@@ -37,16 +37,20 @@
   const BIBLE = { x: 296, y: 194, w: 32, h: 16 };
   function readBible() {
     mode = 'busy';
-    const [text, ref] = SE.pick(SE.VERSES || [['Be still, and know that I am God.', 'Psalm 46:10']]);
+    // a passage he hasn't noted yet, while there are any left
+    const all = SE.VERSES || [['Be still, and know that I am God.', 'Psalm 46:10']];
+    const noted = new Set((SE.save.verses || []).map((v) => v[1]));
+    const unread = all.filter((v) => !noted.has(v[1]));
+    const [text, ref] = SE.pick(unread.length ? unread : all);
     SE.MOMENTS.bible = [
       { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.3, 'bible'], [1.8, 'bible'], [2.6, 'scribble']] },
-      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft'], [2.6, 'bible']] },
+      { black: Math.max(3.6, 2 + text.length / 28), text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft'], [2.6, 'bible']] },
     ];
     SE.moment('bible', { force: true, then: () => {
       mode = 'room';
       const sv = SE.save;
       sv.bibleReads = (sv.bibleReads || 0) + 1; SE.ach.note('bible');
-      sv.verses = (sv.verses || []).filter((v) => v[1] !== ref).concat([[text, ref]]).slice(-24);
+      sv.verses = (sv.verses || []).filter((v) => v[1] !== ref).concat([[text, ref]]).slice(-40);
       SE.persist();
       SE.toast(`Noted in the notebook: ${ref}`, '#ffe6b8');
       dir.dur = 0;

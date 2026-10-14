@@ -16,8 +16,84 @@
     ['This is the day which the Lord hath made; we will rejoice and be glad in it.', 'Psalm 118:24'],
     ['Casting all your care upon him; for he careth for you.', '1 Peter 5:7'],
     ['He giveth snow like wool.', 'Psalm 147:16'],
+    ['God is our refuge and strength, a very present help in trouble.', 'Psalm 46:1'],
+    ['The Lord is my light and my salvation; whom shall I fear?', 'Psalm 27:1'],
+    ['Weeping may endure for a night, but joy cometh in the morning.', 'Psalm 30:5'],
+    ['Create in me a clean heart, O God; and renew a right spirit within me.', 'Psalm 51:10'],
+    ['He healeth the broken in heart, and bindeth up their wounds.', 'Psalm 147:3'],
+    ['He maketh me to lie down in green pastures: he leadeth me beside the still waters.', 'Psalm 23:2'],
+    ['The heavens declare the glory of God; and the firmament sheweth his handywork.', 'Psalm 19:1'],
+    ['He shall cover thee with his feathers, and under his wings shalt thou trust.', 'Psalm 91:4'],
+    ['The Lord shall preserve thy going out and thy coming in.', 'Psalm 121:8'],
+    ['O give thanks unto the Lord; for he is good: for his mercy endureth for ever.', 'Psalm 136:1'],
+    ['So teach us to number our days, that we may apply our hearts unto wisdom.', 'Psalm 90:12'],
+    ['Thou hast made summer and winter.', 'Psalm 74:17'],
+    ['Delight thyself also in the Lord; and he shall give thee the desires of thine heart.', 'Psalm 37:4'],
+    ['Rest in the Lord, and wait patiently for him.', 'Psalm 37:7'],
+    ['The Lord is nigh unto them that are of a broken heart.', 'Psalm 34:18'],
+    ['O taste and see that the Lord is good.', 'Psalm 34:8'],
+    ['I laid me down and slept; I awaked; for the Lord sustained me.', 'Psalm 3:5'],
+    ['I will both lay me down in peace, and sleep: for thou, Lord, only makest me dwell in safety.', 'Psalm 4:8'],
+    ['Hast thou entered into the treasures of the snow?', 'Job 38:22'],
+    ['For he saith to the snow, Be thou on the earth.', 'Job 37:6'],
+    ['Though your sins be as scarlet, they shall be as white as snow.', 'Isaiah 1:18'],
+    ['They that wait upon the Lord shall renew their strength; they shall mount up with wings as eagles.', 'Isaiah 40:31'],
+    ['The grass withereth, the flower fadeth: but the word of our God shall stand for ever.', 'Isaiah 40:8'],
+    ['Fear thou not; for I am with thee: be not dismayed; for I am thy God.', 'Isaiah 41:10'],
+    ['Thou wilt keep him in perfect peace, whose mind is stayed on thee.', 'Isaiah 26:3'],
+    ['Arise, shine; for thy light is come.', 'Isaiah 60:1'],
+    ['His compassions fail not. They are new every morning: great is thy faithfulness.', 'Lamentations 3:22-23'],
+    ['Trust in the Lord with all thine heart; and lean not unto thine own understanding.', 'Proverbs 3:5'],
+    ['A merry heart doeth good like a medicine.', 'Proverbs 17:22'],
+    ['To every thing there is a season, and a time to every purpose under the heaven.', 'Ecclesiastes 3:1'],
+    ['He hath made every thing beautiful in his time.', 'Ecclesiastes 3:11'],
+    ['Be strong and of a good courage; for the Lord thy God is with thee whithersoever thou goest.', 'Joshua 1:9'],
+    ['The Lord bless thee, and keep thee: the Lord make his face shine upon thee.', 'Numbers 6:24-25'],
+    ['In the beginning was the Word, and the Word was with God, and the Word was God.', 'John 1:1'],
+    ['The light shineth in darkness; and the darkness comprehended it not.', 'John 1:5'],
+    ['I am the light of the world: he that followeth me shall not walk in darkness.', 'John 8:12'],
+    ['I am the good shepherd: the good shepherd giveth his life for the sheep.', 'John 10:11'],
+    ['Let not your heart be troubled: ye believe in God, believe also in me.', 'John 14:1'],
+    ['In my Father\'s house are many mansions.', 'John 14:2'],
+    ['Ask, and it shall be given you; seek, and ye shall find; knock, and it shall be opened unto you.', 'Matthew 7:7'],
+    ['Blessed are the pure in heart: for they shall see God.', 'Matthew 5:8'],
+    ['Blessed are the peacemakers: for they shall be called the children of God.', 'Matthew 5:9'],
+    ['Ye are the light of the world.', 'Matthew 5:14'],
+    ['Behold the fowls of the air: they sow not, neither do they reap; yet your heavenly Father feedeth them.', 'Matthew 6:26'],
+    ['Take therefore no thought for the morrow: for the morrow shall take thought for the things of itself.', 'Matthew 6:34'],
+    ['With God all things are possible.', 'Matthew 19:26'],
+    ['Lo, I am with you alway, even unto the end of the world.', 'Matthew 28:20'],
+    ['And we know that all things work together for good to them that love God.', 'Romans 8:28'],
+    ['Rejoicing in hope; patient in tribulation; continuing instant in prayer.', 'Romans 12:12'],
+    ['Be kindly affectioned one to another with brotherly love.', 'Romans 12:10'],
+    ['Charity suffereth long, and is kind.', '1 Corinthians 13:4'],
+    ['And now abideth faith, hope, charity, these three; but the greatest of these is charity.', '1 Corinthians 13:13'],
+    ['My grace is sufficient for thee: for my strength is made perfect in weakness.', '2 Corinthians 12:9'],
+    ['Bear ye one another\'s burdens.', 'Galatians 6:2'],
+    ['Let us not be weary in well doing: for in due season we shall reap, if we faint not.', 'Galatians 6:9'],
+    ['The fruit of the Spirit is love, joy, peace, longsuffering, gentleness, goodness, faith.', 'Galatians 5:22'],
+    ['Be ye kind one to another, tenderhearted, forgiving one another.', 'Ephesians 4:32'],
+    ['Rejoice in the Lord alway: and again I say, Rejoice.', 'Philippians 4:4'],
+    ['In every thing by prayer and supplication with thanksgiving let your requests be made known unto God.', 'Philippians 4:6'],
+    ['I can do all things through Christ which strengtheneth me.', 'Philippians 4:13'],
+    ['Whatsoever ye do, do it heartily, as to the Lord.', 'Colossians 3:23'],
+    ['Pray without ceasing. In every thing give thanks.', '1 Thessalonians 5:17-18'],
+    ['For God hath not given us the spirit of fear; but of power, and of love, and of a sound mind.', '2 Timothy 1:7'],
+    ['Now faith is the substance of things hoped for, the evidence of things not seen.', 'Hebrews 11:1'],
+    ['Jesus Christ the same yesterday, and to day, and for ever.', 'Hebrews 13:8'],
+    ['Every good gift and every perfect gift is from above.', 'James 1:17'],
+    ['Draw nigh to God, and he will draw nigh to you.', 'James 4:8'],
+    ['He that loveth not knoweth not God; for God is love.', '1 John 4:8'],
   ];
   SE.VERSES = VERSES; // the cabin Bible reads from the same verses
+  // what he prays over: the passages he studied by the cabin fire (noted in the notebook),
+  // or any verse if he hasn't read there yet
+  function prayVerse(prev) {
+    const studied = (SE.save.verses || []).filter((v) => Array.isArray(v) && v[0]);
+    const pool = studied.length ? studied : VERSES;
+    const fresh = pool.filter((v) => !prev || v[1] !== prev[1]);
+    return SE.pick(fresh.length ? fresh : pool);
+  }
   // the arched window (glass area) and the scene's marks, in background pixels
   const WIN = { x: 30, y: 56, w: 48, h: 126, spring: 80 }; // spring: where the arch meets the straight sides
   const FLAMES = [{ x: 393, y: 136 }, { x: 436, y: 140 }];
@@ -33,7 +109,10 @@
   // the kneel animation: frame 0 standing, then down onto the knees; the last few frames are the
   // held prayer pose, which breathes gently back and forth
   function prayAnim() { return SE.anims.trav_pray ? 'trav_pray' : null; }
-  function holdFrom() { const a = SE.anims.trav_pray; return a ? Math.max(1, a.frames - 4) : 0; }
+  // trav_pray (96px PixelLab frames, like the woodlot chop): 0 standing bareheaded with the beanie in
+  // hand, 1-11 kneeling down, 11-17 the held prayer pose breathing; his feet sit at x 40 of the frame
+  const PRAY_HOLD = 11, PRAY_AX = 40;
+  function holdFrom() { const a = SE.anims.trav_pray; return a ? Math.min(PRAY_HOLD, a.frames - 1) : 0; }
 
   function startPrayer() {
     if (s.mode !== 'stand') return;
@@ -41,7 +120,7 @@
     if (!s.votives.length) lightCandle(true);
     if (!SE.watching()) SE.moment('pray'); // kneeling at the altar, hands folded
     s.mode = 'kneel'; s.k = 0; s.prayT = 0; s.prayed = false;
-    s.verse = SE.pick(VERSES.filter((v) => v !== s.verse));
+    s.verse = prayVerse(s.verse);
     s.verseT = 0;
   }
   function standUp() {
@@ -215,12 +294,12 @@
     let frame = 0;
     if (s.mode === 'kneel') {
       s.k += dt * fps;
-      frame = Math.min(a.frames - 1, Math.floor(s.k));
-      if (s.k >= a.frames - 1) s.mode = 'pray';
+      frame = Math.min(hold, Math.floor(s.k));
+      if (s.k >= hold) s.mode = 'pray';
     } else if (s.mode === 'pray') {
       // slow breathing across the held frames
       const n = a.frames - hold, cyc = n * 2 - 2 || 1;
-      let f = Math.floor(s.t * 1.6) % cyc; if (f >= n) f = cyc - f;
+      let f = Math.floor(s.t * 2.4) % cyc; if (f >= n) f = cyc - f;
       frame = hold + f;
       advance(dt, 1);
     } else if (s.mode === 'rise') {
@@ -228,7 +307,7 @@
       frame = Math.max(0, Math.floor(s.k));
       if (s.k <= 0) { s.mode = 'stand'; s.k = 0; }
     }
-    SE.drawAnim(name, Math.round(KNEEL.x - sz.w / 2), Math.round(KNEEL.y - sz.h + footPad(name)), 0, { frame });
+    SE.drawAnim(name, Math.round(KNEEL.x - PRAY_AX), Math.round(KNEEL.y - sz.h + footPad(name)), 0, { frame });
   }
   // the PixelLab canvas leaves empty rows under the boots; measured once from the image
   const pads = {};
@@ -251,7 +330,7 @@
       SE.audio.sfx('chime');
       SE.toast(SE.pick(['Amen. The quiet settles over you like fresh snow.', 'Amen. Your heart feels a little lighter.', 'Amen. Waffles sighs contentedly by the pews.']), '#ffe6b8');
     }
-    if (s.prayT > PRAY_LEN + 10) { s.prayT = 0; s.prayed = false; s.verse = SE.pick(VERSES.filter((v) => v !== s.verse)); s.verseT = 0; }
+    if (s.prayT > PRAY_LEN + 10) { s.prayT = 0; s.prayed = false; s.verse = prayVerse(s.verse); s.verseT = 0; }
   }
 
   // ------------------------------------------------------------ verses

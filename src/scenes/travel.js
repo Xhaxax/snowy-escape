@@ -25,7 +25,7 @@
       SE.persist();
       s = {
         t: 0, scroll: 0, prints: [], lastFrame: -1, lastDogFrame: -1,
-        thought: SE.pick(THOUGHTS), thoughtT: 0, hurry: false, arrived: false, walked: 0,
+        thought: SE.pick(THOUGHTS), thoughtT: 0, arrived: false, walked: 0,
         segT: SE.rand(20, 35), wildT: SE.rand(150, 300),
       };
       SE.audio.setMusic('outdoors');
@@ -36,11 +36,10 @@
       SE.audio.setAmbience({ wind: 0.5 + SE.weather.wind / 80, birds: 0.25 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 1 : 0 });
     },
     draw(ctx, rdt) {
-      const speed = s.hurry ? 2.2 : 1;
-      const dt = rdt * speed;
+      const dt = rdt;
       if (!s.arrived) s.t += dt;
       const walking = !s.arrived;
-      const pxPerSec = 34;
+      const pxPerSec = 24; // the same unhurried pace as in the valley
       if (walking) s.scroll += pxPerSec * dt;
 
       // now and then the trail turns uphill: a short cutscene of the climb, then the walk goes on
@@ -94,7 +93,7 @@
       const walkAnim = SE.anims.trav_walk_e ? 'trav_walk_e' : 'traveler_walk';
       const tSize = SE.animSize(walkAnim);
       const tx = 180, ty = GROUND - (tSize.h || 54);
-      const walkT = s.t;
+      const walkT = s.t * 0.78; // a slower, heavier stride (matches the valley)
       if (SE.anims[walkAnim]) {
         const fps = 10;
         const frame = walking ? Math.floor(walkT * fps) % SE.anims[walkAnim].frames : 0;
@@ -129,7 +128,7 @@
 
   function overlay(ctx, dt, rdt, walking) {
     // how far we've wandered today
-    const stepM = (walking ? 34 * dt : 0) * 0.5;
+    const stepM = (walking ? 24 * dt : 0) * 0.5;
     s.walked += stepM;
     SE.save.distance += stepM;
     // little thoughts
@@ -144,7 +143,6 @@
     }
 
     const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
-    if (SE.button(SE.W - 96, SE.H - 24, 90, 18, s.hurry ? 'Stroll slowly' : 'Walk faster', { active: s.hurry, alpha: a })) s.hurry = !s.hurry;
     if (SE.button(6, SE.H - 24, 84, 18, 'Head back', { icon: 'back', alpha: a })) SE.go('map', { walkTo: 'cabin' });
     SE.hud.draw(ctx, { watch: false, title: 'Long Walk', subtitle: `${Math.round(s.walked)} m wandered`, map: true });
   }

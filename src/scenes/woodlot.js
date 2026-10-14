@@ -37,6 +37,13 @@
         ctx.fillStyle = c.c; ctx.fillRect(Math.round(c.x), Math.round(c.y), c.s, c.s);
       }
       SE.weather.tint(ctx);
+      // the lantern hanging on the woodshed: lit from dusk, a warm pool on the snow and the shed wall
+      const dusk = SE.weather.night();
+      if (dusk > 0.05) {
+        const f = 0.9 + Math.sin(s.t * 7.3) * 0.05 + Math.sin(s.t * 2.1) * 0.05;
+        SE.glow(ctx, 281, 140, 70, '255,170,90', 0.36 * dusk * f);
+        SE.glow(ctx, 281, 135, 16, '255,225,150', 0.75 * dusk * f);
+      }
       // a headlamp on his beanie in heavy weather (facing the stump), otherwise the lantern set down in the snow
       SE.travelerLight(ctx, 204, 224, -1, 1, { x: HEAD.x - 7, y: HEAD.y + 8 }); // the lantern stands in the snow by the chopping block (clear of Waffles), or the headlamp on his beanie
       SE.weather.stars(ctx, 60);

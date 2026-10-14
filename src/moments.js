@@ -100,10 +100,10 @@
     // Coffee Talk style: four pictures, the sounds of the kitchen between them, the drink is made
     cocoaMake: [
       { img: 'cut/cocoa_chop', dur: 3.2, text: 'A bar of dark chocolate, chopped fine.', pan: 1, sounds: [[0.3, 'chop'], [0.8, 'chop'], [1.3, 'chop'], [1.9, 'chop']] },
-      { img: 'cut/cocoa_drop', dur: 3.0, text: 'Into the warm milk it goes, every last crumb.', pan: -1, sounds: [[0.4, 'pour'], [1.4, 'stir']] },
-      { img: 'cut/cocoa2', dur: 3.2, text: 'Milk in the pot, two heaped spoons of cocoa.', pan: -1, sounds: [[0.2, 'pour'], [1.6, 'stir']] },
-      { img: 'cut/cocoa_cook', dur: 3.4, text: 'Low heat. Stir until it is smooth and dark.', pan: 1, sounds: [[0.3, 'stir'], [1.1, 'stir'], [1.9, 'stir'], [2.7, 'stir']] },
-      { img: 'cut/cocoa_pour', dur: 3.6, text: 'Into the big red mug. One last stir.', pan: -1, sounds: [[0.2, 'pour'], [1.8, 'stir'], [2.6, 'sip']] },
+      { img: 'cut/cocoa_drop', dur: 3.0, text: 'Into the warm milk it goes, every last crumb.', pan: -1, sounds: [[0.5, 'plop']] },
+      { img: 'cut/cocoa2', dur: 3.2, text: 'Two heaped spoons of cocoa.', pan: -1, sounds: [[0.4, 'powder'], [1.8, 'powder']] },
+      { img: 'cut/cocoa_cook', dur: 3.4, text: 'Low heat. Stir until it is smooth and dark.', pan: 1, sounds: [[0.3, 'stir']] },
+      { img: 'cut/cocoa_pour', dur: 3.6, text: 'Into the big red mug. One last stir.', pan: -1, sounds: [[0.3, 'pour'], [2.2, 'stir']] },
     ],
     cook: [
       { img: 'cut/cook_prep', dur: 3.2, text: 'A sharp knife, a steady hand. Two neat fillets.', pan: 1, sounds: [[0.3, 'scrape'], [0.9, 'scrape'], [1.6, 'chop'], [2.3, 'chop']] },
@@ -142,11 +142,22 @@
       { img: 'cut/sketch', dur: 4.2, text: 'A few quick lines while it holds still.', pan: -1, sounds: [[0.3, 'page'], [0.8, 'scribble'], [2.6, 'scribble']] },
     ],
   };
-  // the Long Walk: its own trail picture now and then (never the summit climb)
+  // the Long Walk: between stretches of walking, ONE of its own pictures (never the same twice in a
+  // row, in no fixed order), never the summit climb
+  const TRAIL = [
+    ['cut/trail', ['Footprints behind you, nothing but trail ahead.', 'The old signpost. Onward, then.']],
+    ['cut/trail2', ['Mile after mile under the pines. Waffles knows the way.', 'Deeper into the trees. Snow squeaks under your boots.']],
+  ];
+  let lastTrail = null;
   SE.trailMoment = function () {
+    const have = TRAIL.filter(([img]) => SE.img(img));
+    const fresh = have.filter(([img]) => img !== lastTrail);
+    const pick = SE.pick(fresh.length ? fresh : have);
+    if (!pick) return;
+    lastTrail = pick[0];
     SE.MOMENTS.trailWalk = [
       { black: 0.5, sounds: [[0.05, 'gust']] },
-      { img: 'cut/trail', dur: 4.0, text: SE.pick(['Mile after mile under the pines. Waffles knows the way.', 'The old trail goes on and on. Snow squeaks under your boots.', 'Footprints behind you, nothing but trail ahead.']), pan: Math.random() < 0.5 ? 1 : -1, sounds: [[0.4, 'step'], [0.9, 'step'], [1.4, 'step'], [1.9, 'step']] },
+      { img: pick[0], dur: 4.2, text: SE.pick(pick[1]), pan: Math.random() < 0.5 ? 1 : -1, sounds: [[0.4, 'step'], [1.0, 'step'], [1.6, 'step'], [2.2, 'step']] },
     ];
     SE.moment('trailWalk', { force: true });
   };
@@ -225,7 +236,7 @@
   }
   function stillFor(img, force) {
     const name = img.replace(/^cut\//, '');
-    const base = BASE[name] || (/^porch_rock/.test(name) || /^sketch_/.test(name) ? 'day' : name === 'chapel_close' ? 'night' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
+    const base = BASE[name] || (/^porch_rock/.test(name) || /^sketch_/.test(name) || /^trail\d/.test(name) ? 'day' : name === 'chapel_close' ? 'night' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
     if (base === 'any') return img;
     const want = force || wanted(img);
     if (want === base) return img;
