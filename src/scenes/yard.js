@@ -85,8 +85,8 @@
   function drawRock(ctx, dt) {
     s.rockT += dt;
     const f = Math.floor(s.rockT * ROCK_FPS) % ROCK_FRAMES, name = `cut/porch_rock_${f}`;
-    // bright: a sunny-day light unless it is night
-    const key = SE.stillFor(name, SE.weather.night() > 0.5 ? 'night' : 'day'), img = SE.img(key);
+    // the same light as the stills before it: day, overcast, windy, dusk (lantern lit) or night
+    const key = SE.stillFor(name), img = SE.img(key);
     ctx.fillStyle = '#06050a'; ctx.fillRect(0, 0, SE.W, SE.H);
     if (img) {
       const k = Math.max(1, Math.floor(Math.min(SE.W / img.width, SE.H / img.height)));
@@ -129,7 +129,9 @@
     if (d.t < d.dur) return;
     d.t = 0;
     let next;
-    next = SE.pick(['woodlot', 'porch', 'porch'].filter((m) => m !== d.last));
+    // no rocking chair in a snowstorm: then it's the woodlot
+    const opts = SE.weather.stormy() ? ['woodlot'] : ['woodlot', 'porch', 'porch'].filter((m) => m !== d.last);
+    next = SE.pick(opts);
     d.last = next;
     if (next === 'shovel') { shovel(); d.dur = 999; return; }
     if (next === 'porch') { porch(); d.dur = 999; return; }

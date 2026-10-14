@@ -181,22 +181,31 @@
   // 'snow' (overcast, snowing), 'storm' (wind and whiteout) and 'night'. BASE says which of those the
   // plain cut/<name>.png already is; the others live in cut/<name>_<variant>.png.
   const BASE = {
-    alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
-    shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'day', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
+    alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'dusk',
+    shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'dusk', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
     leave: 'night', leave_out: 'day', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
   };
   SE.CUT_VARIANTS = {
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
     trail: ['snow', 'storm', 'night'], forest: ['snow', 'storm', 'night'], summit: ['snow', 'storm', 'night'],
-    porch: ['snow', 'storm', 'night'], shovel: ['day', 'storm', 'night'], leave: ['day', 'snow', 'storm'],
+    shovel: ['day', 'storm', 'night'], leave: ['day', 'snow', 'storm'],
     chapel: ['day', 'snow', 'storm'], home: ['day', 'storm'],
   };
   // Stills that happen indoors only change between day and night (lamplight stays warm either way);
   // everything else is outdoors and also gets the live snowfall of the current weather on top.
   const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake|fire_|leave_)|kitchen_)/;
   SE.stillIndoor = (img) => INDOOR.test(img);
+  // the porch (rocking chair) pictures are painted at sunset with the lantern lit: that is their dusk.
+  // By day the sky turns blue or overcast and the lantern is out; at night it glows against the dark.
+  const PORCH = /^cut\/porch/;
   function wanted(img) {
     const W = SE.weather;
+    if (PORCH.test(img)) {
+      const n = W.night();
+      if (n > 0.55) return 'night';
+      if (n > 0.12) return 'dusk';
+      return W.stormy() || W.mode === 'windy' ? 'storm' : W.mode === 'sunny' ? 'day' : 'snow';
+    }
     if (W.night() > 0.5) return 'night';
     if (SE.stillIndoor(img)) return 'day';
     if (W.stormy() || W.mode === 'windy') return 'storm';
@@ -205,12 +214,49 @@
   // Painted variants (cut/<name>_<v>.png) win. Where none was painted, the still is relit here from
   // its base: night turns it moonlit blue but keeps every warm lamp, candle and window pixel glowing;
   // storm greys it into a whiteout; snow cools a sunny picture; day warms an overcast one.
-  function relight(src, from, to, indoor) {
+  // The porch: keep its colour in every light. The pink-lavender sunset in the sky and on the snow is
+  // pulled to blue, then overcast cools it a little, wind greys it, night turns it deep blue; the
+  // lit windows (and at night the lantern) stay warm. By day the lantern glass is dark.
+  function porchGrade(p, w, to) {
+    for (let i = 0; i < p.length; i += 4) {
+      const x = (i / 4) % w, y = Math.floor(i / 4 / w);
+      let r = p[i], g = p[i + 1], b = p[i + 2];
+      const warm = r > 150 && r - b > 55 && g > 80 && b < g; // lamplight is orange-yellow, the sunset sky is pink
+      if (!warm) {
+        // the pink of the sunset (red above green, blue not below it) becomes the sky of this weather
+        const t = b >= g - 6 && r > g ? Math.min(1, (r - g) / 45) : 0;
+        if (t > 0) {
+          const L0 = 0.3 * r + 0.59 * g + 0.11 * b;
+          const [cr, cg, cb] = to === 'day' ? [0.8, 0.95, 1.18] : to === 'night' ? [0.75, 0.85, 1.2] : [0.92, 0.97, 1.06];
+          r += (L0 * cr - r) * t; g += (L0 * cg - g) * t; b += (L0 * cb - b) * t;
+        }
+        const L = 0.3 * r + 0.59 * g + 0.11 * b;
+        let k = 0;
+        if (to === 'day') { r = r * 1.02 + 4; g = g * 1.02 + 5; b = b * 1.02 + 6; }
+        else if (to === 'snow') { k = 0.12; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k; r = r * 0.95 + 5; g = g * 0.99 + 6; b = b * 1.04 + 9; }
+        else if (to === 'storm') { k = 0.22; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k; r = r * 0.88 + 22; g = g * 0.88 + 25; b = b * 0.88 + 31; }
+        else if (to === 'night') {
+          const o = [p[i], p[i + 1], p[i + 2]];
+          k = 0.2; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k; r = r * 0.34 + 4; g = g * 0.4 + 8; b = b * 0.64 + 26;
+          // the lantern's warm pool: near it the picture keeps much of its painted warmth
+          const lift = Math.max(0, 1 - Math.hypot(x - 47, y - 34) / 95) * 0.6;
+          r += (o[0] * 0.78 - r) * lift; g += (o[1] * 0.7 - g) * lift; b += (o[2] * 0.62 - b) * lift;
+        }
+      } else if (to !== 'night' && x >= 41 && x < 55 && y >= 18 && y < 42) {
+        // the lantern by day: unlit glass, a cool grey with a hint of the sky in it
+        const L = 0.3 * r + 0.59 * g + 0.11 * b;
+        r = L * 0.42; g = L * 0.48; b = L * 0.58;
+      }
+      p[i] = SE.clamp(Math.round(r), 0, 255); p[i + 1] = SE.clamp(Math.round(g), 0, 255); p[i + 2] = SE.clamp(Math.round(b), 0, 255);
+    }
+  }
+  function relight(src, from, to, indoor, img) {
     const c = document.createElement('canvas');
     c.width = src.width; c.height = src.height;
     const x = c.getContext('2d');
     x.drawImage(src, 0, 0);
     const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    if (img && PORCH.test(img)) { porchGrade(p, c.width, to); x.putImageData(d, 0, 0); return c; }
     for (let i = 0; i < p.length; i += 4) {
       let r = p[i], g = p[i + 1], b = p[i + 2];
       const L = 0.3 * r + 0.59 * g + 0.11 * b;
@@ -236,7 +282,7 @@
   }
   function stillFor(img, force) {
     const name = img.replace(/^cut\//, '');
-    const base = BASE[name] || (/^porch_rock/.test(name) || /^sketch_/.test(name) || /^trail\d/.test(name) ? 'day' : name === 'chapel_close' ? 'night' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
+    const base = BASE[name] || (/^porch_rock/.test(name) ? 'dusk' : /^sketch_/.test(name) || /^trail\d/.test(name) ? 'day' : name === 'chapel_close' ? 'night' : /^pines_owl/.test(name) ? 'night' : /^pines_/.test(name) ? 'day' : SE.stillIndoor(img) ? 'day' : 'snow');
     if (base === 'any') return img;
     const want = force || wanted(img);
     if (want === base) return img;
@@ -244,7 +290,7 @@
     if (SE.img(key)) return key;
     const src = SE.img(img);
     if (!src) return img;
-    SE.images[key] = relight(src, base, want, SE.stillIndoor(img));
+    SE.images[key] = relight(src, base, want, SE.stillIndoor(img), img);
     return key;
   }
 
