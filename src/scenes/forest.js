@@ -185,7 +185,7 @@
       if (p.isNew) SE.celebrate('New photo!', `${PINES[s.kind].name} · ${n}/${p.of} in your album`, { y: 2 });
       else SE.toast('You already have this one in your album. Lovely anyway.', '#cfe6ff');
     }
-    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, 'Into the album', { icon: 'heart' }) || (p.t > 0.6 && SE.key('Space'))) s.photo = null;
+    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, 'Into the album', {}) || (p.t > 0.6 && SE.key('Space'))) s.photo = null;
   }
 
   // ------------------------------------------------------------ the sketch: a few more lines each trip

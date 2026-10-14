@@ -62,7 +62,6 @@
     // Waffles lies in the snow watching; a good split gets a bark from where he lies, then a grin
     s.woof = (s.woof == null ? -1 : s.woof) + (s.woof >= 0 ? dt : 0);
     if (!SE.drawDogLieCheer(DOG.x + 20, DOG.y + 4, s.woof, { flip: true })) { s.woof = -1; SE.drawDogRest(DOG.x + 20, DOG.y + 4, { flip: true }); }
-    else if (s.woof > 0.3 && s.woof < 0.3 + dt) SE.spawnFloater(DOG.x + 34, DOG.y - 30, 'heart');
   }
 
   // stop the swing in the sweet spot

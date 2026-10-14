@@ -145,3 +145,5 @@
 - Kitchen lanterns are cold in daylight (props/kitchen_unlit.png overlay) and lit with their glow after dusk.
 - Fire out: no chimney smoke, a one-time hint outside, and lighting a cold hearth plays fireStart (cut/fire_lay: hands laying kindling on a cold sooty grate — PixelLab inpaint of the whole fireplace front; cut/fire_light: the match).
 - Rocking chair: longer cutscene, then an idle screen with the PixelLab animation cut/porch_rock_0..15 (animate_image of porch2: rocking, sipping, Waffles breathing), bright daylight relight, creak + sip each loop; not in a snowstorm.
+- Text: small text now uses bitmap pixel fonts at their native 10px (Tiny5; Micro 5 for size-6 notes) — Pixelify Sans at 8px blurred B/G together and fused "fi" into an "A" ("Arewood"). Headings ≥12px stay Pixelify. A zero-width non-joiner also keeps f+i/l apart.
+- Fewer hearts: none on banners or celebration bursts (sparkles only), none on buttons, rare when stroking Mochi. New ElevenLabs reward jingle (sfx_jingle: soft music box and bells).

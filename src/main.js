@@ -39,6 +39,6 @@
     },
   });
   SE.start('loading');
-  const fontReady = document.fonts ? document.fonts.load('10px "Pixelify Sans"').catch(() => {}) : Promise.resolve();
+  const fontReady = document.fonts ? Promise.all(['10px "Pixelify Sans"', '10px "Tiny5"', '10px "Micro 5"'].map((f) => document.fonts.load(f))).catch(() => {}) : Promise.resolve();
   Promise.all([SE.loadImages(images), fontReady]).then(() => { loaded = true; });
 })();

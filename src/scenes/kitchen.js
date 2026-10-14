@@ -43,7 +43,7 @@
     opts.push([opts.length === 2 ? 'Keep it all' : 'All done', 70, done]);
     if (SE.watching() && g.t > 2.5) { if (opts.length > 1) opts[0][2](); else done(); return; }
     let x = SE.W - 6 - opts.reduce((t, o) => t + o[1] + 4, 0);
-    for (const [label, w, cb] of opts) { if (SE.button(x, SE.H - 24, w, 18, label, { icon: label.startsWith('A ') ? 'heart' : null })) cb(); x += w + 4; }
+    for (const [label, w, cb] of opts) { if (SE.button(x, SE.H - 24, w, 18, label, {})) cb(); x += w + 4; }
   }
 
   // ------------------------------------------------------------ the oven needs wood to cook

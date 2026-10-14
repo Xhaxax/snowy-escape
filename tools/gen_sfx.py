@@ -60,6 +60,8 @@ SOUNDS = {
     'sfx_bugle': ('a bull elk bugling, a long high whistling call echoing through a cold valley', 3.0),
     'sfx_wings': ('large owl wings flapping silently a few times, soft whoosh of feathers', 1.2),
     'sfx_pounce': ('an animal pouncing head first into deep powder snow, soft heavy whumpf', 0.8),
+    # the little tune when something good happens (an achievement, a finished job)
+    'sfx_jingle': ('a short soft cozy reward jingle, three gentle rising notes on a warm wooden music box and soft bells, winter cabin feeling, calm, not loud', 2.0),
     # the notebook
     'sfx_scribble': ('a pencil sketching quickly on paper in a notebook, soft scratchy strokes', 2.0),
     'sfx_page': ('turning a page of a small paper notebook, crisp paper rustle', 0.7),

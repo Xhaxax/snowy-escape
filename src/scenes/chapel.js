@@ -303,7 +303,7 @@
     const by = SE.H - 24;
     const kneeling = s.mode !== 'stand';
     const items = [
-      [kneeling ? 'Stand up' : 'Kneel and pray', 84, () => (kneeling ? standUp() : startPrayer()), { active: kneeling, icon: 'heart' }],
+      [kneeling ? 'Stand up' : 'Kneel and pray', 84, () => (kneeling ? standUp() : startPrayer()), { active: kneeling }],
       ['Light a candle', 76, () => lightCandle(false), {}],
       ['Ring the bell', 70, () => ringBell(false), { active: s.bell > 0 }],
     ];

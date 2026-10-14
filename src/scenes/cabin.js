@@ -296,7 +296,7 @@
       SE.cursor = 'grab';
       if (SE.mouse.down && SE.mouse.moved > 0) {
         SE.cursor = 'grabbing';
-        if (Math.random() < 0.15) SE.spawnFloater(SE.mouse.x, SE.mouse.y - 6, 'heart');
+        if (Math.random() < 0.04) SE.spawnFloater(SE.mouse.x, SE.mouse.y - 6, 'heart');
         if (!drawCouch.purrT || SE.time > drawCouch.purrT) { drawCouch.purrT = SE.time + 2.6; SE.audio.sfx('purr'); }
       }
     }
@@ -308,7 +308,7 @@
       if (drawCouch.autoPet <= 0) {
         drawCouch.autoPet = SE.rand(6, 11);
         SE.audio.sfx('purr');
-        for (let i = 0; i < 4; i++) setTimeout(() => { if (SE.sceneName === 'cabin' && mode === 'couch') SE.spawnFloater(lap.x + lap.w * Math.random(), lap.y, 'heart'); }, i * 300);
+        for (let i = 0; i < 1; i++) setTimeout(() => { if (SE.sceneName === 'cabin' && mode === 'couch') SE.spawnFloater(lap.x + lap.w * Math.random(), lap.y, 'heart'); }, i * 300);
       }
       return;
     }

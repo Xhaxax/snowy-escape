@@ -160,7 +160,7 @@
     ctx.restore();
     SE.text(s.A.shots[p.i], SE.W / 2, y + h + 12, { align: 'center', size: 8, color: '#3a2a2a', shadow: false, alpha: pop });
     if (p.t > 0.4 && p.isNew && !p.cheered) { p.cheered = true; SE.celebrate('New photo!', `${s.A.name} · ${(SE.save.album[s.kind] || []).length}/3 in your album`, { y: 2 }); }
-    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, p.spooks ? 'Uh oh…' : 'Lovely', { icon: 'heart' }) || (p.t > 0.6 && SE.key('Space'))) {
+    if (SE.button(SE.W / 2 - 44, SE.H - 24, 88, 18, p.spooks ? 'Uh oh…' : 'Lovely', {}) || (p.t > 0.6 && SE.key('Space'))) {
       const spooks = p.spooks;
       s.photo = null;
       if (spooks) agitate();

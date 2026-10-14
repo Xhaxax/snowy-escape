@@ -91,7 +91,7 @@
       if (s.breathe) drawBreathe(ctx, dt);
 
       const a = SE.uiAlpha == null ? 1 : SE.uiAlpha;
-      if (!SE.watching() && SE.button(SE.W - 106, SE.H - 24, 100, 18, s.breathe ? 'Stop breathing' : 'Breathe with me', { alpha: s.breathe ? 1 : a, active: !!s.breathe, icon: 'heart' })) {
+      if (!SE.watching() && SE.button(SE.W - 106, SE.H - 24, 100, 18, s.breathe ? 'Stop breathing' : 'Breathe with me', { alpha: s.breathe ? 1 : a, active: !!s.breathe })) {
         s.breathe = s.breathe ? null : { t: 0, phase: 0, cycles: 0 };
       }
       if (s.t < 12 && !SE.watching() && SE.weather.night() < 0.3) SE.text('At dusk and at night, shooting stars cross the sky here', 8, SE.H - 40, { size: 7, color: '#ffe6b8', alpha: Math.min(1, 12 - s.t) * a });

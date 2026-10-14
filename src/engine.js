@@ -257,10 +257,21 @@ SE.switchNow = function (name, params) {
 
 // ---------------------------------------------------------------- text & UI
 SE.FONT = '"Pixelify Sans", "Silkscreen", monospace';
+// The pixel font joins "fi"/"fl" into a ligature glyph that reads as "A" ("Arewood"): a zero-width
+// non-joiner between the letters keeps them apart.
+const noLig = (s) => String(s).replace(/f(?=[il])/g, 'f\u200C');
+// Small text uses true bitmap pixel fonts drawn at their native 10px (Tiny5, and Micro 5 for the
+// tiniest notes), where every letter stays distinct; big headings keep the rounder Pixelify Sans.
+SE.fontFor = function (size = 8, bold, family) {
+  if (family) return `${bold ? 'bold ' : ''}${size}px ${family}`;
+  if (size >= 12) return `${bold ? 'bold ' : ''}${size}px ${SE.FONT}`;
+  return size <= 6 ? '10px "Micro 5", monospace' : '10px "Tiny5", monospace';
+};
 SE.text = function (str, x, y, opts = {}) {
   const ctx = SE.ctx;
+  str = noLig(str);
   ctx.save();
-  ctx.font = `${opts.bold ? 'bold ' : ''}${opts.size || 8}px ${opts.font || SE.FONT}`;
+  ctx.font = SE.fontFor(opts.size || 8, opts.bold, opts.font);
   ctx.textAlign = opts.align || 'left';
   ctx.textBaseline = opts.baseline || 'top';
   if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
@@ -274,8 +285,8 @@ SE.text = function (str, x, y, opts = {}) {
 };
 SE.measure = function (str, size = 8) {
   SE.ctx.save();
-  SE.ctx.font = `${size}px ${SE.FONT}`;
-  const w = SE.ctx.measureText(str).width;
+  SE.ctx.font = SE.fontFor(size);
+  const w = SE.ctx.measureText(noLig(str)).width;
   SE.ctx.restore();
   return w;
 };
@@ -476,7 +487,7 @@ SE.celebration = null;
 SE.celebrate = function (title, sub, opts = {}) {
   if (SE.audio) SE.audio.sfx('jingle');
   SE.celebration = { title, sub: sub || SE.pick(SE.PROPS), t: 0, y: opts.y };
-  for (let i = 0; i < 16; i++) SE.spawnFloater(SE.W / 2 + SE.rand(-80, 80), 54 + SE.rand(-6, 10), Math.random() < 0.5 ? 'spark' : 'heart', SE.pick(['#ffd166', '#ff8fa3', '#cfe6ff', '#fff4c2']));
+  for (let i = 0; i < 12; i++) SE.spawnFloater(SE.W / 2 + SE.rand(-80, 80), 54 + SE.rand(-6, 10), 'spark', SE.pick(['#ffd166', '#cfe6ff', '#fff4c2']));
 };
 SE.frameHooks.push(function drawCelebration(ctx, dt) {
   const c = SE.celebration;
@@ -491,10 +502,6 @@ SE.frameHooks.push(function drawCelebration(ctx, dt) {
   const w = Math.max(SE.measure(c.title, 14), SE.measure(c.sub, 8)) + 34;
   const y = (c.y || 44) - bounce - (1 - inn) * 10;
   SE.panel(SE.W / 2 - w / 2, y, w, 38, { alpha: a, fill: 'rgba(72,52,96,0.96)' });
-  SE.ctx.save(); SE.ctx.globalAlpha = a;
-  SE.drawIcon('heart', SE.W / 2 - w / 2 + 6, y + 6, '#ff8fa3');
-  SE.drawIcon('heart', SE.W / 2 + w / 2 - 14, y + 6, '#ff8fa3');
-  SE.ctx.restore();
   SE.text(c.title, SE.W / 2, y + 5, { align: 'center', size: 14, color: '#ffd166', alpha: a, bold: true });
   SE.text(c.sub, SE.W / 2, y + 24, { align: 'center', size: 8, color: '#fff7ea', alpha: a });
 });
