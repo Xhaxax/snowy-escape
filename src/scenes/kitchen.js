@@ -15,31 +15,35 @@
       SE.celebrate('Hot chocolate!', `Marshmallows on top. ${SE.pick(SE.PROPS)}`);
     } });
   }
-  // Mochi cannot help herself: while the fish is scaled her paw sneaks into the picture, then back
-  function sneakyPaw(ctx, r) {
-    const img = SE.img('props/paw');
-    if (!img) return;
-    const reach = Math.sin(SE.clamp((r.t - 0.7) / 1.5, 0, 1) * Math.PI);
-    if (reach <= 0) return;
-    const x = Math.round(r.x + r.w - reach * img.width * r.s * 0.9), y = Math.round(r.y + r.h * 0.42);
-    ctx.save();
-    ctx.beginPath(); ctx.rect(r.x, r.y, r.w, r.h); ctx.clip();
-    ctx.translate(x + img.width * r.s, y); ctx.scale(-r.s, r.s); ctx.drawImage(img, 0, 0);
-    ctx.restore();
-  }
   function startCook(fish) {
     mode = 'busy';
-    SE.MOMENTS.cook[1].draw = sneakyPaw;
     SE.moment('cook', { force: true, then: () => {
-      mode = 'idle';
       const sv = SE.save;
       sv.fish[fish]--;
       if (sv.fish[fish] <= 0) delete sv.fish[fish];
       sv.dishes['Pan-fried Fish'] = (sv.dishes['Pan-fried Fish'] || 0) + 1;
       sv.cooked++;
       SE.persist();
-      SE.celebrate('Dinner is served!', `Pan-fried ${fish}, golden and cooked with love. ${SE.pick(SE.PROPS)}`);
+      // and then dinner, with Waffles and Mochi watching every bite
+      SE.moment('eat', { force: true, then: () => { mode = 'share'; g = { fish, t: 0 }; } });
     } });
+  }
+  // after dinner: share a bite? Each choice is its own little cutscene
+  let g = null;
+  function drawShare(ctx, dt) {
+    g.t += dt;
+    SE.drawStill(ctx, 'cut/eat');
+    const fish = g.fish;
+    const done = () => { mode = 'idle'; g = null; SE.celebrate('Dinner is served!', `Pan-fried ${fish}, cooked with love. ${SE.pick(SE.PROPS)}`); };
+    const pick = (what) => { mode = 'busy'; SE.moment(what, { force: true, then: () => { mode = 'share'; g.gave = (g.gave || []).concat(what); g.t = 0; } }); };
+    const gave = g.gave || [];
+    const opts = [];
+    if (!gave.includes('treat_dog')) opts.push(['A piece for Waffles', 112, () => pick('treat_dog')]);
+    if (!gave.includes('treat_cat')) opts.push(['A bite for Mochi', 96, () => pick('treat_cat')]);
+    opts.push([opts.length === 2 ? 'Keep it all' : 'All done', 70, done]);
+    if (SE.watching() && g.t > 2.5) { if (opts.length > 1) opts[0][2](); else done(); return; }
+    let x = SE.W - 6 - opts.reduce((t, o) => t + o[1] + 4, 0);
+    for (const [label, w, cb] of opts) { if (SE.button(x, SE.H - 24, w, 18, label, { icon: label.startsWith('A ') ? 'heart' : null })) cb(); x += w + 4; }
   }
 
   // ------------------------------------------------------------ the oven needs wood to cook
@@ -97,6 +101,7 @@
 
       drawMochi(ctx, dt);
       if (mode === 'idle') drawIdle(ctx);
+      else if (mode === 'share') drawShare(ctx, dt);
       const ovenWord = SE.save.stove > 0.6 ? 'hot' : SE.save.stove > 0.12 ? 'warm' : 'cold';
       SE.hud.draw(ctx, { title: 'Kitchen', subtitle: `oven: ${ovenWord} · firewood: ${SE.save.wood} · fish: ${SE.fishCount()}`, map: false, back: mode === 'idle' ? () => SE.go('cabin') : null });
     },
@@ -113,7 +118,7 @@
         if (stoveCold()) {
           // out of firewood: the traveler heads out to chop some (a little film of its own)
           SE.toast('Out of firewood — off to the chopping block.', '#ffe6b8');
-          SE.go('yard', { mode: 'chop' });
+          SE.go('woodlot');
           return;
         }
         const fishes = Object.entries(SE.save.fish).filter(([, n]) => n > 0);

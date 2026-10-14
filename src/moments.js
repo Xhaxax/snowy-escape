@@ -57,9 +57,6 @@
       { black: 0.6 },
       { img: 'cut/pray', dur: 3.8, text: '', pan: 0, sounds: [[0.4, 'soft'], [2.4, 'bell']] },
     ],
-    cocoa: [
-      { img: 'cut/cocoa', dur: 2.8, text: 'Milk on the stove…', pan: 1, sounds: [[0.2, 'pour']] },
-    ],
 
     // ---- whole actions told in stills (no minigame): each ends with the job done
     shovelling: [
@@ -77,20 +74,42 @@
       { img: 'cut/climb1', dur: 3.6, text: 'Step by step up the ridge. Waffles leads the way.', pan: 1, sounds: [[0.3, 'stomp'], [0.9, 'step'], [1.5, 'stomp'], [2.1, 'step'], [2.7, 'woof']] },
       { img: 'cut/climb2', dur: 3.8, text: 'Breathless — and then the whole world opens up.', pan: -1, sounds: [[0.2, 'gust'], [1.8, 'soft']] },
     ],
+    // Coffee Talk style: four pictures, the sounds of the kitchen between them, the drink is made
     cocoaMake: [
-      { img: 'cut/cocoa', dur: 3.0, text: 'Milk on the stove…', pan: 1, sounds: [[0.2, 'pour']] },
-      { img: 'cut/cocoa2', dur: 3.0, text: 'Two heaped spoons of cocoa.', pan: -1, sounds: [[0.5, 'stir'], [1.4, 'stir']] },
-      { anim: 'cocoa_stir', dur: 3.2, text: 'Stir until it is smooth and dark.', sounds: [[0.3, 'stir'], [1.0, 'stir'], [1.7, 'stir'], [2.4, 'stir']] },
-      { img: 'cut/cocoa3', dur: 3.4, text: 'Marshmallows. Obviously.', pan: 1, sounds: [[0.5, 'pop'], [1.1, 'pop'], [1.6, 'pop'], [2.4, 'sip']] },
+      { img: 'cut/cocoa_chop', dur: 3.2, text: 'A bar of dark chocolate, chopped fine.', pan: 1, sounds: [[0.3, 'chop'], [0.8, 'chop'], [1.3, 'chop'], [1.9, 'chop']] },
+      { img: 'cut/cocoa2', dur: 3.2, text: 'Milk in the pot, two heaped spoons of cocoa.', pan: -1, sounds: [[0.2, 'pour'], [1.6, 'stir']] },
+      { img: 'cut/cocoa_cook', dur: 3.4, text: 'Low heat. Stir until it is smooth and dark.', pan: 1, sounds: [[0.3, 'stir'], [1.1, 'stir'], [1.9, 'stir'], [2.7, 'stir']] },
+      { img: 'cut/cocoa_pour', dur: 3.6, text: 'Into the big red mug. One last stir.', pan: -1, sounds: [[0.2, 'pour'], [1.8, 'stir'], [2.6, 'sip']] },
     ],
     cook: [
-      { img: 'kitchen_cut', dur: 2.6, text: 'A sharp knife, a steady hand.', sounds: [[0.3, 'chop'], [1.0, 'chop']] },
-      { img: 'kitchen_scale', dur: 2.6, text: 'Scales off, against the grain…', sounds: [[0.2, 'scrape'], [0.8, 'scrape'], [1.4, 'scrape']] },
-      { img: 'kitchen_head', dur: 2.4, text: 'Head and fins off.', sounds: [[0.3, 'chop'], [0.9, 'chop'], [1.4, 'chop']] },
-      { img: 'kitchen_fillet', dur: 2.8, text: 'Two neat fillets. Dill and salt.', sounds: [[0.4, 'stir'], [1.4, 'soft']] },
-      { anim: 'kitchen_fry_raw', dur: 3.4, text: 'Into the hot pan. Sssss.', sounds: [[0.1, 'sizzle'], [1.6, 'sizzle']] },
-      { anim: 'kitchen_fry_gold', dur: 3.2, text: 'Flip. Golden.', sounds: [[0.05, 'whoosh'], [0.3, 'sizzle']] },
-      { img: 'cut/eat', dur: 3.8, text: 'Dinner by the window. Everyone is very interested.', pan: 1, sounds: [[0.6, 'purr'], [1.8, 'woof']] },
+      { img: 'cut/cook_prep', dur: 3.2, text: 'A sharp knife, a steady hand. Two neat fillets.', pan: 1, sounds: [[0.3, 'scrape'], [0.9, 'scrape'], [1.6, 'chop'], [2.3, 'chop']] },
+      { img: 'cut/cook_pan', dur: 3.0, text: 'Into the hot pan.', pan: -1, sounds: [[0.4, 'sizzle'], [1.6, 'sizzle']] },
+      { img: 'cut/cook_fry', dur: 3.4, text: 'Sssss… flip. Golden.', pan: 1, sounds: [[0.1, 'sizzle'], [1.5, 'whoosh'], [1.8, 'sizzle']] },
+      { img: 'cut/cook_plate', dur: 3.2, text: 'Onto the plate, with dill and lemon.', pan: -1, sounds: [[0.4, 'soft'], [1.6, 'soft']] },
+    ],
+    // putting the headphones on when you sit back and just watch: music for working and studying
+    music: [
+      { img: 'cut/music', dur: 3.4, text: 'Headphones on. Something quiet to work to.', pan: 1, sounds: [[0.3, 'rustle'], [1.2, 'soft']] },
+    ],
+    // a night in the bedroom: lamp out, the three of them asleep, morning
+    sleep: [
+      { black: 1.2, text: 'Lamp out.', sounds: [[0.3, 'soft']] },
+      { img: 'cut/sleep', dur: 6.0, text: 'Mochi on the quilt, Waffles on the rug. Everyone snores a little.', pan: 1, sounds: [[0.8, 'purr'], [3.0, 'purr']] },
+      { black: 2.2, text: 'The night passes…', sounds: [[0.6, 'gust']] },
+    ],
+    woodDone: [
+      { img: 'cut/stack', dur: 3.6, text: 'Stacked under the lean-to, bark side up.', pan: 1, sounds: [[0.3, 'chop'], [1.0, 'stomp'], [1.8, 'chop'], [2.6, 'stomp']] },
+      { img: 'cut/carry_in', dur: 3.6, text: 'And an armful for the fire tonight.', pan: -1, sounds: [[0.3, 'step'], [0.9, 'step'], [1.6, 'stomp'], [2.4, 'creak']] },
+    ],
+    // dinner with the two of them watching every bite; a treat each, if you share
+    eat: [
+      { img: 'cut/eat', dur: 4.0, text: 'Dinner by the window. Everyone is very interested.', pan: 1, sounds: [[0.6, 'purr'], [1.8, 'woof']] },
+    ],
+    treat_dog: [
+      { img: 'cut/treat_dog', dur: 3.6, text: 'A piece for Waffles. Gone in one gulp.', pan: 1, sounds: [[0.6, 'woof'], [1.6, 'soft']] },
+    ],
+    treat_cat: [
+      { img: 'cut/treat_cat', dur: 3.6, text: 'A tiny bite for Mochi. Taken very politely.', pan: -1, sounds: [[0.5, 'purr'], [2.0, 'purr']] },
     ],
     photo: [
       { img: 'cut/camera', dur: 2.6, text: '', pan: 1, sounds: [[0.4, 'rustle'], [1.7, 'camera']] },
@@ -117,7 +136,7 @@
   const BASE = {
     alert: 'day', chop: 'day', lake: 'day', trail: 'day', forest: 'day', summit: 'day', porch: 'day',
     shovel: 'snow', shovel2: 'snow', shovel3: 'snow', porch2: 'day', climb1: 'day', climb2: 'day', camera: 'day', sketch: 'day',
-    leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night', cocoa: 'any',
+    leave: 'night', chapel: 'night', home: 'night', pray: 'night', lantern: 'night',
   };
   SE.CUT_VARIANTS = {
     alert: ['snow', 'storm', 'night'], chop: ['snow', 'storm', 'night'], lake: ['snow', 'storm', 'night'],
@@ -125,22 +144,78 @@
     porch: ['snow', 'storm', 'night'], shovel: ['day', 'storm', 'night'], leave: ['day', 'snow', 'storm'],
     chapel: ['day', 'snow', 'storm'], home: ['day', 'storm'], pray: ['day'],
   };
-  const PREFER = { day: ['day', 'snow'], snow: ['snow', 'storm', 'day'], storm: ['storm', 'snow', 'day'], night: ['night'] };
-  function wanted() {
+  // Stills that happen indoors only change between day and night (lamplight stays warm either way);
+  // everything else is outdoors and also gets the live snowfall of the current weather on top.
+  const INDOOR = /^(cut\/(home|lantern|pray|cocoa|pet_|eat|cook|bible|treat|music|sleep|wake)|kitchen_)/;
+  SE.stillIndoor = (img) => INDOOR.test(img);
+  function wanted(img) {
     const W = SE.weather;
     if (W.night() > 0.5) return 'night';
+    if (SE.stillIndoor(img)) return 'day';
     if (W.stormy() || W.mode === 'windy') return 'storm';
     return W.mode === 'sunny' ? 'day' : 'snow';
   }
+  // Painted variants (cut/<name>_<v>.png) win. Where none was painted, the still is relit here from
+  // its base: night turns it moonlit blue but keeps every warm lamp, candle and window pixel glowing;
+  // storm greys it into a whiteout; snow cools a sunny picture; day warms an overcast one.
+  function relight(src, from, to, indoor) {
+    const c = document.createElement('canvas');
+    c.width = src.width; c.height = src.height;
+    const x = c.getContext('2d');
+    x.drawImage(src, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) {
+      let r = p[i], g = p[i + 1], b = p[i + 2];
+      const L = 0.3 * r + 0.59 * g + 0.11 * b;
+      const warm = r > 150 && r - b > 55 && g > 80; // lamps, fire, candles, lit windows
+      if (to === 'night') {
+        if (warm) { r = Math.min(255, r * 1.08); g = Math.min(255, g * 1.04); }
+        else if (indoor) { r = r * 0.62 + L * 0.04; g = g * 0.62 + L * 0.06; b = b * 0.7 + L * 0.14 + 6; }
+        else { r = L * 0.26 + 6; g = L * 0.34 + 10; b = L * 0.6 + 28; }
+      } else if (to === 'storm') {
+        const k = 0.7; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k; // most colour gone
+        r = r * 0.62 + 208 * 0.38; g = g * 0.62 + 214 * 0.38; b = b * 0.62 + 228 * 0.38;   // into the whiteout
+      } else if (to === 'snow' && from === 'day') {
+        const k = 0.32; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k;
+        r = r * 0.88 + 200 * 0.12; g = g * 0.88 + 208 * 0.12; b = b * 0.88 + 226 * 0.12;
+      } else if (to === 'day' && from !== 'day') {
+        const k = -0.12; r = r + (L - r) * k; g = g + (L - g) * k; b = b + (L - b) * k;
+        r = r * 1.05 + 6; g = g * 1.03 + 3; b = b * 0.98;
+      }
+      p[i] = SE.clamp(Math.round(r), 0, 255); p[i + 1] = SE.clamp(Math.round(g), 0, 255); p[i + 2] = SE.clamp(Math.round(b), 0, 255);
+    }
+    x.putImageData(d, 0, 0);
+    return c;
+  }
   function stillFor(img) {
     const name = img.replace(/^cut\//, '');
-    if (!BASE[name] || BASE[name] === 'any') return img;
-    for (const v of PREFER[wanted()]) {
-      if (v === BASE[name]) return img;
-      if (SE.img(`${img}_${v}`)) return `${img}_${v}`;
-    }
-    return img;
+    const base = BASE[name] || (SE.stillIndoor(img) ? 'day' : 'snow');
+    if (base === 'any') return img;
+    const want = wanted(img);
+    if (want === base) return img;
+    const key = `${img}_${want}`;
+    if (SE.img(key)) return key;
+    const src = SE.img(img);
+    if (!src) return img;
+    SE.images[key] = relight(src, base, want, SE.stillIndoor(img));
+    return key;
   }
+
+  SE.stillFor = stillFor;
+  // A still as the whole screen (an encounter waits on its picture while you choose): the right light
+  // and weather, whole-pixel scale, letterbox bars, and the live snowfall outdoors.
+  SE.drawStill = function (ctx, name) {
+    const key = stillFor(name), img = SE.img(key);
+    ctx.fillStyle = '#06050a'; ctx.fillRect(0, 0, SE.W, SE.H);
+    if (!img) return;
+    const s = Math.max(1, Math.floor(Math.min(SE.W / img.width, SE.H / img.height)));
+    const w = img.width * s, h = img.height * s, x = Math.round((SE.W - w) / 2), y = Math.round((SE.H - h) / 2);
+    ctx.save(); ctx.beginPath(); ctx.rect(4, 22, SE.W - 8, SE.H - 44); ctx.clip();
+    ctx.drawImage(img, x, y, w, h);
+    ctx.restore();
+    if (!SE.stillIndoor(name) && SE.weather.mode !== 'sunny') SE.weather.draw(ctx, { clip: [{ x: 4, y: 22, w: SE.W - 8, h: SE.H - 44 }], density: 0.9 });
+    ctx.fillStyle = '#06050a'; ctx.fillRect(0, 0, SE.W, 22); ctx.fillRect(0, SE.H - 22, SE.W, 22);
+  };
 
   const COOLDOWN = 120; // seconds before the same moment plays again (they stay special)
   const lastPlayed = {};
@@ -198,6 +273,12 @@
         // smaller pictures (the cooking panels) get a thin warm frame, like a photo on the table
         if (w < SE.W - 40) { ctx.strokeStyle = 'rgba(243,230,207,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3); }
         ctx.restore();
+        // the weather keeps falling over outdoor pictures (sideways in a storm, none on a sunny spell)
+        if (b.img && !SE.stillIndoor(b.img) && SE.weather.mode !== 'sunny') {
+          ctx.save(); ctx.globalAlpha = SE.clamp(ia, 0, 1);
+          SE.weather.draw(ctx, { clip: [{ x: Math.max(4, x), y: Math.max(22, y), w: Math.min(SE.W - 8, w), h: Math.min(SE.H - 44, h) }], density: 0.9 });
+          ctx.restore();
+        }
         if (b.draw) b.draw(ctx, { x, y, w, h, s, t: m.t, k }); // extras on top (falling herbs, …)
       }
       // letterbox bars, with the line of text in the lower one (typed out gently)
@@ -207,6 +288,11 @@
         const n = Math.floor(SE.clamp((m.t - 0.4) * 32, 0, b.text.length));
         SE.text(b.text.slice(0, n), SE.W / 2, SE.H - 16, { align: 'center', size: 8, color: '#f3e6cf', alpha: SE.clamp(a, 0, 1) });
       }
+    }
+    // a dark pause can carry a line of its own, centred in the black (tension before a reveal)
+    if (b.black != null && b.text) {
+      const n = Math.floor(SE.clamp((m.t - 0.3) * 30, 0, b.text.length));
+      SE.text(b.text.slice(0, n), SE.W / 2, SE.H / 2 - 4, { align: 'center', size: 8, color: '#cfc4e6', alpha: SE.clamp(a, 0, 1) * 0.95 });
     }
     if (b.go && !b.went && m.t > len * 0.4) { b.went = true; SE.fade.a = 0; SE.switchNow(...b.go); SE.modal = 'moment'; }
     const skip = SE.mouse.released || SE.key('Space') || SE.key('Escape') || SE.key('Enter');

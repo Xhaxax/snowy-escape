@@ -13,6 +13,7 @@
     summit: { node: 'summit', label: 'Summit Trail', desc: 'Up past the cave to a ledge above the clouds.', scene: 'summit' },
     lake: { node: 'lake', label: 'Frozen Lake', desc: 'Ice fishing with Waffles by your side.', scene: 'lake' },
     trail: { node: 'trail', label: 'Long Walk', desc: 'The old trail out of the valley. Just keep walking.', scene: 'trail' },
+    woodlot: { node: 'woodlot', label: 'Woodlot', desc: 'The chopping block, a big snowy woodpile and felled pines.', scene: 'woodlot' },
     chapel: { node: 'chapel', label: 'Little Chapel', desc: 'A quiet log chapel with a bell tower. Candles, pews, peace.', scene: 'chapel' },
   };
   // path network, lake, clearings and landmarks come from src/world_layout.js (also used by
@@ -216,6 +217,7 @@
       ctx.save(); ctx.translate(-cx, -cy);
       SE.nightLights(ctx, 'lit/cabin_td', CABIN.x, CABIN.y, CABIN_LIGHTS);
       SE.nightLights(ctx, 'lit/chapel_td', CHAPEL.x, CHAPEL.y, CHAPEL_LIGHTS);
+      SE.travelerLight(ctx, s.hero.x + 4, s.hero.y - 5, s.hero.dir === 'w' ? -1 : 1, 0.6); // his lantern / headlamp
       ctx.restore();
       SE.weather.sunshine(ctx, 0);
       SE.weather.draw(ctx, { density: 0.5 });

@@ -86,6 +86,7 @@
         ctx.fillStyle = 'rgba(60,80,130,0.28)';
         ctx.beginPath(); ctx.ellipse(POS.man.x + 26, POS.man.y, 18, 3, 0, 0, Math.PI * 2); ctx.fill();
         SE.drawAnim(anim, POS.man.x + (reeling ? 0 : SE.weather.shiver(0)), POS.man.y - fsz.h, 0, { frame: manFrame });
+        SE.headphones(ctx, POS.man.x + 31, POS.man.y - fsz.h + 3);
       } else SE.drawActorFallback(ctx, POS.man.x + 20, POS.man.y - 40, '#a0522d');
       // Waffles keeps you company: resting, then sitting up when a fish bites
       if (s.state === 'nibble' || s.mini || s.card || s.land || s.miss) {
@@ -95,6 +96,7 @@
 
       // night and weather light fall on everyone in the scene, not just the background
       SE.weather.tint(ctx);
+      SE.travelerLight(ctx, POS.man.x - 20, POS.man.y - 4, 1); // a lantern on the ice beside him
       SE.weather.stars(ctx, 40);
       SE.weather.sunshine(ctx, 180);
       SE.weather.draw(ctx);

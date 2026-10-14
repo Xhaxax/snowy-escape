@@ -1,14 +1,11 @@
-// Wildlife encounter: out walking, an animal turns up out of nowhere (Waffles notices first). Take a
-// photo with the camera (each animal has three special shots you can only get this way), sketch it in
-// the notebook, or let it be. A bear is different: only when he is calm can you photograph him or
-// write a note; if he is agitated, you and Waffles back away slowly until he loses interest.
+// Wildlife encounter, told in stills (no animation): Waffles notices something, a dark pause while
+// you both listen ("Something in the woods got Waffles' attention…"), then the animal is revealed.
+// Over that picture you choose: take a photo (a cutscene of the camera, then the print: each animal
+// has three shots you can only get this way), note it down in the notebook (the pencil, then the
+// page), or let it be. A bear may be agitated: then there is only one choice, backing away slowly.
 'use strict';
 
 (function () {
-  const FEET = 242;
-  const TRAV = { x: 96 }, DOG = { x: 134 };
-  const MARK = 300; // where the animal stops
-  // walk/act sprites (shared with Whispering Pines), the three photos, and what goes in the notebook
   const ANIMALS = {
     deer: { name: 'Deer', walk: 'deer_walk', act: 'deer_graze', speed: 16, note: 'A doe, nibbling at the bark of a young pine.',
       shots: ['Eye to eye with a doe in the falling snow.', 'A deer leaping over a snowy log.', 'A doe and her fawn at the edge of the forest.'] },
@@ -25,6 +22,7 @@
     bear: { name: 'Grizzly bear', walk: 'bear_walk', act: 'bear_idle', angry: 'bear_bluff', sniff: 'bear_sniff', speed: 12, bear: true, note: 'A grizzly, calm and foraging. Keep your distance.',
       shots: ['A grizzly walking calmly through the pines.', 'A grizzly crossing a snowy clearing, far off.', 'A grizzly among the tall pines.'] },
   };
+  const REVEAL = {"deer": "A doe steps out between the pines.", "elk": "A bull elk. Antlers like a winter tree.", "fox": "A red fox, listening to the snow.", "hare": "A snowshoe hare — almost invisible.", "owl": "Two golden eyes in the branches. An owl.", "bird": "A flash of red: a cardinal.", "bear": "A grizzly. Calm, for now. Keep your distance."};
   SE.WILDLIFE = ANIMALS;
   let s = null;
   const has = (n) => !!(n && SE.anims[n]);
@@ -42,165 +40,62 @@
   }
 
   SE.addScene('encounter', {
-    retreating: () => !!s && s.state === 'retreat',
+    retreating: () => false,
     enter(p) {
       const kind = ANIMALS[p.animal] ? p.animal : 'deer';
       const A = ANIMALS[kind];
-      s = {
-        kind, A, from: p.from || 'map', t: 0, state: 'alert', bang: 1.6, ax: SE.W + 30, ay: FEET - 8, animT: 0, mood: 'calm',
-        moodT: SE.rand(6, 12), back: 0, photo: null, sketch: null, flash: 0, leaveT: 0, msg: null, huffT: 0,
-      };
-      if (A.bear) s.mood = Math.random() < 0.55 ? 'calm' : 'agitated';
-      if (kind === 'bird') { s.ax = SE.W + 20; s.ay = 90; }
-      if (kind === 'owl') { s.ax = SE.W + 20; s.ay = 70; }
-      SE.audio.sfx('woof');
+      s = { kind, A, from: p.from || 'map', state: 'intro', mood: 'calm', photo: null, sketch: null, flash: 0, msg: null, t: 0 };
+      if (A.bear && Math.random() < 0.4) s.mood = 'agitated';
       SE.audio.setMusic('outdoors');
+      SE.moment(`see_${kind}`, { force: true, then: () => {
+        if (A.bear && s.mood === 'agitated') agitate(); else s.state = 'meet';
+      } });
     },
     update() {
-      SE.audio.setAmbience({ wind: 0.35 + SE.weather.wind / 90, birds: 0.3 * (1 - SE.weather.night()), storm: 0 });
+      SE.audio.setAmbience({ wind: 0.35 + SE.weather.wind / 90, birds: 0.3 * (1 - SE.weather.night()), storm: SE.weather.stormy() ? 0.6 : 0 });
     },
     draw(ctx, dt) {
-      s.t += dt; s.animT += dt;
-      SE.drawForest(ctx, [[0, 0, 175, 200], [255, 0, 225, 195]]);
-      updateAnimal(dt);
-      drawAnimal(ctx);
-      drawPair(ctx, dt);
-      SE.weather.tint(ctx, 0.75 + 0.25 * SE.weather.night()); // a real night out here, not a filter
-      SE.moonlight(ctx);
-      // after dark he carries the lantern: a small warm circle around the two of them
-      const nl = SE.weather.night();
-      if (nl > 0.1) {
-        const lx = TRAV.x - s.back + 10, ly = FEET - 22, fl = 0.9 + 0.1 * Math.sin(SE.time * 8) * Math.sin(SE.time * 3.3);
-        SE.glow(ctx, lx, ly + 10, 64 * fl, '255,180,100', 0.22 * nl);
-        SE.glow(ctx, lx, ly, 10 * fl, '255,225,160', 0.5 * nl);
-      }
-      SE.weather.stars(ctx, 60);
-      SE.weather.draw(ctx, { density: 0.5 });
+      s.t += dt;
+      // the revealed animal stays on screen (in this weather and light) while you decide
+      SE.drawStill(ctx, s.mood === 'agitated' ? 'cut/see_bear_angry' : `cut/see_${s.kind}`);
       if (s.flash > 0) { s.flash -= dt * 3; ctx.fillStyle = `rgba(255,255,255,${Math.max(0, s.flash)})`; ctx.fillRect(0, 0, SE.W, SE.H); }
       if (s.photo) drawPhoto(ctx, dt);
       else if (s.sketch) drawSketch(ctx, dt);
       else drawChoices(ctx);
       if (s.msg) { s.msg.t += dt; if (s.msg.t > 5) s.msg = null; else banner(s.msg.text, s.msg.color); }
-      SE.hud.draw(ctx, { watch: false, title: 'A wild encounter', subtitle: A_title() });
+      SE.hud.draw(ctx, { watch: false, title: 'A wild encounter', subtitle: s.A.bear ? `${s.A.name} · ${s.mood === 'calm' ? 'calm' : 'agitated!'}` : s.A.name });
     },
   });
-  const A_title = () => (s.A.bear ? `${s.A.name} · ${s.mood === 'calm' ? 'calm' : 'agitated!'}` : s.A.name);
-
-  // ------------------------------------------------------------ the animal
-  function updateAnimal(dt) {
-    const A = s.A;
-    if (s.state === 'alert') {
-      s.bang -= dt;
-      if (s.bang <= 0) s.state = 'enter';
-      return;
-    }
-    if (s.state === 'enter') {
-      if (A.perch) { const k = Math.min(1, s.animT / 2.2); s.ax = SE.lerp(SE.W + 20, A.perch.x, SE.ease(k)); s.ay = SE.lerp(60, A.perch.y, SE.ease(k)); if (k >= 1) arrive(); return; }
-      if (s.kind === 'bird') { const k = Math.min(1, s.animT / 2); s.ax = SE.lerp(SE.W + 20, MARK, SE.ease(k)); s.ay = SE.lerp(90, FEET - 6, SE.ease(k)) - Math.sin(k * Math.PI) * 20; if (k >= 1) arrive(); return; }
-      // they trot in briskly, then slow to a stop at their spot
-      let v = A.speed * 2.6 * SE.clamp((s.ax - MARK) / 60, 0.35, 1);
-      if (A.hops) v = (s.animT % 1.2) < 0.55 ? A.speed * 2.6 : 0;
-      s.ax -= v * dt;
-      if (s.ax <= MARK) arrive();
-      return;
-    }
-    if (s.state === 'leave') {
-      s.leaveT += dt;
-      if (A.perch || s.kind === 'bird') { s.ax += 60 * dt; s.ay -= 30 * dt; }
-      else s.ax += (A.hops && (s.animT % 1.2) >= 0.55 ? 0 : (A.speed || 20) * (A.hops ? 1.8 : 1.2)) * dt;
-      if (s.leaveT > 4.5) goBack();
-      return;
-    }
-    // a bear's mood can change while you stand there
-    if (A.bear && s.state !== 'retreat') {
-      s.moodT -= dt;
-      if (s.moodT <= 0) { s.moodT = SE.rand(8, 14); if (s.mood === 'calm' && Math.random() < 0.3) agitate(); }
-    }
+  // the moments that tell it: listen, then see (built from the stills for each animal)
+  for (const kind of Object.keys(ANIMALS)) {
+    SE.MOMENTS[`see_${kind}`] = [
+      { black: 2.6, text: 'Something in the woods got Waffles’ attention…', sounds: [[0.3, 'twig'], [1.4, 'rustle'], [2.2, 'twig']] },
+      { img: `cut/see_${kind}`, dur: 3.6, text: REVEAL[kind], pan: 1, sounds: [[0.2, kind === 'bear' ? 'stomp' : kind === 'owl' || kind === 'bird' ? 'rustle' : 'step']] },
+    ];
   }
-  function arrive() { s.state = 'meet'; s.animT = 0; }
+  SE.MOMENTS.bear_angry = [
+    { img: 'cut/see_bear_angry', dur: 3.4, text: 'He lowers his head and huffs, slapping the snow. Back away slowly.', pan: -1, sounds: [[0.2, 'woof'], [1.0, 'stomp'], [2.2, 'stomp']] },
+  ];
+  SE.MOMENTS.bear_retreat = [
+    { img: 'cut/retreat', dur: 3.8, text: 'Step by step. Never turn your back. Waffles stays close.', pan: 1, sounds: [[0.4, 'step'], [1.4, 'step'], [2.4, 'step']] },
+    { black: 2.2, text: 'Branches snap far behind you… then nothing.', sounds: [[0.5, 'twig'], [1.6, 'rustle']] },
+  ];
+  SE.MOMENTS.animal_leaves = [
+    { black: 1.6, text: 'It slips back between the trees.', sounds: [[0.3, 'rustle']] },
+  ];
+
   function agitate() {
     s.mood = 'agitated';
-    s.state = 'meet';
-    s.animT = 0;
-    SE.audio.sfx('woof');
-    s.msg = { text: `The bear lowers his head and huffs, slapping the snow. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A'}.`, color: '#ffb3a3', t: 0 };
+    s.state = 'busy';
+    SE.moment('bear_angry', { force: true, then: () => { s.state = 'meet'; } });
   }
-  function drawAnimal(ctx) {
-    const A = s.A;
-    if (s.state === 'alert') return;
-    const walking = s.state === 'enter' || s.state === 'leave';
-    let anim = walking ? (A.walk || A.fly) : A.act;
-    if (A.bear && s.mood === 'agitated' && !walking && has(A.angry)) anim = A.angry;
-    // a calm bear forages, and every so often lifts a paw and his nose to test the air
-    const sniffing = A.bear && s.mood === 'calm' && !walking && has(A.sniff) && (s.animT % 11) > 7;
-    if (sniffing) anim = A.sniff;
-    if (s.kind === 'bird') anim = walking ? A.fly : A.act;
-    if (s.kind === 'owl') anim = A.act;
-    const flip = !(s.state === 'leave'); // the sprites face right; they come in from the right
-    if (!has(anim)) {
-      SE.drawActorFallback(ctx, s.ax, (A.perch ? s.ay : FEET) - 30, A.bear ? '#5a3a24' : '#9a6a44', true);
-      return;
-    }
-    const sz = SE.animSize(anim), n = SE.anims[anim].frames;
-    let frame;
-    if (walking) frame = A.hops ? ((s.animT % 1.2) < 0.55 ? Math.floor(((s.animT % 1.2) / 0.55) * n) % n : 0) : Math.floor(s.animT * 9) % n;
-    else { const f = Math.floor(s.animT * 3); frame = f < n - 2 ? f : n - 3 + (Math.floor(s.animT * 2.5) % 2); }
-    // agitated: a bluff — head drops, ears back, a front paw slams the snow; a pause, then again
-    if (A.bear && s.mood === 'agitated' && !walking) {
-      const c = (s.animT % 2.6) * 7, last = n - 1;
-      frame = c < n ? Math.floor(c) : c < n + 4 ? last : Math.max(0, last - Math.floor(c - n - 4));
-      if (frame === 6 && !s.thud) { s.thud = true; SE.audio.sfx('stomp'); } else if (frame !== 6) s.thud = false;
-    }
-    if (sniffing) { const c = ((s.animT % 11) - 7) * 4, half = n - 1; frame = Math.min(half, Math.floor(c < half + 6 ? Math.min(c, half) : Math.max(0, 2 * half + 6 - c))); }
-    if (A.perch || s.kind === 'bird') { SE.drawAnim(anim, s.ax - sz.w / 2, s.ay - sz.h, 0, { frame, flip: s.kind === 'bird' ? s.state !== 'leave' : false }); return; }
-    ctx.fillStyle = 'rgba(70,90,140,0.25)';
-    ctx.fillRect(Math.round(s.ax + 4), FEET - 1, Math.round(sz.w - 8), 2);
-    SE.drawAnim(anim, s.ax, FEET - sz.h, 0, { frame, flip });
-  }
-
-  // ------------------------------------------------------------ the traveler and Waffles
-  function drawPair(ctx, dt) {
-    // backing away from an agitated bear: hold ← / A, and do not rush it
-    if (s.state === 'retreat') {
-      const left = SE.held('ArrowLeft', 'KeyA'), rush = SE.held('ShiftLeft', 'ShiftRight');
-      s.huffT -= dt;
-      if (left && !rush) { s.back += 14 * dt; s.walkT = (s.walkT || 0) + dt; }
-      if (left && rush && s.huffT <= 0) { s.huffT = 3; SE.audio.sfx('woof'); s.msg = { text: 'Slowly… never run from a bear.', color: '#ffb3a3', t: 0 }; }
-      if (s.back > 80) {
-        s.state = 'leave'; s.leaveT = 0; s.animT = 0; s.mood = 'calm';
-        SE.save.bears = (SE.save.bears || 0) + 1; SE.persist();
-        s.msg = { text: 'You back away slowly. The bear loses interest and lumbers off into the pines.', color: '#ffe6b8', t: 0 };
-      }
-    }
-    const bx = -s.back + (s.state === 'retreat' ? 0 : SE.weather.shiver(0));
-    const walkA = SE.anims.trav_walk_e ? 'trav_walk_e' : null;
-    const moving = s.state === 'retreat' && SE.held('ArrowLeft', 'KeyA') && !SE.held('ShiftLeft', 'ShiftRight');
-    const tA = moving && walkA ? walkA : SE.anims.trav_pray ? 'trav_pray' : null;
-    if (tA) {
-      const sz = SE.animSize(tA), n = SE.anims[tA].frames;
-      // walking backwards, still facing the bear: the walk cycle played in reverse
-      const frame = tA === walkA ? (n - 1 - (Math.floor((s.walkT || 0) * 6) % n)) : 0;
-      ctx.fillStyle = 'rgba(40,46,90,0.25)';
-      ctx.beginPath(); ctx.ellipse(TRAV.x + bx, FEET, 10, 2, 0, 0, Math.PI * 2); ctx.fill();
-      SE.drawAnim(tA, Math.round(TRAV.x + bx - sz.w / 2), FEET - sz.h, 0, { frame });
-    } else SE.drawActorFallback(ctx, TRAV.x + bx - 7, FEET - 36, '#8a5a34');
-    // Waffles is not at ease: he heard something he does not know. He stands right by your side,
-    // low and tense, head stretched toward it, sniffing — until the animal is gone again.
-    const wary = s.state !== 'leave' || s.mood === 'agitated';
-    const dA = moving && has('dog_walk') ? 'dog_walk' : wary && has('dog_cautious') ? 'dog_cautious' : 'dog_sit';
-    if (has(dA)) {
-      const sz = SE.animSize(dA), n = SE.anims[dA].frames;
-      let frame = dA === 'dog_walk' ? (n - 1 - (Math.floor((s.walkT || 0) * 8) % n)) : Math.floor(SE.time * 3) % Math.min(3, n);
-      if (dA === 'dog_cautious') {
-        // lower the head and lean in over the first moments, then hold there, sniffing now and then
-        const t = s.t * 5, hold = n - 4;
-        frame = t < hold ? Math.floor(t) : hold + Math.floor((Math.sin(s.t * 1.7) * 0.5 + 0.5) * 3.99);
-        if (s.mood === 'agitated') frame = Math.min(frame, 3) + (Math.floor(SE.time * 8) % 2); // bristling, uneasy
-      }
-      SE.drawAnim(dA, Math.round(DOG.x + bx - sz.w / 2), FEET - sz.h + 2, 0, { frame });
-      // Waffles notices first: a bouncing "!" over his head
-      if (s.state === 'alert' || s.t < 2.4) drawBang(ctx, DOG.x + bx, FEET - sz.h - 6, s.t);
-    }
+  function retreat() {
+    s.state = 'busy';
+    SE.moment('bear_retreat', { force: true, then: () => {
+      SE.save.bears = (SE.save.bears || 0) + 1; SE.persist();
+      SE.toast('You made it back to the path. Waffles leans against your legs.', '#ffe6b8');
+      goBack();
+    } });
   }
   SE.drawBang = (ctx, x, y, t) => drawBang(ctx, x, y, t);
   function drawBang(ctx, x, y, t) {
@@ -217,25 +112,21 @@
   function drawChoices() {
     if (s.state !== 'meet') return;
     const A = s.A, by = SE.H - 24;
-    if (A.bear && s.mood === 'agitated') {
-      s.state = 'retreat'; s.back = 0;
-      if (!s.msg) s.msg = { text: `The bear is agitated. Back away slowly — ${SE.touch && SE.touch.on ? 'hold the button' : 'hold ← or A (no rushing)'}.`, color: '#ffb3a3', t: 0 };
-      return;
-    }
-    const items = [
-      ['Take a photo', 84, takePhoto, 'cam'],
-      [A.bear ? 'Note it down' : 'Sketch it', 76, sketchIt, 'book'],
-      [A.bear ? 'Back away' : 'Let it be', 66, () => (A.bear ? (s.state = 'retreat', s.back = 0) : leave()), null],
-    ];
+    const items = A.bear && s.mood === 'agitated'
+      ? [['Back away slowly', 104, retreat, null]]
+      : [
+        ['Take a photo', 84, takePhoto, 'cam'],
+        [A.bear ? 'Note it down' : 'Sketch it', 76, sketchIt, 'book'],
+        [A.bear ? 'Back away' : 'Let it be', 66, () => (A.bear ? retreat() : leave()), null],
+      ];
     let x = SE.W - 6 - items.reduce((t, i) => t + i[1] + 4, 0);
     for (const [label, w, cb, icon] of items) { if (SE.button(x, by, w, 18, label, { icon })) cb(); x += w + 4; }
   }
-  function leave() { s.state = 'leave'; s.leaveT = 0; s.animT = 0; }
+  function leave() { s.state = 'busy'; SE.moment('animal_leaves', { force: true, then: goBack }); }
   function goBack() {
     if (s.from === 'trail') SE.go('trail', {});
     else SE.go('map', { resume: true });
   }
-
   // Photo and sketch are little cutscenes: his hands raising the camera (the shutter clicks), or the
   // pencil moving over the notebook, and then the print or the finished page.
   function takePhoto() {

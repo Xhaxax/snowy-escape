@@ -32,6 +32,26 @@
     });
   }
 
+  // The Bible on the coffee table: a chapter by the fire, a verse noted in the notebook
+  const BIBLE = { x: 296, y: 194, w: 32, h: 16 };
+  function readBible() {
+    mode = 'busy';
+    const [text, ref] = SE.pick(SE.VERSES || [['Be still, and know that I am God.', 'Psalm 46:10']]);
+    SE.MOMENTS.bible = [
+      { img: 'cut/bible_read', dur: 4.2, text: 'A chapter by the fire, and a few notes in the margin.', pan: 1, sounds: [[0.4, 'rustle'], [1.8, 'scrape'], [2.6, 'scrape']] },
+      { black: 3.6, text: `“${text}” — ${ref}`, sounds: [[0.4, 'soft']] },
+    ];
+    SE.moment('bible', { force: true, then: () => {
+      mode = 'room';
+      const sv = SE.save;
+      sv.bibleReads = (sv.bibleReads || 0) + 1;
+      sv.verses = (sv.verses || []).filter((v) => v[1] !== ref).concat([[text, ref]]).slice(-24);
+      SE.persist();
+      SE.toast(`Noted in the notebook: ${ref}`, '#ffe6b8');
+      dir.dur = 0;
+    } });
+  }
+
   function sitDown(auto) {
     mode = 'couch';
     sips = 0;
@@ -127,11 +147,12 @@
     if (mode === 'busy' || SE.momentPlaying()) return;
     if (SE.save.fire < 0.4 && SE.save.wood > 0 && (dir.fireT = (dir.fireT || 0) + dt) > 3) { dir.fireT = 0; addLog(true); }
     if (dir.t < dir.dur) return;
-    const options = ['couch', 'couch', 'petDog', 'petCat', 'room'].filter((m) => m !== dir.last && m !== mode);
+    const options = ['couch', 'couch', 'petDog', 'petCat', 'room', 'bible'].filter((m) => m !== dir.last && m !== mode);
     const next = SE.pick(options);
     dir.last = next; dir.t = 0;
     if (next === 'couch') { sitDown(true); dir.dur = SE.rand(35, 55); }
     else if (next === 'room') { mode = 'room'; dir.dur = SE.rand(12, 20); }
+    else if (next === 'bible') { readBible(); dir.dur = 999; }
     else { startPet(next === 'petDog' ? 'dog' : 'cat'); dir.dur = 999; }
   }
 
@@ -158,6 +179,7 @@
       drawDoor(ctx, dt);
       SE.weather.interior(ctx);
       drawGust(ctx, dt);
+      if (mode === 'room' && !SE.watching() && hotspot(BIBLE, 'Read the Bible')) readBible();
       if (mode === 'room' && !SE.watching() && doorT <= 0 && hotspot(DOOR, SE.weather.stormy() ? 'The storm howls outside' : 'Step outside')) goOutside();
 
       // fire (its size follows the fire level) + lamps that matter more at night
@@ -195,13 +217,15 @@
         const by = SE.H - 24;
         const items = [
           ['Settle on the couch', 92, () => sitDown()],
-          ['Kitchen', 56, () => SE.go('kitchen')],
+          ['Read the Bible', 78, readBible],
+          ['Kitchen', 52, () => SE.go('kitchen')],
+          ['Bedroom', 52, () => SE.go('bedroom')],
           ['Step outside', 70, goOutside],
         ];
         let x = SE.W - 6 - items.reduce((s, i) => s + i[1] + 4, 0);
         for (const [label, w, cb] of items) { if (SE.button(x, by, w, 18, label, { alpha: a })) cb(); x += w + 4; }
         idleHint += dt;
-        if (idleHint < 8) SE.text('Tip: click Waffles or Mochi to pet them', 8, SE.H - 20, { size: 7, alpha: Math.min(1, (8 - idleHint)) * a, color: '#ffe6b8' });
+        if (idleHint < 8) SE.text('Tip: click Waffles, Mochi or the Bible', 8, SE.H - 36, { size: 7, alpha: Math.min(1, (8 - idleHint)) * a, color: '#ffe6b8' });
       }
       const fireWord = SE.save.fire > 0.7 ? 'roaring' : SE.save.fire > 0.35 ? 'cozy' : SE.save.fire > 0.1 ? 'getting low' : 'embers';
       SE.hud.draw(ctx, { title: 'The Cabin', subtitle: `fire: ${fireWord} · firewood: ${SE.save.wood} · cocoa: ${SE.save.cocoa}`, map: false });
@@ -226,6 +250,7 @@
     // the coffee table stands in front of him: hide whatever of the sprite is below its top edge
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SE.W, 196); ctx.clip();
     if (SE.anims.couch_sit) SE.drawAnim('couch_sit', r.x, r.y, SE.time * 0.55, { pingpong: true });
+    SE.headphones(ctx, r.x + 26, r.y + 9);
     ctx.restore();
     if (!SE.anims.couch_sit) SE.drawActorFallback(ctx, POS.couch.x + 20, POS.couch.y - 50, '#a0522d');
     // steam from the mug

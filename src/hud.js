@@ -1,4 +1,4 @@
-// Snowy Escape — HUD: location label, top bar, journal, sound, weather & focus timer panels.
+// Snowy Escape — HUD: location label, top bar (notebook, sound, weather & focus timer panels).
 'use strict';
 
 (function () {
@@ -107,7 +107,7 @@
     btn('note', () => toggle('sound'), H.panel === 'sound');
     btn('snow', () => toggle('weather'), H.panel === 'weather');
     btn('clock', () => toggle('focus'), H.panel === 'focus' || F.running);
-    btn('book', () => toggle('journal'), H.panel === 'journal');
+    btn('book', () => { H.close(); SE.openNotebook(); }, SE.notebook && SE.notebook.open);
     if (opts.map) btn('map', () => { H.panel = null; SE.go('map'); });
     // the big "Just watch" toggle: activities play themselves on a loop
     if (opts.watch !== false) {
@@ -139,7 +139,7 @@
   function drawPanel(ctx) {
     ctx.fillStyle = 'rgba(14,10,24,0.45)';
     ctx.fillRect(0, 0, SE.W, SE.H);
-    const pw = H.panel === 'journal' ? 300 : 200, ph = H.panel === 'journal' ? 200 : 132;
+    const pw = 200, ph = 132;
     const px = SE.W / 2 - pw / 2, py = SE.H / 2 - ph / 2;
     SE.panel(px, py, pw, ph, { fill: 'rgba(48,40,70,0.97)' });
     if (SE.button(px + pw - 20, py + 4, 16, 14, 'x', { modal: true })) { H.close(); return; }
@@ -180,79 +180,7 @@
         });
       }
       SE.text(`Sessions completed: ${SE.save.focusSessions}`, px + pw / 2, py + ph - 14, { align: 'center', size: 7, color: '#b9b1d6' });
-    } else if (H.panel === 'journal') drawJournal(px, py, pw, ph);
-  }
-
-  function drawJournal(px, py, pw, ph) {
-    SE.text("Traveler's Journal", px + 12, py + 8, { size: 10, color: '#ffe6b8' });
-    const tabs = ['Fish', 'Kitchen', 'Moments', 'Photos'];
-    tabs.forEach((t, i) => { if (SE.button(px + 12 + i * 62, py + 24, 58, 15, t, { modal: true, active: H.tab === i })) H.tab = i; });
-    const sv = SE.save;
-    let y = py + 48;
-    const line = (l, r, c) => {
-      SE.text(l, px + 16, y, { size: 8, color: c || '#fff7ea' });
-      if (r != null) SE.text(String(r), px + pw - 16, y, { size: 8, align: 'right', color: '#ffe6b8' });
-      y += 13;
-    };
-    if (H.tab === 0) {
-      SE.text('species', px + 16, y - 2, { size: 6, color: '#b9b1d6' });
-      SE.text('in bucket · caught', px + pw - 16, y - 2, { size: 6, align: 'right', color: '#b9b1d6' });
-      y += 8;
-      for (const [name, f] of Object.entries(SE.FISH)) {
-        const seen = sv.caught[name];
-        SE.drawIcon('fish', px + 16, y, seen ? f.color : '#5d5577');
-        SE.text(seen ? name : '???', px + 28, y, { size: 8, color: seen ? '#fff7ea' : '#8a82a8' });
-        SE.text(`${sv.fish[name] || 0} · ${seen || 0}`, px + pw - 16, y, { size: 8, align: 'right', color: '#ffe6b8' });
-        y += 14;
-      }
-      SE.text('Catch fish at the Frozen Lake, cook them in the cabin kitchen.', px + pw / 2, py + ph - 14, { align: 'center', size: 6, color: '#b9b1d6' });
-    } else if (H.tab === 1) {
-      line('Hot chocolate ready', sv.cocoa);
-      for (const d of Object.keys(SE.DISHES)) line(d + ' made', sv.dishes[d] || 0);
-      line('Meals cooked in total', sv.cooked);
-    } else if (H.tab === 3) {
-      // the photo album: three camera-only shots per animal, met on walks through the valley
-      const W = SE.WILDLIFE || {};
-      const kinds = ['deer', 'elk', 'fox', 'hare', 'owl', 'bird', 'bear'];
-      const album = sv.album || {};
-      const tw = 32, th = 24, colW = 39, x0 = px + 14, y0 = y - 2;
-      let count = 0;
-      kinds.forEach((k, c) => {
-        const cx = x0 + c * colW;
-        SE.text(W[k] ? W[k].name.split(' ').pop() : k, cx + tw / 2, y0, { size: 6, align: 'center', color: '#b9b1d6' });
-        for (let i = 0; i < 3; i++) {
-          const ty = y0 + 10 + i * (th + 4);
-          const got = (album[k] || []).includes(i), img = SE.img(`photo/${k}_${i}`);
-          SE.ctx.fillStyle = got ? '#fbf6ec' : 'rgba(20,16,32,0.6)';
-          SE.ctx.fillRect(cx - 1, ty - 1, tw + 2, th + 2);
-          if (got && img) { SE.ctx.imageSmoothingEnabled = false; SE.ctx.drawImage(img, cx, ty, tw, th); count++; }
-          else SE.text('?', cx + tw / 2, ty + 7, { size: 8, align: 'center', color: '#5d5577' });
-          if (got && SE.inRect(SE.mouse.x, SE.mouse.y, { x: cx, y: ty, w: tw, h: th })) { SE.cursor = 'pointer'; if (SE.mouse.released) { SE.mouse.released = false; H.photo = { k, i }; } }
-        }
-      });
-      SE.text(`${count} / 21 photos · animals turn up on walks through the valley`, px + pw / 2, py + ph - 14, { align: 'center', size: 6, color: '#b9b1d6' });
-      if (H.photo) {
-        const img = SE.img(`photo/${H.photo.k}_${H.photo.i}`);
-        const w = 256, h = 192, bx = SE.W / 2 - w / 2, by = 20;
-        SE.ctx.fillStyle = '#fbf6ec'; SE.ctx.fillRect(bx - 6, by - 6, w + 12, h + 26);
-        if (img) SE.ctx.drawImage(img, bx, by, w, h);
-        const cap = W[H.photo.k] ? W[H.photo.k].shots[H.photo.i] : '';
-        SE.text(cap, SE.W / 2, by + h + 6, { align: 'center', size: 8, color: '#3a2a2a', shadow: false });
-        if (SE.mouse.released) { SE.mouse.released = false; H.photo = null; }
-      }
-    } else {
-      const sk = sv.sketches || {};
-      line('Sketched: deer · elk · fox · hare · owl · bird', `${sk.deer || sv.deerPhotos || 0}·${sk.elk || 0}·${sk.fox || 0}·${sk.hare || 0}·${sk.owl || 0}·${sk.bird || 0}`);
-      line('Shooting stars watched with Waffles', sv.stars || 0);
-      line('Calm breaths at the summit', sv.breaths);
-      line('Prayers · candles lit in the chapel', `${sv.prayers || 0} · ${sv.candles || 0}`);
-      line('Belly rubs for Waffles', sv.petsDog);
-      line('Paths shoveled', sv.shoveled);
-      line('Armfuls of firewood', sv.logs);
-      line('Chin scratches for Mochi', sv.petsCat);
-      line('Kilometres walked in snow', (sv.distance / 1000).toFixed(1));
-      line('Focus sessions finished', sv.focusSessions);
-      line('Days in the mountains', sv.day);
     }
   }
+
 })();

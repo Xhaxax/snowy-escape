@@ -76,6 +76,51 @@
     SE.glow(ctx, x - 40, 230, 180, '150,170,230', 0.07 * n);
   };
 
+  // While you just watch, he is listening to music: headphones over his hat and little notes
+  // drifting up. Scenes call this right after drawing him, with the top of his head.
+  SE.headphones = function (ctx, x, y, scale = 1) {
+    if (!SE.watching()) return;
+    x = Math.round(x); y = Math.round(y);
+    const k = Math.max(1, Math.round(scale)), px = (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x + dx * k, y + dy * k, w * k, h * k); };
+    px(-6, -2, 13, 1, '#1b1720');                          // the band arching over his hat
+    px(-7, -1, 1, 6, '#1b1720'); px(7, -1, 1, 6, '#1b1720');
+    px(-9, 5, 4, 6, '#1b1720'); px(6, 5, 4, 6, '#1b1720');  // ear cups, outlined
+    px(-8, 6, 2, 4, '#5a5266'); px(7, 6, 2, 4, '#5a5266');
+    px(-8, 6, 1, 1, '#a8a0b8'); px(8, 6, 1, 1, '#a8a0b8');  // a little shine
+    if (Math.random() < SE.dt * 0.9) SE.spawnFloater(x + SE.rand(-4, 6) * k, y - 4, 'note', SE.pick(['#ffe6b8', '#cfe6ff', '#ffd1dc']));
+  };
+
+  // What he carries when it is dark out: a lantern swinging at his side at night, and a headlamp
+  // when the snow comes down hard (its beam cuts a cone through the flakes the way he faces).
+  // (x, y) is about his hand; dir is +1 facing right, -1 facing left. Drawn after the night tint.
+  SE.travelerLight = function (ctx, x, y, dir = 1, scale = 1) {
+    const W = SE.weather, n = W.night();
+    const heavy = W.stormy() || W.mode === 'windy' || W.mode === 'snowy';
+    const fl = 0.9 + 0.1 * Math.sin(SE.time * 9) * Math.sin(SE.time * 3.7);
+    if (heavy && (n > 0.25 || W.stormy())) {
+      const hx = x, hy = y - 14 * scale, k = W.stormy() ? 1 : SE.clamp(n * 1.4, 0, 1);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createLinearGradient(hx, hy, hx + dir * 120 * scale, hy + 30 * scale);
+      g.addColorStop(0, `rgba(235,240,255,${0.32 * k})`); g.addColorStop(1, 'rgba(235,240,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + dir * 120 * scale, hy - 18 * scale); ctx.lineTo(hx + dir * 120 * scale, hy + 46 * scale); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      SE.glow(ctx, hx, hy, 8 * scale, '240,245,255', 0.6 * k);
+      ctx.fillStyle = '#fffbe8'; ctx.fillRect(Math.round(hx), Math.round(hy), 2, 1);
+      return;
+    }
+    if (n < 0.35) return;
+    const k = SE.clamp((n - 0.35) * 2.5, 0, 1);
+    const sw = Math.sin(SE.time * 2.4) * 1.2; // the lantern swings a little as he walks
+    const lx = Math.round(x + sw), ly = Math.round(y);
+    SE.glow(ctx, lx, ly, 60 * scale * fl, '255,170,90', 0.24 * k);
+    SE.glow(ctx, lx, ly, 14 * scale * fl, '255,220,150', 0.55 * k);
+    // the lantern itself: a little brass frame with a flame
+    ctx.fillStyle = '#3a2a1e'; ctx.fillRect(lx - 1, ly - 3, 3, 1); ctx.fillRect(lx - 2, ly - 2, 1, 4); ctx.fillRect(lx + 2, ly - 2, 1, 4); ctx.fillRect(lx - 1, ly + 2, 3, 1);
+    ctx.fillStyle = '#ffd27a'; ctx.fillRect(lx - 1, ly - 2, 3, 4);
+    ctx.fillStyle = '#fff4d0'; ctx.fillRect(lx, ly - 1, 1, 2);
+  };
+
   // Lit windows after dark: drawn AFTER the night tint, so the warm panes keep their full colour and
   // bloom out into the dark while everything around them sinks into blue-black. `img` holds only the
   // lit pixels of a backdrop (assets/img/lit/*), `spots` are window centres for halos and pools of
@@ -189,101 +234,69 @@
     ctx.restore();
   };
 
-  // A still "comic panel" (Coffee Talk style): one beautiful frame slides in over a card, drifts a
-  // couple of pixels like a slow camera pan, and lets timed sounds carry the action; then it fades.
-  // opts: { img, x, y, dur, caption, sounds: [[seconds, sfxName], ...] }. Returns true while showing.
-  SE.Panel = function (opts) {
-    const p = { t: 0, ...opts, played: new Set() };
-    p.draw = function (ctx, dt) {
-      p.t += dt;
-      const img = SE.img(p.img);
-      if (!img || p.t > p.dur) return false;
-      for (const [i, [at, name]] of (p.sounds || []).entries()) if (p.t >= at && !p.played.has(i)) { p.played.add(i); SE.audio.sfx(name); }
-      const k = p.t / p.dur, inn = Math.min(1, p.t / 0.25), out = Math.min(1, (p.dur - p.t) / 0.35);
-      const a = Math.min(inn, out);
-      const slide = Math.round((1 - SE.ease(inn)) * 14);
-      const pan = Math.round(-1 + k * 3); // the slow drift
-      const w = img.width, h = img.height, x = Math.round(p.x - w / 2) + slide, y = Math.round(p.y);
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.fillStyle = 'rgba(20,14,24,0.55)'; ctx.fillRect(x - 3, y - 3 + 3, w + 6, h + 6);
-      ctx.fillStyle = '#fbf3e4'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
-      ctx.beginPath(); ctx.rect(x + 1, y, w - 2, h); ctx.clip(); // a 1px inset hides the edge as it pans
-      ctx.drawImage(img, x + pan, y);
-      ctx.restore();
-      if (p.caption) SE.text(p.caption, p.x, y + h + 6, { align: 'center', size: 8, color: '#ffe6b8', alpha: a });
-      return true;
-    };
-    return p;
-  };
-
   // Mochi's little life in a room. `surfaces` are the places she can be: { id: [x1, x2, feetY] };
-  // `links` are the jumps between them. Each time a room is entered she is lounging somewhere new;
-  // then she sits, washes herself, lies down, strolls along a counter or hops up onto a shelf.
+  // `links` are the jumps between them. Each time a room is entered she is somewhere new: most often
+  // lying in a loaf (counter, shelf, quilt…) or sitting up, watching the room; now and then she strolls
+  // along or hops to another spot. She is always seen from the front-diagonal, never side-on.
   SE.Mochi = function (surfaces, links) {
     const ids = Object.keys(surfaces);
-    const m = { state: 'rest', t: 0, dur: SE.rand(6, 12), flip: Math.random() < 0.5, pose: SE.pick(['lie', 'lie', 'sit', 'wash']), face: Math.random() < 0.5 ? 'front' : 'side' };
+    const m = { state: 'rest', t: 0, dur: SE.rand(10, 20), pose: SE.pick(['loaf', 'loaf', 'loaf', 'sit']), face: SE.pick(['se', 'sw']) };
     const place = (id) => { const [a, b, y] = surfaces[id]; m.surf = id; m.x = SE.rand(a, b); m.y = y; };
     place(SE.pick(ids));
     const neighbours = () => links.filter((l) => l.includes(m.surf)).map((l) => (l[0] === m.surf ? l[1] : l[0]));
-    const frames = (n) => (SE.anims[n] ? SE.anims[n].frames : 8);
-    // settle into a resting pose, facing the room or turned sideways
-    function rest(pose, dur) {
-      m.state = 'rest'; m.t = 0; m.pose = pose; m.dur = dur;
-      m.face = Math.random() < 0.45 ? 'front' : 'side';
-    }
-    // one-shot moves: a long stretch after lying down, a big yawn now and then
-    function oneShot(pose, anim, fps) { m.state = 'once'; m.t = 0; m.pose = pose; m.anim = anim; m.dur = frames(anim) / fps; }
+    const has = (n) => !!SE.anims[n];
+    const frames = (n) => (SE.anims[n] ? SE.anims[n].frames : 1);
+    function rest(pose, dur) { m.state = 'rest'; m.t = 0; m.pose = pose; m.dur = dur; m.face = SE.pick(['se', 'sw']); }
     function decide() {
       const [a, b] = surfaces[m.surf], r = Math.random(), nb = neighbours();
-      if (m.pose === 'lie' && m.state === 'rest' && SE.anims.cat_stretch && Math.random() < 0.6) { m.face = 'side'; oneShot('stretch', 'cat_stretch', 7); return; }
       m.t = 0;
-      if (r < 0.3 && b - a > 24) { m.state = 'walk'; m.tx = SE.rand(a, b); m.flip = m.tx < m.x; return; }
-      if (r < 0.6 && nb.length) {
+      if (r < 0.25 && b - a > 24) { m.state = 'walk'; m.tx = SE.rand(a, b); m.face = m.tx < m.x ? 'sw' : 'se'; return; }
+      if (r < 0.5 && nb.length) {
         const to = SE.pick(nb), [c, d, y] = surfaces[to];
-        m.state = 'jump'; m.from = [m.x, m.y]; m.to = [SE.clamp(m.x, c, d), y]; m.toSurf = to; m.flip = m.to[0] < m.x;
-        m.dur = 0.75; return;
+        m.state = 'jump'; m.from = [m.x, m.y]; m.to = [SE.clamp(m.x, c, d), y]; m.toSurf = to; m.face = m.to[0] < m.x ? 'sw' : 'se';
+        m.dur = 0.8; return;
       }
-      if (r < 0.7 && SE.anims.cat_yawn_s) { m.face = 'front'; oneShot('yawn', 'cat_yawn_s', 6); return; }
-      const pose = SE.pick(['lie', 'sit', 'wash', 'lie']);
-      rest(pose, pose === 'lie' ? SE.rand(14, 30) : SE.rand(6, 12));
+      const pose = SE.pick(['loaf', 'loaf', 'sit']);
+      rest(pose, pose === 'loaf' ? SE.rand(18, 36) : SE.rand(6, 12));
     }
     m.update = function (dt) {
       m.t += dt;
       if (m.state === 'rest' && m.t > m.dur) decide();
-      else if (m.state === 'once' && m.t > m.dur) rest(m.pose === 'stretch' ? 'sit' : 'sit', SE.rand(3, 7));
       else if (m.state === 'walk') {
-        const d = m.tx - m.x, step = 15 * dt;
-        if (Math.abs(d) <= step) { m.x = m.tx; rest(SE.pick(['sit', 'lie', 'wash']), SE.rand(5, 14)); }
+        const d = m.tx - m.x, step = 14 * dt;
+        if (Math.abs(d) <= step) { m.x = m.tx; rest(SE.pick(['sit', 'loaf']), SE.rand(6, 14)); }
         else m.x += Math.sign(d) * step;
       } else if (m.state === 'jump') {
         const k = Math.min(1, m.t / m.dur);
         m.x = SE.lerp(m.from[0], m.to[0], k);
         const lift = Math.max(14, m.from[1] - m.to[1] + 12);
         m.y = SE.lerp(m.from[1], m.to[1], k) - Math.sin(k * Math.PI) * lift * (m.to[1] < m.from[1] ? 1 : 0.5);
-        if (k >= 1) { m.y = m.to[1]; m.surf = m.toSurf; rest(SE.pick(['sit', 'wash']), SE.rand(4, 9)); }
+        if (k >= 1) { m.y = m.to[1]; m.surf = m.toSurf; rest(SE.pick(['sit', 'loaf']), SE.rand(5, 10)); }
       }
     };
-    // which strip and frame to show for what she is doing, facing the room or sideways
+    // which strip and frame to show
     function look() {
+      const f = m.face;
       const loop = (n, fps) => Math.floor(m.t * fps) % frames(n);
-      const swing = (n, fps) => { const c = frames(n) * 2 - 2; let f = Math.floor(m.t * fps) % c; if (f >= frames(n)) f = c - f; return f; };
-      if (m.state === 'walk') return ['cat_walk', loop('cat_walk', 10)];
-      if (m.state === 'jump') return ['cat_jump', Math.min(frames('cat_jump') - 1, Math.floor((m.t / m.dur) * frames('cat_jump')))];
-      if (m.state === 'once') return [m.anim, Math.min(frames(m.anim) - 1, Math.floor((m.t / m.dur) * frames(m.anim)))];
-      const front = m.face === 'front';
-      if (m.pose === 'lie') return front && SE.anims.cat_lie_s ? ['cat_lie_s', swing('cat_lie_s', 2)] : ['cat_lie', swing('cat_lie', 2)];
-      if (m.pose === 'wash') return front && SE.anims.cat_wash_s ? ['cat_wash_s', loop('cat_wash_s', 5)] : ['cat_sit', loop('cat_sit', 5)];
-      return front && SE.anims.cat_wash_s ? ['cat_wash_s', 0] : ['cat_sit', 0];
+      const settle = (n, fps) => Math.min(frames(n) - 1, Math.floor(m.t * fps)); // play once, then hold
+      if (m.state === 'walk') return [`mochi_walk_${f}`, loop(`mochi_walk_${f}`, 10)];
+      if (m.state === 'jump') return [`mochi_jump_${f}`, Math.min(frames(`mochi_jump_${f}`) - 1, Math.floor((m.t / m.dur) * frames(`mochi_jump_${f}`)))];
+      if (m.pose === 'loaf') {
+        const n = has(`mochi_loaf_${f}`) ? `mochi_loaf_${f}` : 'mochi_loaf_se';
+        // she settles into the loaf, then just breathes (the last frames, slowly)
+        const k = Math.floor(m.t * 5);
+        return [n, k < frames(n) ? k : frames(n) - 2 + (Math.floor(m.t * 0.8) % 2)];
+      }
+      return ['mochi_sit_se', settle('mochi_sit_se', 6), f === 'sw']; // sitting: one strip, mirrored for the other diagonal
     }
     // draws her (feet at m.y) and returns her box for petting hotspots
     m.draw = function () {
-      let [anim, frame] = look();
-      if (!SE.anims[anim]) { anim = 'cat_sit'; frame = 0; }
+      let [anim, frame, flip] = look();
+      if (!SE.anims[anim]) { anim = 'mochi_sit_se'; frame = frames(anim) - 1; }
       if (!SE.anims[anim]) return null;
       const sz = SE.animSize(anim);
       const x = Math.round(m.x - sz.w / 2), y = Math.round(m.y - sz.h);
-      SE.drawAnim(anim, x, y, 0, { frame, flip: m.flip && m.face !== 'front' });
+      SE.drawAnim(anim, x, y, 0, { frame, flip: !!flip });
       return { x, y, w: sz.w, h: sz.h };
     };
     return m;

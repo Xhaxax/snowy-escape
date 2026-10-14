@@ -47,6 +47,7 @@
           if (k >= seq.length) s.look = -1; else frame = seq[k];
         }
         SE.drawAnim('summit_pair', 204 + SE.weather.shiver(0), 239 - sz.h, 0, { frame });
+        SE.headphones(ctx, 204 + 23, 239 - sz.h + 6);
       } else if (SE.anims.summit_sit) {
         const sz = SE.animSize('summit_sit');
         SE.drawAnim('summit_sit', 196, 238 - sz.h, s.t * 0.6, { pingpong: true });
@@ -54,6 +55,7 @@
       } else SE.drawActorFallback(ctx, 210, 196, '#a0522d');
 
       SE.weather.tint(ctx, 0.75);
+      SE.travelerLight(ctx, 184, 234, 1); // the lantern set down on the ledge beside them
       SE.weather.stars(ctx, 90);
 
       // shooting stars

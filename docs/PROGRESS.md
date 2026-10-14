@@ -102,3 +102,16 @@
 - Cutscene stills exist per condition: day (sunny spell), snow (overcast + snowfall), storm (windy/storm), night. BASE in src/moments.js says which one the original file is; the others are cut/<name>_<variant>.png (33 PixelLab edits). The moment picks the right one when it starts. Cocoa (indoors) and lantern (always dusk) have one version.
 - Kitchen: no sprite fish sliced on a drawn board any more. Cutting shows only the painted stills (kitchen_cut, scaling, head/fins, the open fillets), seasoning sprinkles dill onto the open-fillet still, frying is a PixelLab animation of the two open fillets in the pan (`kitchen_fry_raw`, then `kitchen_fry_gold` after the flip), and the plate is a PixelLab dish (props/dish).
 - iOS: resize again shortly after rotations (stale sizes blew the canvas up past the screen).
+
+## Round: everything without a skill is a cutscene
+- Cutscene variants: painted variants where they exist; otherwise src/moments.js relights the still in code (night = moonlit blue that keeps lamps/candles/windows warm, storm = whiteout, snow = cooled, day = warmed; indoor stills only day/night). Live snowfall of the current weather falls over outdoor stills.
+- Encounters (src/scenes/encounter.js) are stills only: Waffles notices (alert) → dark pause "Something in the woods got Waffles' attention…" → reveal still per animal (cut/see_*) → choose photo (camera still → the print) / note (pencil still → notebook page) / let it be. Bear: maybe agitated (cut/see_bear_angry) → only "Back away slowly" → cut/retreat + a dark beat.
+- Kitchen: cocoa = cocoa_chop, cocoa2, cocoa_cook, cocoa_pour; fish = cook_prep, cook_pan, cook_fry, cook_plate; then dinner (cut/eat) with a choice to share: treat_dog / treat_cat. No minigames, no panels, no Mochi paw.
+- Woodlot (src/scenes/woodlot.js, map place next to the cabin): its own clearing (bg_woodlot: lean-to woodpile, felled trunks). Chopping is the one skill; after 5 good splits → cutscene stack + carry_in → cabin, fire +.
+- Chapel: back-wall door matching the outside door (where the logs were). Cabin: new Bible on the coffee table; "Read the Bible" (button or click the Bible) → bible_read still + a verse beat; verses are kept in the notebook.
+- Notebook (src/notebook.js): book button → cut/pocket still → a real open notebook (ui/notebook.png) with 4 spreads: notes & wildlife sketches, photo album (click to enlarge), fish & kitchen, Bible notes & chapel.
+- Lantern at night / headlamp in heavy weather (SE.travelerLight) on the map, Long Walk, lake, summit, woodlot.
+- Just watch → cutscene of putting headphones on; while watching he wears headphones (SE.headphones) with notes floating up (couch, summit, lake, woodlot, trail).
+- Bedroom (src/scenes/bedroom.js): bed, lamp, Mochi on the quilt, Waffles on the rug; "Go to sleep" only at night → cut/sleep with zzz from all three → morning (clock 7:12, new day).
+- Mochi v4 (PixelLab character ef64e189…, smaller): walk SE/SW/NE/NW, sit (SE, mirrored), loaf SE/SW, jump SE/SW. No side views; she loafs on counters, shelves, the couch back and the quilt.
+- PixelLab budget: ~45 generations left until 2026-11-13.

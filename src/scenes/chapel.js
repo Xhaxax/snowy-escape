@@ -17,6 +17,7 @@
     ['Casting all your care upon him; for he careth for you.', '1 Peter 5:7'],
     ['He giveth snow like wool.', 'Psalm 147:16'],
   ];
+  SE.VERSES = VERSES; // the cabin Bible reads from the same verses
   // the arched window (glass area) and the scene's marks, in background pixels
   const WIN = { x: 30, y: 56, w: 48, h: 126, spring: 80 }; // spring: where the arch meets the straight sides
   const FLAMES = [{ x: 393, y: 136 }, { x: 436, y: 140 }];

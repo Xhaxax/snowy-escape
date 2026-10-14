@@ -134,7 +134,9 @@
   // ------------------------------------------------------------ drawing
   // opts: clip {x,y,w,h}|[...] (draw only inside, e.g. windows), density, windScale, alpha, speed
   W.draw = function (ctx, opts = {}) {
-    const dt = opts.frozen ? 0 : SE.dt;
+    // the flakes move once per frame, however many times they are drawn (scene, windows, cutscene)
+    const dt = opts.frozen || W._drawnAt === SE.time ? 0 : SE.dt;
+    W._drawnAt = SE.time;
     const count = Math.floor(MAX * W.intensity * (opts.density || 1));
     const speed = opts.speed || 1;
     const wind = (W.wind + W.gust) * (opts.windScale == null ? 1 : opts.windScale);
