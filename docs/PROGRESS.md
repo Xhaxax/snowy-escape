@@ -127,3 +127,4 @@
 - Couch: repainted in one pass from the clean room (body, legs, feet and boots together) so the couch colours behind the legs match, then two small touch-ups for the toes and the boots; couch_sip re-animated from the new painting (12 frames).
 - Headphones are parked (SE.HEADPHONES = false): drawn on top of the beanie they never sat on his ears in any scene. The "music" put-them-on cutscene is skipped too. Future feature: paint headphones into his sprites/stills (PixelLab edit of each pose) and switch the flag back on.
 - Bible reading still (cut/bible_read): his beard was painted grey; recoloured to his brown beard (pixel recolour, no new generation). The other stills were checked and already show a brown beard.
+- Couch sip: two frames where his eye was missing got his closed eye painted back in.
