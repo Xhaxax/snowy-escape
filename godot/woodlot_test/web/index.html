@@ -1,0 +1,96 @@
+<title>Woodlot in Godot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap">
+<style>
+  /* One night-time look on purpose: the frame around the scene is the winter sky it sits in. */
+  :root {
+    --night: #120e1c;       /* behind the scene, same as the game's letterbox */
+    --dusk: #2a2140;        /* the empty part of the progress bar */
+    --lamp: #ffc472;        /* lantern light: the progress and the heading */
+    --snow: #f3ecff;        /* text */
+    --frost: #b9b1d6;       /* quieter text */
+    --display: 'Pixelify Sans', ui-monospace, 'Courier New', monospace;
+    color-scheme: dark;
+  }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--night); color: var(--snow); font-family: var(--display); overflow: hidden; touch-action: none; }
+  #canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; outline: none; }
+  #veil { position: fixed; inset: 0; display: grid; place-items: center; background: var(--night);
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); transition: opacity .6s ease; }
+  #veil.gone { opacity: 0; pointer-events: none; }
+  .card { display: grid; gap: 10px; justify-items: center; text-align: center; max-width: 28rem; }
+  h1 { margin: 0; font-size: 22px; font-weight: 600; color: var(--lamp); letter-spacing: .02em; text-wrap: balance; }
+  p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--frost); }
+  .bar { width: min(260px, 70vw); height: 8px; background: var(--dusk); box-shadow: 0 0 0 2px var(--dusk); }
+  .bar i { display: block; height: 100%; width: 0; background: var(--lamp); transition: width .2s linear; }
+  #status { font-size: 12px; color: var(--frost); font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { #veil, .bar i { transition: none; } }
+</style>
+
+<canvas id="canvas" tabindex="0">The woodlot needs a browser with WebGL 2.</canvas>
+<div id="veil">
+  <div class="card">
+    <h1>The woodlot, in Godot 4.5</h1>
+    <p>Lantern light, moonlight, wind and snow, rebuilt in the Godot engine to compare with the browser game. Use the buttons in the corner to change the time and the weather.</p>
+    <div class="bar" aria-hidden="true"><i id="fill"></i></div>
+    <div id="status" role="status">Loading the engine…</div>
+  </div>
+</div>
+
+<script>
+  // The engine (index.wasm) is shipped gzipped as engine-gz.wasm to fit the artifact's file limit.
+  // Godot fetches index.wasm; answer that request with the unpacked file.
+  (function () {
+    const realFetch = window.fetch.bind(window);
+    const fill = document.getElementById('fill'), status = document.getElementById('status');
+    const GZ_SIZE = 9256059;
+    window.fetch = async function (input, init) {
+      const url = typeof input === 'string' ? input : input.url;
+      // the game data travels as game-pck.wasm (artifacts serve only standard web file types)
+      if (/index\.pck(\?|$)/.test(url)) return realFetch(url.replace('index.pck', 'game-pck.wasm'), init);
+      if (!/index\.wasm(\?|$)/.test(url)) return realFetch(input, init);
+      const r = await realFetch(url.replace('index.wasm', 'engine-gz.wasm'), init);
+      if (!r.ok) throw new Error('The engine file could not be loaded (' + r.status + ').');
+      // read it with progress, then unpack (unless the server already did)
+      const reader = r.body.getReader(), parts = [];
+      let got = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        parts.push(value); got += value.length;
+        const k = Math.min(1, got / GZ_SIZE);
+        fill.style.width = (k * 85).toFixed(1) + '%';
+        status.textContent = 'Loading the engine… ' + Math.round(k * 100) + '%';
+      }
+      const blob = new Blob(parts);
+      const head = new Uint8Array(await blob.slice(0, 2).arrayBuffer());
+      const body = head[0] === 0x1f && head[1] === 0x8b ? blob.stream().pipeThrough(new DecompressionStream('gzip')) : blob.stream();
+      status.textContent = 'Starting…';
+      return new Response(body, { status: 200, headers: { 'Content-Type': 'application/wasm' } });
+    };
+  })();
+</script>
+<script src="index.js"></script>
+<script>
+  (function () {
+    const CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":530292,"index.wasm":38034280},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+    const veil = document.getElementById('veil'), status = document.getElementById('status'), fill = document.getElementById('fill');
+    const missing = Engine.getMissingFeatures({ threads: false });
+    if (missing.length) {
+      status.textContent = 'This browser is missing: ' + missing.join(', ') + '. Try a recent Chrome, Edge, Firefox or Safari.';
+      return;
+    }
+    const engine = new Engine(CONFIG);
+    engine.startGame({
+      onProgress: function (cur, total) { if (total > 0 && cur >= total) fill.style.width = '100%'; },
+    }).then(function () {
+      fill.style.width = '100%';
+      veil.classList.add('gone');
+      document.getElementById('canvas').focus();
+    }).catch(function (err) {
+      status.textContent = 'The woodlot could not start: ' + (err && err.message ? err.message : err);
+    });
+  })();
+</script>
