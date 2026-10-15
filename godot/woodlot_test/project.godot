@@ -1,0 +1,26 @@
+; Snowy Escape: a Godot 4.5 test of the woodlot at night (lighting, wind, snow), to compare with
+; the browser game before deciding on a port. Open this folder in Godot 4.5 to edit it.
+config_version=5
+
+[application]
+
+config/name="Snowy Escape - Godot woodlot test"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=480
+window/size/viewport_height=272
+window/size/window_width_override=960
+window/size/window_height_override=544
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+window/handheld/orientation=0
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.07, 0.055, 0.11, 1)
